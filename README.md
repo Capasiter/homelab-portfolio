@@ -100,3 +100,33 @@ Because this infrastructure boasts significant memory resources (including 64GB 
 * **Nested Containerization (`nesting=1`):** Configured secondary container runtime engines (Docker/containerd) inside OS-level Linux Containers (LXC). Bypassed standard kernel-space restrictions on `sys_admin` capabilities within the Linux namespace, allowing the guest container to safely mount internal overlay filesystems while preserving critical user namespace isolation (Unprivileged mode).
 * **Automated Image Lifecycle Management:** Implemented detached daemon arrays (`Watchtower`) paired with real-time log aggregation engines (`Dozzle`). Attached directly to local Unix sockets to establish a zero-storage log streaming pipeline, completely eliminating the need to use interactive terminal SSH access during standard maintenance windows.
 * **Network Discovery via MAC Signatures:** Bypassed private consumer router DHCP tracking limitations by logging into the core Proxmox bridge (`vmbr0`) and running low-level network discovery (`arp-scan`). Isolated newly deployed cloud instances using the explicit Proxmox hardware MAC address prefix signature (`bc:24:11`) to accurately hunt down blind network allocations.
+
+---
+
+## 🎮 Game Server Infrastructure Deployment Logs
+
+### 🚀 Project 3: Containerized Multi-User Simulation Environment (Wreckfest 2)
+* **Objective:** Deploy and stabilize a high-performance, containerized dedicated multiplayer environment for Wreckfest 2 (Steam App ID: 3519390).
+* **The Architecture:** Orchestrated via Docker Engine and managed through the Pelican Panel administrative interface, hosted inside an Ubuntu Linux VM (Node 200) running on a bare-metal Intel Core i9 Proxmox VE hypervisor. Integrated a Wine translation layer for seamless Windows-on-Linux runtime execution.
+
+### 🧠 Post-Mortem & Advanced Troubleshooting
+
+#### 1. Hypervisor CPU Instruction Set Incompatibility (AVX/AVX2 Bypass)
+* **Symptom:** The dedicated game server executable crashed immediately upon initial runtime initialization, throwing fatal `Unhandled illegal instruction` errors via the Wine translation layer.
+* **Root Cause Analysis:** The Proxmox Virtual Machine defaulted to the standard virtual CPU type (`kvm64`). This legacy configuration strips away modern, advanced vector instruction sets (specifically AVX/AVX2 execution flags) required by modern gaming and compilation engines.
+* **Remediation Strategy:** Hard-stopped the virtual node, navigated to the Proxmox Hardware Configuration panel, and upgraded the processor type topology from `kvm64` to `host`. This directly exposes the raw Intel Core i9 processor hardware flags to the guest OS, completely mitigating the instruction set conflict.
+
+#### 2. Storage Subsystem I/O Throttle & Disk Write Bottlenecks
+* **Symptom:** During heavy extraction and asset verification phases, SteamCMD download pipelines choked down to single-digit KB/s throughput while triggering persistent `[slow disk]` hardware fault flags.
+* **Root Cause Analysis:** The underlying Proxmox virtual disk controller was provisioned with standard synchronized write behavior (`No Cache`). Under massive continuous parallel write loops, the hypervisor forced an immediate physical host disk commit for every block change, obliterating storage IOPS performance.
+* **Remediation Strategy:** Expanded the storage pool allocation to eliminate capacity degradation. Modified the VM drive hardware profile to utilize the high-throughput **VirtIO SCSI** controller, explicitly setting the caching mechanism to **`Write back`**. This safely delegated disk synchronization buffers directly to system RAM pools, removing the physical disk access bottleneck.
+
+#### 3. Administrative Session Token Masking (SteamCMD / Family View Lockdown)
+* **Symptom:** SteamCMD configuration handshakes failed to fetch app manifests, throwing explicit credential authorization and permission errors despite verified MFA/Steam Guard bypass authentication.
+* **Root Cause Analysis:** Active Steam Family View restrictions were masking the account profile backend, silently dropping API registration keys, token handshakes, and developer portal communication paths.
+* **Remediation Strategy:** Executed an isolated web session inside an incognito browser runtime to drop corrupted local storage tokens. Successfully passed the 4-digit administrative PIN to transition the profile status to an unlocked state, unblocking the Steam Master Server communication handshakes.
+
+### 🌐 Live Production Target Profile
+* **Ingress Mapping:** Managed via UPnP/Static Port Forwarding configurations binding port `30100` (UDP Protocol) across the WAN.
+* **Internal Routing Vector:** `192.168.0.187:30100`
+* **Access Control Matrix:** Open Public Authentication mapping dynamic server-side AI bot population routines to optimize player tracking loops.
