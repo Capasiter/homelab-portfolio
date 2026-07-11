@@ -1,0 +1,3 @@
+proxmox_endpoint = "https://192.168.0.202:8006/"
+
+proxmox_api_token = "c2181931-4ffd-403d-95a2-b8b9f8942838"
