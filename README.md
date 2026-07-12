@@ -128,5 +128,5 @@ Because this infrastructure boasts significant memory resources (including 64GB 
 
 ### 🌐 Live Production Target Profile
 * **Ingress Mapping:** Managed via UPnP/Static Port Forwarding configurations binding port `30100` (UDP Protocol) across the WAN.
-* **Internal Routing Vector:** `192.168.0.187:30100`
+* **Internal Routing Vector:** `192.16100`
 * **Access Control Matrix:** Open Public Authentication mapping dynamic server-side AI bot population routines to optimize player tracking loops.
