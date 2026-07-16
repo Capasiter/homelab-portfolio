@@ -1,4 +1,16 @@
-terraform.tfvars
-terraform.tfstate
-terraform.tfstate.*
+# OpenTofu state
+*.tfstate
+*.tfstate.*
+
+# Variables
+*.tfvars
+
+# Providers/modules
 .terraform/
+**/.terraform/
+
+# Crash logs
+crash.log
+
+# Sensitive files
+*.tfvars

@@ -1,31 +1,20 @@
-terraform {
-  required_providers {
-    proxmox = {
-      source  = "bpg/proxmox"
-      version = "0.66.0"
-    }
-  }
-}
+resource "proxmox_virtual_environment_container" "ubuntu2404" {
 
-provider "proxmox" {
-  endpoint  = var.proxmox_endpoint
-  api_token = var.proxmox_api_token
-  insecure  = true
-}
-resource "proxmox_virtual_environment_container" "tofu_test" {
   node_name = "pve"
   vm_id     = 999
 
-  description = "Created and managed by OpenTofu"
+  description = "Managed by OpenTofu"
 
   initialization {
-    hostname = "tofu-test"
+
+    hostname = "ubuntu2404"
 
     ip_config {
       ipv4 {
         address = "dhcp"
       }
     }
+
   }
 
   cpu {
@@ -43,12 +32,18 @@ resource "proxmox_virtual_environment_container" "tofu_test" {
   }
 
   operating_system {
+
     template_file_id = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
-    type             = "ubuntu"
+
+    type = "ubuntu"
+
   }
 
   network_interface {
+
     name   = "eth0"
     bridge = "vmbr0"
+
   }
+
 }
