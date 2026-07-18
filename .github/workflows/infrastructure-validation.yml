@@ -1,0 +1,71 @@
+name: Infrastructure Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  opentofu:
+    name: OpenTofu validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      TF_IN_AUTOMATION: "true"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install OpenTofu
+        uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_version: 1.12.4
+
+      - name: Check formatting
+        run: tofu fmt -check -recursive proxmox/opentofu
+
+      - name: Initialize dev configuration
+        working-directory: proxmox/opentofu/environments/dev
+        run: tofu init -backend=false -input=false -lockfile=readonly
+
+      - name: Validate dev configuration
+        working-directory: proxmox/opentofu/environments/dev
+        run: tofu validate -no-color
+
+  ansible:
+    name: Ansible validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      ANSIBLE_CONFIG: ansible/ansible.cfg
+      ANSIBLE_NOCOLOR: "1"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Ansible tooling
+        run: python -m pip install ansible-core==2.16.3 ansible-lint==6.17.2
+
+      - name: Validate sanitized inventory
+        run: ansible-inventory -i ansible/inventory/hosts.example.yml --graph
+
+      - name: Check playbook syntax
+        run: ansible-playbook -i ansible/inventory/hosts.example.yml ansible/playbooks/linux_baseline.yml --syntax-check
+
+      - name: Lint Ansible project
+        run: ansible-lint --profile production ansible/
