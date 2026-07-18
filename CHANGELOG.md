@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-18
+
+### Added
+
+- GitHub Actions workflow with independent OpenTofu and Ansible validation jobs.
+- Automated OpenTofu formatting, backend-disabled initialization, and configuration validation.
+- Automated sanitized-inventory parsing, playbook syntax checking, and production-profile Ansible linting.
+- Validation on pull requests and pushes to the `main` branch.
+
+### Changed
+
+- Renamed the sanitized inventory from `hosts.yml.example` to `hosts.example.yml` so Ansible recognizes it as YAML.
+- Updated Ansible documentation to use the parseable example-inventory filename.
+
+### Security
+
+- Restricted workflow permissions to read-only repository contents.
+- Kept Proxmox credentials, SSH keys, live inventory, state, plans, and live-host connections out of CI.
+- Prevented public CI from running OpenTofu `plan` or `apply`.
+
 ## [0.2.0] - 2026-07-18
 
 ### Added
