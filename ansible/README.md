@@ -24,7 +24,7 @@ The `linux_baseline` role:
 ```text
 ansible/
 ├── inventory/
-│   └── hosts.yml.example
+│   └── hosts.example.yml
 ├── playbooks/
 │   └── linux_baseline.yml
 ├── roles/
@@ -57,7 +57,7 @@ Private SSH keys, live inventory values, passwords, and other credentials must n
 From the `ansible/` directory, copy the sanitized example:
 
 ```bash
-cp inventory/hosts.yml.example inventory/hosts.yml
+cp inventory/hosts.example.yml inventory/hosts.yml
 ```
 
 Replace the documentation address with the managed host's real address. The live `hosts.yml` file is excluded from Git.
