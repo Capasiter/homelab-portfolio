@@ -6,25 +6,36 @@ Production-style homelab demonstrating Linux administration, Infrastructure as C
 
 ## Current Milestone
 
-The current milestone delivers a reusable OpenTofu implementation that manages a live Ubuntu 24.04 LXC container on Proxmox VE.
+The current milestone delivers an end-to-end infrastructure automation workflow for a live Ubuntu 24.04 LXC container on Proxmox VE.
 
 Delivered capabilities include:
 
-- Reusable `ubuntu-lxc` OpenTofu module
-- Separate development environment configuration
-- Configurable compute, storage, and networking
-- Input validation and documented outputs
-- Live unprivileged LXC deployment with nesting and start-on-boot enabled
-- Dedicated Proxmox service identity and API-token authentication
-- Local secrets, provider data, and state excluded from version control
-- Successful OpenTofu formatting and configuration validation
-- Live refresh and plan confirming no infrastructure drift
-- Runtime verification against the deployed Proxmox container
-- Documented HTTP 401 and 403 API troubleshooting
+- Reusable OpenTofu module for provisioning Ubuntu LXC infrastructure
+- Live infrastructure refresh and drift validation
+- Dedicated Ansible automation account with ED25519 key authentication
+- Structured inventory, playbook, and reusable `linux_baseline` role
+- Automated installation of Linux administration packages
+- Repeatable timezone configuration
+- SSH password and keyboard-interactive authentication disabled
+- Direct root SSH login disabled
+- SSH configuration validation before service restart
+- Successful live configuration of the OpenTofu-provisioned container
+- Idempotent Ansible validation reporting `changed=0`
+- Local credentials, private keys, live inventory, and state excluded from Git
 
-> **Project status:** The OpenTofu development environment is live-validated. The deployed container matches its configuration, and Ansible configuration management is the next milestone.
+> **Project status:** OpenTofu provisioning and Ansible configuration management are both live-validated. Automated CI validation is the next milestone.
 
-## Featured Infrastructure Project
+## Featured Infrastructure Projects
+
+### Ansible Linux Baseline
+
+[View the Ansible Linux baseline project](ansible/)
+
+[Read the Ansible live-validation report](ansible/docs/live-validation.md)
+
+The Ansible project configures the OpenTofu-provisioned Ubuntu container with administration packages, timezone management, SSH hardening, validation handlers, and an idempotent role-based workflow.
+
+### OpenTofu Infrastructure
 
 [View the Proxmox OpenTofu project](proxmox/opentofu/)
 
@@ -54,7 +65,7 @@ This structure allows infrastructure components to be reused while keeping envir
 | Virtualization | Proxmox VE | Operational |
 | Infrastructure as Code | OpenTofu and `bpg/proxmox` | Live validated |
 | Linux containers | Ubuntu 24.04 LXC | Deployed and verified |
-| Configuration management | Ansible | Next milestone |
+| Configuration management | Ansible | Live validated |
 | Containers | Docker | Used in homelab |
 | Orchestration | Kubernetes/K3s | Future phase |
 | Storage | Unraid | Operational |
@@ -69,6 +80,10 @@ This structure allows infrastructure components to be reused while keeping envir
 - Least-privilege service authentication
 - Secret and state-file protection
 - Git feature-branch workflow
+- Role-based Ansible configuration management
+- Key-only SSH automation with controlled privilege escalation
+- Pre-restart SSH configuration validation
+- Idempotence verification with `changed=0`
 - Consistent formatting and validation
 - Infrastructure drift detection
 - Runtime verification against live infrastructure
@@ -88,17 +103,19 @@ homelab-portfolio/
 
 ## Roadmap
 
-1. Add an Ansible Linux baseline for the OpenTofu-provisioned container.
-2. Add automated formatting and validation with GitHub Actions.
-3. Evaluate remote state and state-locking options.
-4. Add a production environment after the development workflow is established.
-5. Provision dedicated virtual machines for K3s.
+1. Add automated OpenTofu and Ansible validation with GitHub Actions.
+2. Evaluate remote state and state-locking options.
+3. Add a production environment after the development workflow is established.
+4. Provision dedicated Proxmox virtual machines for K3s.
+5. Deploy a three-node K3s cluster with Ansible.
 6. Integrate persistent storage, monitoring, and backups.
 7. Add GitOps deployment after the Kubernetes foundation is operational.
 
 ## Security
 
 Credentials, API tokens, local variable files, provider caches, saved plans, and state files are excluded from version control. Public example configuration contains placeholders only, and the Proxmox API uses a dedicated service identity with scoped permissions.
+
+Ansible private keys, live inventory, vault-password files, and retry files are also kept out of version control.
 
 State files are treated as sensitive because infrastructure providers can store environment details or secret values in them.
 

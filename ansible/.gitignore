@@ -1,0 +1,6 @@
+# Environment-specific inventory
+inventory/hosts.yml
+
+# Ansible retry and local secret files
+*.retry
+.vault-password

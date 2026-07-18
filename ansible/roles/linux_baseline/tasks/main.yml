@@ -1,0 +1,49 @@
+---
+- name: Verify the target operating system
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Ubuntu"
+    fail_msg: This role currently supports Ubuntu only.
+    success_msg: Ubuntu target confirmed.
+
+- name: Refresh the APT package cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install baseline administration packages
+  ansible.builtin.apt:
+    name: "{{ linux_baseline_packages }}"
+    state: present
+
+- name: Configure the system timezone
+  ansible.builtin.file:
+    src: "/usr/share/zoneinfo/{{ linux_baseline_timezone }}"
+    dest: /etc/localtime
+    owner: root
+    group: root
+    state: link
+    force: true
+
+- name: Record the system timezone
+  ansible.builtin.copy:
+    content: "{{ linux_baseline_timezone }}\n"
+    dest: /etc/timezone
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install the SSH hardening configuration
+  ansible.builtin.copy:
+    content: |
+      # Managed by Ansible
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin no
+      PubkeyAuthentication yes
+    dest: /etc/ssh/sshd_config.d/00-linux-baseline.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: linux_baseline_ssh_hardening | bool
+  notify: Restart SSH

@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Role-based Ansible Linux baseline for the OpenTofu-provisioned Ubuntu container.
+- Repository-scoped Ansible configuration, structured inventory, reusable role, and deployment playbook.
+- Automated administration-package installation and timezone configuration.
+- SSH hardening with configuration validation before service restart.
+- Sanitized example inventory and live-validation documentation.
+
+### Changed
+
+- Updated the portfolio landing page to show live-validated Ansible configuration management.
+- Advanced the project roadmap to automated CI validation and future K3s infrastructure.
+
+### Security
+
+- Added a dedicated password-locked automation account using ED25519 key authentication and controlled sudo escalation.
+- Disabled SSH password authentication, keyboard-interactive authentication, and direct root login.
+- Excluded live inventory, private keys, vault-password files, and retry files from version control.
+
 ## [0.1.0] - 2026-07-18
 
 ### Added

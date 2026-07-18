@@ -1,0 +1,16 @@
+---
+linux_baseline_timezone: America/Chicago
+
+linux_baseline_packages:
+  - ca-certificates
+  - curl
+  - git
+  - htop
+  - jq
+  - openssh-server
+  - rsync
+  - sudo
+  - unzip
+  - vim
+
+linux_baseline_ssh_hardening: true
