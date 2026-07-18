@@ -1,12 +1,14 @@
 # Homelab Infrastructure Portfolio
 
+[![Infrastructure Validation](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml/badge.svg)](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml)
+
 Production-style homelab demonstrating Linux administration, Infrastructure as Code, automation, troubleshooting, and infrastructure operations across Proxmox VE and Unraid.
 
 **Career focus:** Linux Systems Administration · Infrastructure Engineering · Cloud Support · Junior DevOps
 
 ## Current Milestone
 
-The current milestone delivers an end-to-end infrastructure automation workflow for a live Ubuntu 24.04 LXC container on Proxmox VE.
+The current milestone extends the live-validated OpenTofu and Ansible workflow with automated, read-only GitHub Actions validation for every pull request and push to the main branch.
 
 Delivered capabilities include:
 
@@ -21,11 +23,20 @@ Delivered capabilities include:
 - SSH configuration validation before service restart
 - Successful live configuration of the OpenTofu-provisioned container
 - Idempotent Ansible validation reporting `changed=0`
+- Automated OpenTofu formatting, backend-disabled initialization, and configuration validation
+- Automated Ansible inventory parsing, playbook syntax checks, and production-profile linting
+- Independent GitHub Actions jobs with read-only repository permissions
 - Local credentials, private keys, live inventory, and state excluded from Git
 
-> **Project status:** OpenTofu provisioning and Ansible configuration management are both live-validated. Automated CI validation is the next milestone.
+> **Project status:** OpenTofu provisioning and Ansible configuration management are live-validated, with automated GitHub Actions validation active for both stacks.
 
 ## Featured Infrastructure Projects
+
+### GitHub Actions Infrastructure Validation
+
+[View the infrastructure validation workflow](.github/workflows/infrastructure-validation.yml)
+
+Every pull request and push to `main` runs independent OpenTofu and Ansible jobs on Ubuntu 24.04. The workflow checks source formatting, initializes without a backend, validates configuration, parses only the sanitized inventory, checks playbook syntax, and runs `ansible-lint` without accessing live infrastructure.
 
 ### Ansible Linux Baseline
 
@@ -34,6 +45,7 @@ Delivered capabilities include:
 [Read the Ansible live-validation report](ansible/docs/live-validation.md)
 
 The Ansible project configures the OpenTofu-provisioned Ubuntu container with administration packages, timezone management, SSH hardening, validation handlers, and an idempotent role-based workflow.
+
 
 ### OpenTofu Infrastructure
 
@@ -66,6 +78,7 @@ This structure allows infrastructure components to be reused while keeping envir
 | Infrastructure as Code | OpenTofu and `bpg/proxmox` | Live validated |
 | Linux containers | Ubuntu 24.04 LXC | Deployed and verified |
 | Configuration management | Ansible | Live validated |
+| Continuous integration | GitHub Actions | Automated validation passing |
 | Containers | Docker | Used in homelab |
 | Orchestration | Kubernetes/K3s | Future phase |
 | Storage | Unraid | Operational |
@@ -85,6 +98,8 @@ This structure allows infrastructure components to be reused while keeping envir
 - Pre-restart SSH configuration validation
 - Idempotence verification with `changed=0`
 - Consistent formatting and validation
+- Automated pull-request and main-branch validation
+- Least-privilege CI without infrastructure credentials
 - Infrastructure drift detection
 - Runtime verification against live infrastructure
 - Troubleshooting based on API response codes
@@ -94,6 +109,8 @@ This structure allows infrastructure components to be reused while keeping envir
 
 ```text
 homelab-portfolio/
+├── .github/
+│   └── workflows/   # Automated infrastructure validation
 ├── ansible/       # Configuration-management work
 ├── diagrams/      # Architecture diagrams
 ├── docs/          # Runbooks and technical documentation
@@ -103,19 +120,20 @@ homelab-portfolio/
 
 ## Roadmap
 
-1. Add automated OpenTofu and Ansible validation with GitHub Actions.
-2. Evaluate remote state and state-locking options.
-3. Add a production environment after the development workflow is established.
-4. Provision dedicated Proxmox virtual machines for K3s.
-5. Deploy a three-node K3s cluster with Ansible.
-6. Integrate persistent storage, monitoring, and backups.
-7. Add GitOps deployment after the Kubernetes foundation is operational.
+1. Evaluate remote state and state-locking options.
+2. Add a production environment after the development workflow is established.
+3. Provision dedicated Proxmox virtual machines for K3s.
+4. Deploy a three-node K3s cluster with Ansible.
+5. Integrate persistent storage, monitoring, and backups.
+6. Add GitOps deployment after the Kubernetes foundation is operational.
 
 ## Security
 
 Credentials, API tokens, local variable files, provider caches, saved plans, and state files are excluded from version control. Public example configuration contains placeholders only, and the Proxmox API uses a dedicated service identity with scoped permissions.
 
 Ansible private keys, live inventory, vault-password files, and retry files are also kept out of version control.
+
+GitHub Actions runs with read-only repository permissions and uses no Proxmox credentials, SSH keys, live inventory, or repository secrets. Public CI performs validation only and never runs OpenTofu `plan` or `apply`.
 
 State files are treated as sensitive because infrastructure providers can store environment details or secret values in them.
 
