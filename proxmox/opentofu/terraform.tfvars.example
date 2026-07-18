@@ -1,3 +1,24 @@
-proxmox_endpoint = "https://PROXMOX_HOST_OR_IP:8006/"
-
+# Proxmox API connection
+proxmox_endpoint  = "https://PROXMOX_HOST_OR_IP:8006/"
 proxmox_api_token = "USER@REALM!TOKEN_ID=REPLACE_WITH_TOKEN_SECRET"
+proxmox_insecure  = true
+
+# Container identity
+node_name   = "pve"
+vm_id       = 300
+hostname    = "ubuntu-dev-01"
+description = "OpenTofu-managed Ubuntu development container"
+
+# Compute
+cpu_cores = 2
+memory    = 2048
+swap      = 512
+
+# Storage
+datastore_id     = "local-lvm"
+disk_size        = 16
+template_file_id = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
+
+# Networking
+ip_address = "dhcp"
+bridge     = "vmbr0"

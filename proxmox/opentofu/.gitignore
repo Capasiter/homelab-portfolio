@@ -1,16 +1,28 @@
-# OpenTofu state
+# Local OpenTofu state and saved plans
 *.tfstate
 *.tfstate.*
+*.tfplan
+.terraform.tfstate.lock.info
 
-# Variables
+# Environment-specific variables and credentials
 *.tfvars
+*.tfvars.json
 
-# Providers/modules
+# Downloaded providers and modules
 .terraform/
-**/.terraform/
 
-# Crash logs
+# Crash and diagnostic logs
 crash.log
+crash.*.log
 
-# Sensitive files
-*.tfvars
+# Local override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration files that may contain credentials
+.tofurc
+tofu.rc
+.terraformrc
+terraform.rc
