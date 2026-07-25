@@ -4,7 +4,7 @@ This OpenTofu environment provisions three Ubuntu 24.04 virtual machines that wi
 
 > **Current status:** The VM infrastructure is deployed and drift-free. K3s has not yet been installed.
 
-OpenTofu manages the virtual-machine lifecycle. OPNsense provides isolated routing, DHCP, DNS forwarding, and outbound NAT. Ansible will configure the operating systems and install K3s in the next phase.
+OpenTofu manages the virtual-machine lifecycle. OPNsense provides isolated routing, DHCP, DNS forwarding, and outbound NAT. Ansible now manages the Linux baseline on all three nodes; K3s installation is the next phase.
 
 ## Architecture
 
@@ -130,9 +130,11 @@ Detailed evidence and troubleshooting notes are recorded in [K3s Live Validation
 
 ## Management Access
 
-The management workstation does not have a direct route into `10.20.0.0/24`. Initial validation used an SSH jump through the Proxmox host.
+The management workstation does not have a direct route into `10.20.0.0/24`. Management access now uses a dedicated unprivileged `k3s-jump` account on the Proxmox host as a forwarding-only SSH bastion.
 
-Before routine Ansible automation, the environment will receive a dedicated unprivileged bastion identity using SSH-key authentication. This preserves isolation without modifying the upstream router or exposing the lab network directly.
+The bastion uses a separate passphrase-protected key, denies password authentication and interactive shell access, and permits forwarding only to SSH on the three K3s nodes. This preserves isolation without modifying the upstream router or exposing the lab network directly.
+
+Implementation and validation evidence are documented in [K3s Node Bootstrap Live Validation](../../../../ansible/docs/k3s-node-validation.md).
 
 ## Security Practices
 
@@ -147,9 +149,9 @@ Before routine Ansible automation, the environment will receive a dedicated unpr
 
 ## Next Steps
 
-1. Configure secure bastion access for Ansible
-2. Add the three nodes to the Ansible inventory
-3. Apply and re-run the Linux baseline to prove idempotency
-4. Install the three-node K3s control plane
-5. Validate embedded etcd membership and cluster health
+1. Build and review the Ansible K3s installation automation
+2. Deploy the initial K3s server as a controlled canary
+3. Join the remaining two control-plane servers
+4. Validate embedded etcd membership, cluster health, scheduling, DNS, storage, and networking
+5. Document the live cluster evidence and publish v0.4.0
 6. Add persistent storage, monitoring, backups, and GitOps

@@ -39,6 +39,14 @@ jobs:
         working-directory: proxmox/opentofu/environments/dev
         run: tofu validate -no-color
 
+      - name: Initialize K3s configuration
+        working-directory: proxmox/opentofu/environments/k3s
+        run: tofu init -backend=false -input=false -lockfile=readonly
+
+      - name: Validate K3s configuration
+        working-directory: proxmox/opentofu/environments/k3s
+        run: tofu validate -no-color
+
   ansible:
     name: Ansible validation
     runs-on: ubuntu-24.04

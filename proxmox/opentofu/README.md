@@ -199,19 +199,18 @@ This workflow distinguishes successful resource creation from a validated, opera
 - The homelab permits a self-signed Proxmox certificate
 - OPNsense and DHCP reservations are external prerequisites
 - The management workstation does not directly route into the isolated subnet
-- A dedicated unprivileged bastion identity is still pending
+- Management access to the isolated subnet intentionally depends on a restricted, forwarding-only Proxmox bastion
 - The broader parent API ACL requires staged hardening after both tokens are verified
 - K3s has not yet been installed
 - Persistent Kubernetes storage, monitoring, backups, and GitOps are future phases
 
 ## Next Milestone
 
-The next phase will:
+The infrastructure and Linux baseline phases are complete. The next phase will:
 
-1. Establish secure key-based bastion access
-2. Add all three VMs to the Ansible inventory
-3. Apply the existing Linux baseline
-4. Re-run the baseline to prove idempotency
-5. Deploy the three-node K3s control plane
-6. Validate embedded etcd membership and cluster health
-7. Add persistent storage, monitoring, backups, and GitOps
+1. Build and review the Ansible K3s installation automation
+2. Deploy the initial K3s server as a controlled canary
+3. Join the remaining two control-plane servers
+4. Validate embedded etcd membership, cluster health, scheduling, DNS, storage, and networking
+5. Document the live cluster evidence and publish v0.4.0
+6. Add persistent storage, monitoring, backups, and GitOps

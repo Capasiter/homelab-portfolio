@@ -4,7 +4,7 @@
 
 Employment-focused homelab demonstrating Linux administration, Infrastructure as Code, configuration management, isolated networking, troubleshooting, continuous integration, and infrastructure operations across Proxmox VE and Unraid.
 
-> **Current build:** Three Ubuntu VMs for a highly available K3s control plane are deployed on an isolated OPNsense network. The infrastructure is live-validated and drift-free; Ansible configuration and K3s installation are next.
+> **Current build:** Three Ubuntu VMs for a highly available K3s control plane are deployed on an isolated OPNsense network. The infrastructure, restricted bastion access, and Linux baseline are live-validated; K3s installation is next.
 
 **Career focus:** Linux Systems Administration · Infrastructure Engineering · Cloud Support · Junior DevOps
 
@@ -96,7 +96,9 @@ Both live environments have completed full drift checks reporting no changes.
 
 [View the Ansible Linux baseline](ansible/)
 
-[Read the Ansible live-validation report](ansible/docs/live-validation.md)
+[Read the original development-LXC validation report](ansible/docs/live-validation.md)
+
+[Read the three-node K3s bootstrap validation report](ansible/docs/k3s-node-validation.md)
 
 The reusable `linux_baseline` role provides:
 
@@ -111,7 +113,7 @@ The reusable `linux_baseline` role provides:
 - Production-profile linting
 - Proven idempotency with `changed=0`
 
-The next phase will apply this baseline to all three K3s nodes.
+The same baseline is now live-validated on all three K3s nodes, including a full idempotent run with `changed=0` on every node.
 
 ### GitHub Actions Infrastructure Validation
 
@@ -119,7 +121,7 @@ The next phase will apply this baseline to all three K3s nodes.
 
 Every pull request and push to `main` runs independent OpenTofu and Ansible jobs on Ubuntu 24.04.
 
-CI validates formatting, initializes OpenTofu without a backend, validates configuration, parses only sanitized Ansible inventory, checks playbook syntax, and runs `ansible-lint` without accessing live infrastructure.
+CI validates formatting, initializes both the development and K3s OpenTofu environments without backends, validates both configurations, parses only sanitized Ansible inventory, checks playbook syntax, and runs `ansible-lint` without accessing live infrastructure.
 
 The workflow uses read-only repository permissions and contains no Proxmox credentials, SSH keys, live inventory, or infrastructure state.
 
@@ -190,9 +192,9 @@ homelab-portfolio/
 - [x] Create and sanitize an Ubuntu cloud-image template
 - [x] Provision three deterministic K3s virtual machines
 - [x] Confirm a final drift-free OpenTofu plan
-- [ ] Configure dedicated key-based bastion access
-- [ ] Apply the Ansible Linux baseline to all three nodes
-- [ ] Prove three-node baseline idempotency
+- [x] Configure dedicated key-based bastion access
+- [x] Apply the Ansible Linux baseline to all three nodes
+- [x] Prove three-node baseline idempotency
 - [ ] Deploy the highly available K3s control plane
 - [ ] Validate embedded etcd, cluster DNS, networking, and scheduling
 - [ ] Integrate persistent storage from Unraid
