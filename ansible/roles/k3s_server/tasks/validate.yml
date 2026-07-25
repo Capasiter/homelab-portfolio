@@ -1,0 +1,133 @@
+---
+- name: Validate the running K3s server
+  when: not ansible_check_mode
+  block:
+    - name: Read the K3s active service state
+      ansible.builtin.command:
+        argv:
+          - /usr/bin/systemctl
+          - is-active
+          - k3s.service
+      register: k3s_service_active
+      changed_when: false
+      failed_when: false
+
+    - name: Read the K3s enabled service state
+      ansible.builtin.command:
+        argv:
+          - /usr/bin/systemctl
+          - is-enabled
+          - k3s.service
+      register: k3s_service_enabled
+      changed_when: false
+      failed_when: false
+
+    - name: Verify the K3s service state
+      ansible.builtin.assert:
+        that:
+          - k3s_service_active.stdout == "active"
+          - k3s_service_enabled.stdout == "enabled"
+        fail_msg: The K3s service is not both active and enabled.
+        success_msg: The K3s service is active and enabled.
+
+    - name: Read the installed K3s version
+      ansible.builtin.command:
+        argv:
+          - "{{ k3s_binary_path }}"
+          - --version
+      register: k3s_installed_version
+      changed_when: false
+
+    - name: Verify the installed K3s version
+      ansible.builtin.assert:
+        that:
+          - k3s_version in k3s_installed_version.stdout
+        fail_msg: The running K3s version does not match the pinned release.
+        success_msg: The running K3s version matches the pinned release.
+
+    - name: Wait for the K3s API readiness endpoint
+      ansible.builtin.command:
+        argv:
+          - "{{ k3s_binary_path }}"
+          - kubectl
+          - get
+          - --raw=/readyz
+      register: k3s_api_readiness
+      changed_when: false
+      retries: "{{ k3s_readiness_retries }}"
+      delay: "{{ k3s_readiness_delay }}"
+      until: k3s_api_readiness.rc == 0 and k3s_api_readiness.stdout == "ok"
+
+    - name: Wait for this Kubernetes node to become Ready
+      ansible.builtin.command:
+        argv:
+          - "{{ k3s_binary_path }}"
+          - kubectl
+          - wait
+          - --for=condition=Ready
+          - "node/{{ inventory_hostname }}"
+          - "--timeout={{ k3s_wait_timeout }}s"
+      changed_when: false
+
+    - name: Read the K3s secrets-encryption status
+      ansible.builtin.command:
+        argv:
+          - "{{ k3s_binary_path }}"
+          - secrets-encrypt
+          - status
+      register: k3s_encryption_status
+      changed_when: false
+
+    - name: Verify K3s secrets encryption is enabled
+      ansible.builtin.assert:
+        that:
+          - k3s_encryption_status.stdout is search("Enabled")
+        fail_msg: K3s secrets encryption is not enabled.
+        success_msg: K3s secrets encryption is enabled.
+
+    - name: Inspect the managed K3s configuration permissions
+      ansible.builtin.stat:
+        path: "{{ k3s_config_path }}"
+      register: k3s_config_status
+
+    - name: Verify the managed K3s configuration permissions
+      ansible.builtin.assert:
+        that:
+          - k3s_config_status.stat.exists
+          - k3s_config_status.stat.uid == 0
+          - k3s_config_status.stat.gid == 0
+          - k3s_config_status.stat.mode == "0600"
+        fail_msg: The managed K3s configuration permissions are incorrect.
+        success_msg: The managed K3s configuration is root-owned and mode 0600.
+
+    - name: Inspect the K3s join-token permissions
+      ansible.builtin.stat:
+        path: "{{ k3s_join_token_path }}"
+      register: k3s_join_token_status
+      when: k3s_server_mode == "join"
+
+    - name: Verify the K3s join-token permissions
+      ansible.builtin.assert:
+        that:
+          - k3s_join_token_status.stat.exists
+          - k3s_join_token_status.stat.uid == 0
+          - k3s_join_token_status.stat.gid == 0
+          - k3s_join_token_status.stat.mode == "0600"
+        fail_msg: The K3s join-token permissions are incorrect.
+        success_msg: The K3s join token is root-owned and mode 0600.
+      when: k3s_server_mode == "join"
+
+    - name: Read the generated K3s server token
+      ansible.builtin.slurp:
+        src: "{{ k3s_generated_server_token_path }}"
+      register: k3s_generated_server_token
+      when: k3s_server_mode == "bootstrap"
+      no_log: true
+
+    - name: Hold the generated K3s server token in memory
+      ansible.builtin.set_fact:
+        k3s_server_token: >-
+          {{ k3s_generated_server_token.content | b64decode | trim }}
+        cacheable: false
+      when: k3s_server_mode == "bootstrap"
+      no_log: true

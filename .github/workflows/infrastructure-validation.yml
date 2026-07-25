@@ -72,8 +72,11 @@ jobs:
       - name: Validate sanitized inventory
         run: ansible-inventory -i ansible/inventory/hosts.example.yml --graph
 
-      - name: Check playbook syntax
+      - name: Check Linux baseline playbook syntax
         run: ansible-playbook -i ansible/inventory/hosts.example.yml ansible/playbooks/linux_baseline.yml --syntax-check
+
+      - name: Check K3s cluster playbook syntax
+        run: ansible-playbook -i ansible/inventory/hosts.example.yml ansible/playbooks/k3s_cluster.yml --syntax-check
 
       - name: Lint Ansible project
         run: ansible-lint --profile production ansible/

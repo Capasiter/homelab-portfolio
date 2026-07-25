@@ -1,0 +1,50 @@
+---
+- name: Render the K3s configuration in memory
+  ansible.builtin.set_fact:
+    k3s_rendered_config: >-
+      {{ lookup("ansible.builtin.template", "config.yaml.j2") }}
+  changed_when: false
+
+- name: Verify the rendered K3s configuration is valid YAML
+  ansible.builtin.assert:
+    that:
+      - (k3s_rendered_config | from_yaml) is mapping
+    fail_msg: The rendered K3s configuration is not valid YAML.
+    success_msg: The rendered K3s configuration is valid YAML.
+
+- name: Create the secure K3s configuration directory
+  ansible.builtin.file:
+    path: "{{ k3s_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Install the root-only K3s join token
+  ansible.builtin.copy:
+    content: "{{ k3s_join_token | trim }}\n"
+    dest: "{{ k3s_join_token_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+  when:
+    - k3s_server_mode == "join"
+    - not ansible_check_mode
+  no_log: true
+  diff: false
+  notify: Restart K3s
+
+- name: Install the managed K3s configuration
+  ansible.builtin.copy:
+    content: "{{ k3s_rendered_config }}"
+    dest: "{{ k3s_config_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+  when: not ansible_check_mode
+  notify: Restart K3s
+
+- name: Report successful check-mode configuration rendering
+  ansible.builtin.debug:
+    msg: The K3s configuration rendered and parsed successfully without being written.
+  when: ansible_check_mode

@@ -1,0 +1,101 @@
+---
+- name: Create the K3s installer directory
+  ansible.builtin.file:
+    path: "{{ k3s_install_script_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download the immutable K3s installer
+  ansible.builtin.get_url:
+    url: "{{ k3s_install_script_url }}"
+    dest: "{{ k3s_install_script_path }}"
+    checksum: "{{ k3s_install_script_checksum }}"
+    owner: root
+    group: root
+    mode: "0755"
+  when: not ansible_check_mode
+
+- name: Inspect the installed K3s binary
+  ansible.builtin.stat:
+    path: "{{ k3s_binary_path }}"
+    checksum_algorithm: sha256
+    get_checksum: true
+  register: k3s_binary_before
+
+- name: Inspect the K3s systemd unit
+  ansible.builtin.stat:
+    path: "{{ k3s_service_unit_path }}"
+  register: k3s_service_unit_before
+
+- name: Determine whether K3s installation is required
+  ansible.builtin.set_fact:
+    k3s_install_required: >-
+      {{
+        not k3s_binary_before.stat.exists or
+        (k3s_binary_before.stat.checksum | default("")) != k3s_binary_checksum or
+        not k3s_service_unit_before.stat.exists
+      }}
+  changed_when: false
+
+- name: Report the check-mode K3s installation decision
+  ansible.builtin.debug:
+    msg: "Pinned K3s installation required: {{ k3s_install_required | bool }}"
+  when: ansible_check_mode
+
+- name: Install the pinned K3s server without starting it
+  ansible.builtin.command: "{{ k3s_install_script_path }}"
+  environment:
+    INSTALL_K3S_VERSION: "{{ k3s_version }}"
+    INSTALL_K3S_EXEC: server
+    INSTALL_K3S_SKIP_START: "true"
+  when:
+    - k3s_install_required | bool
+    - not ansible_check_mode
+  changed_when: true
+  notify: Restart K3s
+
+- name: Inspect the installed K3s binary after installation
+  ansible.builtin.stat:
+    path: "{{ k3s_binary_path }}"
+    checksum_algorithm: sha256
+    get_checksum: true
+  register: k3s_binary_after
+  when: not ansible_check_mode
+
+- name: Inspect the K3s systemd unit after installation
+  ansible.builtin.stat:
+    path: "{{ k3s_service_unit_path }}"
+  register: k3s_service_unit_after
+  when: not ansible_check_mode
+
+- name: Verify the installed K3s artifacts
+  ansible.builtin.assert:
+    that:
+      - k3s_binary_after.stat.exists
+      - k3s_binary_after.stat.checksum == k3s_binary_checksum
+      - k3s_service_unit_after.stat.exists
+    fail_msg: The installed K3s binary or systemd unit failed verification.
+    success_msg: The installed K3s binary and systemd unit passed verification.
+  when: not ansible_check_mode
+
+- name: Apply pending K3s restart handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure K3s is enabled and running
+  ansible.builtin.systemd_service:
+    name: "{{ k3s_service_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Wait for the local K3s API port
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ k3s_api_port }}"
+    state: started
+    delay: 2
+    timeout: "{{ k3s_wait_timeout }}"
+  when: not ansible_check_mode

@@ -1,0 +1,4 @@
+# Managed by Ansible. Manual changes will be overwritten.
+{% for setting, value in k3s_sysctl_settings.items() %}
+{{ setting }} = {{ value }}
+{% endfor %}

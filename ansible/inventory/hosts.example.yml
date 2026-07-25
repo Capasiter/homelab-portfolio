@@ -14,10 +14,15 @@ linux_servers:
           -o ProxyJump=pve-k3s-bastion
       children:
         k3s_servers:
-          hosts:
-            k3s-server-01:
-              ansible_host: 10.20.0.101
-            k3s-server-02:
-              ansible_host: 10.20.0.102
-            k3s-server-03:
-              ansible_host: 10.20.0.103
+          children:
+            k3s_bootstrap_server:
+              hosts:
+                k3s-server-01:
+                  ansible_host: 10.20.0.101
+
+            k3s_join_servers:
+              hosts:
+                k3s-server-02:
+                  ansible_host: 10.20.0.102
+                k3s-server-03:
+                  ansible_host: 10.20.0.103

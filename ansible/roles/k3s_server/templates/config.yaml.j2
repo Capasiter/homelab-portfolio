@@ -1,0 +1,26 @@
+---
+# Managed by Ansible. Manual changes will be overwritten.
+
+cluster-cidr: "{{ k3s_cluster_cidr }}"
+service-cidr: "{{ k3s_service_cidr }}"
+cluster-dns: "{{ k3s_cluster_dns }}"
+cluster-domain: "{{ k3s_cluster_domain }}"
+flannel-backend: "{{ k3s_flannel_backend }}"
+flannel-iface: "{{ k3s_flannel_interface }}"
+
+secrets-encryption: true
+write-kubeconfig-mode: "0600"
+
+etcd-snapshot-schedule-cron: "{{ k3s_etcd_snapshot_schedule_cron }}"
+etcd-snapshot-retention: {{ k3s_etcd_snapshot_retention }}
+etcd-snapshot-compress: {{ k3s_etcd_snapshot_compress | bool | lower }}
+
+node-ip: "{{ ansible_host }}"
+advertise-address: "{{ ansible_host }}"
+
+{% if k3s_server_mode == "bootstrap" %}
+cluster-init: true
+{% elif k3s_server_mode == "join" %}
+server: "{{ k3s_server_url }}"
+token-file: "{{ k3s_join_token_path }}"
+{% endif %}

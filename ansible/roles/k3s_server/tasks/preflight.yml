@@ -1,0 +1,63 @@
+---
+- name: Verify the K3s orchestration inventory
+  ansible.builtin.assert:
+    that:
+      - groups.get("k3s_servers", []) | length == 3
+      - groups.get("k3s_bootstrap_server", []) | length == 1
+      - groups.get("k3s_join_servers", []) | length == 2
+    fail_msg: The K3s inventory must define one bootstrap server and two join servers.
+    success_msg: The three-server K3s orchestration inventory is valid.
+
+- name: Verify the K3s server mode and group membership
+  ansible.builtin.assert:
+    that:
+      - k3s_server_mode in ["bootstrap", "join"]
+      - >-
+        (k3s_server_mode == "bootstrap" and
+        inventory_hostname in groups.get("k3s_bootstrap_server", [])) or
+        (k3s_server_mode == "join" and
+        inventory_hostname in groups.get("k3s_join_servers", []))
+    fail_msg: The K3s server mode does not match this host's inventory group.
+    success_msg: The K3s server mode and inventory membership match.
+
+- name: Verify the supported K3s platform and resources
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Ubuntu"
+      - ansible_facts.distribution_version == "24.04"
+      - ansible_facts.architecture == "x86_64"
+      - ansible_facts.service_mgr == "systemd"
+      - ansible_facts.processor_vcpus | int >= 2
+      - ansible_facts.memtotal_mb | int >= 2048
+      - ansible_facts.swaptotal_mb | int == 0
+    fail_msg: The host does not meet the supported K3s platform or resource requirements.
+    success_msg: The host meets the supported K3s platform and resource requirements.
+
+- name: Verify the node identity and network interface
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.hostname == inventory_hostname
+      - ansible_host is defined
+      - ansible_facts.default_ipv4.address == ansible_host
+      - ansible_facts.default_ipv4.interface == k3s_flannel_interface
+    fail_msg: The node identity or default network interface does not match inventory.
+    success_msg: The node identity and network interface match inventory.
+
+- name: Verify the pinned K3s artifact metadata
+  ansible.builtin.assert:
+    that:
+      - k3s_version is match("^v[0-9]+\\.[0-9]+\\.[0-9]+\\+k3s[0-9]+$")
+      - k3s_install_script_checksum is match("^sha256:[0-9a-f]{64}$")
+      - k3s_binary_checksum is match("^[0-9a-f]{64}$")
+    fail_msg: The pinned K3s version or checksum metadata is invalid.
+    success_msg: The pinned K3s artifact metadata is structurally valid.
+
+- name: Verify secure join inputs
+  ansible.builtin.assert:
+    that:
+      - k3s_server_url | length > 0
+      - (k3s_join_token | default("")) | length > 0
+    fail_msg: A server URL and in-memory token are required to join this server.
+    success_msg: Secure join inputs are available.
+  when: k3s_server_mode == "join"
+  no_log: true
