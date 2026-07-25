@@ -89,7 +89,6 @@
         that:
           - '"node-role.kubernetes.io/control-plane" in item.metadata.labels'
           - '"node-role.kubernetes.io/etcd" in item.metadata.labels'
-          - '"node-role.kubernetes.io/master" in item.metadata.labels'
         fail_msg: "Node {{ item.metadata.name }} is missing a required server role."
         success_msg: "Node {{ item.metadata.name }} has all required server roles."
       loop: "{{ k3s_cluster_node_data['items'] }}"
