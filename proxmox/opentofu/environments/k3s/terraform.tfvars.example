@@ -1,11 +1,11 @@
 proxmox_endpoint  = "https://proxmox.example.com:8006/"
-proxmox_api_token = "automation@pve!opentofu=REPLACE_WITH_TOKEN_SECRET"
+proxmox_api_token = "opentofu@pve!provisioner=REPLACE_WITH_TOKEN_SECRET"
 proxmox_insecure  = true
 
 node_name      = "pve"
 template_vm_id = 9100
 datastore_id   = "local-lvm"
-bridge         = "vmbr0"
+bridge         = "vmbr1"
 
 cpu_cores = 2
 cpu_type  = "host"

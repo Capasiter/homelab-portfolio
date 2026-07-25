@@ -21,11 +21,14 @@ module "k3s_nodes" {
   source   = "../../modules/ubuntu-vm"
   for_each = local.k3s_nodes
 
-  node_name   = var.node_name
-  vm_id       = each.value.vm_id
-  name        = each.key
-  description = "K3s control-plane node managed by OpenTofu"
-  tags        = ["k3s", "control-plane", "opentofu"]
+  node_name          = var.node_name
+  vm_id              = each.value.vm_id
+  name               = each.key
+  description        = "K3s control-plane node managed by OpenTofu"
+  tags               = ["k3s", "control-plane", "opentofu"]
+  startup_order      = 2
+  startup_up_delay   = 15
+  startup_down_delay = 60
 
   template_vm_id = var.template_vm_id
   cpu_cores      = var.cpu_cores

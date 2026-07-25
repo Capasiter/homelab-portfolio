@@ -137,3 +137,36 @@ variable "mac_address" {
     error_message = "mac_address must use six colon-separated hexadecimal octets."
   }
 }
+
+variable "startup_order" {
+  description = "Proxmox automatic-start order; lower values start first and stop last."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.startup_order >= 0 && var.startup_order == floor(var.startup_order)
+    error_message = "startup_order must be a non-negative whole number."
+  }
+}
+
+variable "startup_up_delay" {
+  description = "Seconds to wait after starting this VM before starting the next VM."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.startup_up_delay >= 0 && var.startup_up_delay == floor(var.startup_up_delay)
+    error_message = "startup_up_delay must be a non-negative whole number."
+  }
+}
+
+variable "startup_down_delay" {
+  description = "Seconds to wait after stopping this VM before stopping the next VM."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.startup_down_delay >= 0 && var.startup_down_delay == floor(var.startup_down_delay)
+    error_message = "startup_down_delay must be a non-negative whole number."
+  }
+}
