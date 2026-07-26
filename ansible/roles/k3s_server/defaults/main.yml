@@ -1,0 +1,57 @@
+---
+k3s_version: "v1.36.2+k3s1"
+
+k3s_install_script_commit: "01b6f04aaa69e8b09303f0393d4b4f1811da23aa"
+k3s_install_script_url: >-
+  https://raw.githubusercontent.com/k3s-io/k3s/{{ k3s_install_script_commit }}/install.sh
+k3s_install_script_checksum: "sha256:46177d4c99440b4c0311b67233823a8e8a2fc09693f6c89af1a7161e152fbfad"
+
+k3s_binary_path: /usr/local/bin/k3s
+k3s_binary_checksum: "65a55ec56c24eab44383086166ec620a491952b7e23941a49ddca6e8a4c4b4de"
+k3s_install_script_path: /usr/local/src/k3s-install.sh
+k3s_service_name: k3s
+k3s_service_unit_path: /etc/systemd/system/k3s.service
+
+k3s_config_dir: /etc/rancher/k3s
+k3s_config_path: "{{ k3s_config_dir }}/config.yaml"
+k3s_join_token_path: "{{ k3s_config_dir }}/server-token"
+k3s_generated_server_token_path: /var/lib/rancher/k3s/server/token
+k3s_modules_load_path: /etc/modules-load.d/k3s.conf
+k3s_sysctl_path: /etc/sysctl.d/99-k3s.conf
+
+k3s_server_mode: ""
+k3s_server_url: ""
+
+# k3s_join_token is intentionally undefined here. The playbook supplies it
+# in memory with no_log only while joining additional servers.
+
+k3s_prerequisite_packages:
+  - ca-certificates
+  - curl
+  - kmod
+  - procps
+
+k3s_kernel_modules:
+  - overlay
+  - br_netfilter
+
+k3s_sysctl_settings:
+  net.ipv4.ip_forward: 1
+  net.bridge.bridge-nf-call-iptables: 1
+  net.bridge.bridge-nf-call-ip6tables: 1
+
+k3s_cluster_cidr: "10.42.0.0/16"
+k3s_service_cidr: "10.43.0.0/16"
+k3s_cluster_dns: "10.43.0.10"
+k3s_cluster_domain: cluster.local
+k3s_flannel_backend: vxlan
+k3s_flannel_interface: eth0
+
+k3s_etcd_snapshot_schedule_cron: "0 */12 * * *"
+k3s_etcd_snapshot_retention: 5
+k3s_etcd_snapshot_compress: true
+
+k3s_api_port: 6443
+k3s_wait_timeout: 600
+k3s_readiness_retries: 60
+k3s_readiness_delay: 10

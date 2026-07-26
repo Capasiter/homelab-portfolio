@@ -1,0 +1,97 @@
+---
+- name: Initialize the K3s embedded-etcd bootstrap server
+  hosts: k3s_bootstrap_server
+  become: true
+  gather_facts: true
+  serial: 1
+  any_errors_fatal: true
+
+  vars:
+    k3s_server_mode: bootstrap
+
+  roles:
+    - role: k3s_server
+
+- name: Join the additional K3s servers sequentially
+  hosts: k3s_join_servers
+  become: true
+  gather_facts: true
+  serial: 1
+  any_errors_fatal: true
+
+  vars:
+    k3s_server_mode: join
+    k3s_server_url: >-
+      https://{{ hostvars[groups["k3s_bootstrap_server"][0]].ansible_host }}:6443
+    k3s_join_token: >-
+      {{
+        "__ansible_check_mode_token__"
+        if ansible_check_mode
+        else hostvars[groups["k3s_bootstrap_server"][0]].k3s_server_token
+      }}
+
+  roles:
+    - role: k3s_server
+
+- name: Validate the three-server K3s control plane
+  hosts: k3s_bootstrap_server
+  become: true
+  gather_facts: false
+  any_errors_fatal: true
+
+  tasks:
+    - name: Wait for all K3s server nodes to become Ready
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - wait
+          - --for=condition=Ready
+          - nodes
+          - --all
+          - --timeout=600s
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Read the K3s cluster node state
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - get
+          - nodes
+          - --output=json
+      register: k3s_cluster_nodes
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Parse the K3s cluster node state
+      ansible.builtin.set_fact:
+        k3s_cluster_node_data: "{{ k3s_cluster_nodes.stdout | from_json }}"
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Verify the K3s server count and identities
+      ansible.builtin.assert:
+        that:
+          - k3s_cluster_node_data["items"] | length == 3
+          - >-
+            (k3s_cluster_node_data["items"] |
+            map(attribute="metadata.name") |
+            sort |
+            list) == (groups["k3s_servers"] | sort)
+        fail_msg: The K3s cluster does not contain the expected three server nodes.
+        success_msg: The K3s cluster contains the expected three server nodes.
+      when: not ansible_check_mode
+
+    - name: Verify the K3s control-plane and etcd role labels
+      ansible.builtin.assert:
+        that:
+          - '"node-role.kubernetes.io/control-plane" in item.metadata.labels'
+          - '"node-role.kubernetes.io/etcd" in item.metadata.labels'
+        fail_msg: "Node {{ item.metadata.name }} is missing a required server role."
+        success_msg: "Node {{ item.metadata.name }} has all required server roles."
+      loop: "{{ k3s_cluster_node_data['items'] }}"
+      loop_control:
+        label: "{{ item.metadata.name }}"
+      when: not ansible_check_mode

@@ -6,6 +6,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-26
+
+### Added
+
+- OpenTofu-managed three-VM Ubuntu environment on an isolated OPNsense network for the K3s control plane.
+- Deterministic VM identities, reserved addresses, dependency-aware startup, guest-agent integration, and serial-console recovery.
+- Restricted OpenSSH bastion path for managing servers that are not directly reachable from the automation controller.
+- `k3s_cluster.yml` playbook and reusable `k3s_server` role for preflight validation, prerequisites, configuration, installation, and runtime checks.
+- Explicit bootstrap and sequential-join inventory groups for the three K3s servers.
+- Live cluster validation report covering health, networking, security controls, snapshots, and idempotence.
+
+### Changed
+
+- Expanded GitHub Actions validation to syntax-check the K3s playbook.
+- Corrected runtime validation to require the current `control-plane` and `etcd` labels instead of the obsolete `master` label.
+- Updated portfolio and Ansible documentation from pre-installation status to the validated live deployment.
+- Documented delivered capabilities separately from remaining production-oriented improvements.
+
+### Security
+
+- Pinned the K3s installer to an immutable Git commit and verified installer and binary SHA-256 checksums.
+- Protected root-owned K3s configuration and token files with mode `0600`.
+- Suppressed sensitive token operations with `no_log`, disabled token-file diffs, and transferred the bootstrap token through a non-cacheable in-memory Ansible fact.
+- Enabled Kubernetes Secrets encryption and validated matching encryption hashes across all servers.
+- Kept live inventory, private keys, tokens, kubeconfig contents, and infrastructure credentials out of Git and public CI.
+
+### Validated
+
+- All three servers reported `Ready` on K3s `v1.36.2+k3s1` with `control-plane` and `etcd` roles.
+- Kubernetes API readiness, embedded-etcd readiness, server membership, and Secrets encryption passed.
+- Cross-node scheduling, Flannel networking, Service routing, and CoreDNS resolution passed.
+- Metrics Server, Traefik, ServiceLB, Local Path Provisioner, and the default StorageClass were healthy.
+- Local etcd snapshot creation completed successfully.
+- A complete Ansible rerun converged with `changed=0`, `failed=0`, and `unreachable=0` on every server.
+- OpenTofu reconciliation and both GitHub Actions validation jobs passed.
+
+### Known Limitations
+
+- Kubernetes API access does not yet use a virtual IP or external load balancer.
+- The validated etcd snapshot is local-only, and a restore exercise has not yet been completed.
+- Local Path Provisioner storage is node-local; shared Unraid-backed persistent storage is not yet integrated.
+- Monitoring, alerting, NetworkPolicy, GitOps, and application workloads remain future milestones.
+
 ## [0.3.0] - 2026-07-18
 
 ### Added

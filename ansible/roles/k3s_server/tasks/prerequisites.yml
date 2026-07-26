@@ -1,0 +1,68 @@
+---
+- name: Install K3s prerequisite packages
+  ansible.builtin.apt:
+    name: "{{ k3s_prerequisite_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install the persistent K3s kernel module configuration
+  ansible.builtin.template:
+    src: modules-load.conf.j2
+    dest: "{{ k3s_modules_load_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Apply K3s kernel prerequisites
+
+- name: Install the persistent K3s sysctl configuration
+  ansible.builtin.template:
+    src: sysctl.conf.j2
+    dest: "{{ k3s_sysctl_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Apply K3s kernel prerequisites
+
+- name: Apply pending K3s kernel prerequisite handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Inspect the required loaded kernel modules
+  ansible.builtin.stat:
+    path: "/sys/module/{{ item }}"
+  loop: "{{ k3s_kernel_modules }}"
+  loop_control:
+    label: "{{ item }}"
+  register: k3s_loaded_module_status
+  when: not ansible_check_mode
+
+- name: Verify the required kernel modules are loaded
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+    fail_msg: "Required kernel module {{ item.item }} is not loaded."
+    success_msg: "Required kernel module {{ item.item }} is loaded."
+  loop: "{{ k3s_loaded_module_status.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: not ansible_check_mode
+
+- name: Read the active K3s sysctl settings
+  ansible.builtin.command:
+    argv:
+      - /usr/sbin/sysctl
+      - -n
+      - net.ipv4.ip_forward
+      - net.bridge.bridge-nf-call-iptables
+      - net.bridge.bridge-nf-call-ip6tables
+  register: k3s_active_sysctl
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Verify the active K3s sysctl settings
+  ansible.builtin.assert:
+    that:
+      - k3s_active_sysctl.stdout_lines == ["1", "1", "1"]
+    fail_msg: The required K3s networking sysctls are not active.
+    success_msg: The required K3s networking sysctls are active.
+  when: not ansible_check_mode

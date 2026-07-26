@@ -1,149 +1,216 @@
 # Proxmox OpenTofu Infrastructure
 
-This project uses OpenTofu to provision and manage infrastructure on a Proxmox VE homelab. It demonstrates a modular Infrastructure as Code workflow with reusable modules, environment-specific configuration, secure handling of credentials, and live infrastructure validation.
+This directory contains reusable OpenTofu modules and environment compositions for provisioning infrastructure on Proxmox VE.
+
+The portfolio demonstrates modular Infrastructure as Code, isolated virtual networking, cloud-init automation, dependency-aware startup, secure API usage, controlled recovery, and live drift validation.
 
 ## Delivered Infrastructure
 
-The development environment currently manages a live Ubuntu 24.04 LXC container:
+| Milestone | Environment | Managed infrastructure | Status |
+|---|---|---|---|
+| v0.1.0 | `environments/dev` | Ubuntu 24.04 LXC container | Released and drift-free |
+| v0.4.0 | `environments/k3s` | Three Ubuntu 24.04 K3s VMs | Infrastructure deployed; K3s installation pending |
+
+### Development LXC
+
+The development environment manages:
 
 | Setting | Value |
 |---|---|
-| Proxmox node | `pve` |
-| Container ID | `337` |
+| Container ID | 337 |
 | Hostname | `ubuntu-dev-01` |
-| Status | Running |
 | CPU | 2 cores |
 | Memory | 3072 MB |
-| Swap | 512 MB |
 | Disk | 16 GB |
-| Networking | DHCP on `vmbr0` |
-| Start on boot | Enabled |
+| Network | DHCP on `vmbr0` |
 | Container type | Unprivileged |
-| Nesting | Enabled |
+| Start on boot | Enabled |
 
-A live refresh and plan confirmed that the deployed container matches the OpenTofu configuration with no infrastructure drift.
+See [LXC Live Validation](docs/live-validation.md).
 
-See [Live Validation](docs/live-validation.md) for the validation evidence, troubleshooting notes, and security controls.
+### K3s VM Infrastructure
+
+The K3s environment manages:
+
+| Node | VM ID | Reserved address | Network |
+|---|---:|---|---|
+| `k3s-server-01` | 401 | `10.20.0.101` | Isolated `vmbr1` |
+| `k3s-server-02` | 402 | `10.20.0.102` | Isolated `vmbr1` |
+| `k3s-server-03` | 403 | `10.20.0.103` | Isolated `vmbr1` |
+
+Each node is a full clone of a sanitized Ubuntu 24.04 cloud-image template with two CPU cores, 3072 MB of memory, a 32 GB disk, QEMU guest-agent support, cloud-init, automatic startup, and serial-console access.
+
+OPNsense provides DHCP, DNS forwarding, outbound NAT, and the gateway for the isolated lab. OpenTofu does not manage the OPNsense configuration or the upstream household network.
+
+See:
+
+- [K3s Environment Guide](environments/k3s/README.md)
+- [K3s Live Validation](docs/k3s-live-validation.md)
+
+## Responsibility Boundaries
+
+The project separates infrastructure lifecycle from operating-system configuration:
+
+| Layer | Responsibility |
+|---|---|
+| OpenTofu | Proxmox containers, VMs, disks, CPU, memory, networking, cloning, and startup policy |
+| Cloud-init | Initial hostname, automation user, SSH public key, and first-boot initialization |
+| Ansible | Packages, Linux baseline, SSH policy, services, and K3s installation |
+| OPNsense | Isolated lab routing, DHCP reservations, DNS forwarding, firewall policy, and NAT |
+| K3s | Cluster control plane, embedded etcd, scheduling, and Kubernetes services |
+
+This separation makes each layer independently testable and prevents configuration-management concerns from being embedded in the infrastructure module.
 
 ## Repository Structure
 
 ```text
 proxmox/opentofu/
 ├── docs/
-│   └── live-validation.md
+│   ├── live-validation.md
+│   └── k3s-live-validation.md
 ├── environments/
-│   └── dev/
+│   ├── dev/
+│   └── k3s/
+│       ├── README.md
 │       ├── main.tf
 │       ├── outputs.tf
 │       ├── provider.tf
+│       ├── terraform.tfvars.example
 │       ├── variables.tf
 │       └── versions.tf
 ├── modules/
-│   └── ubuntu-lxc/
-│       ├── main.tf
-│       ├── outputs.tf
-│       ├── README.md
-│       ├── variables.tf
-│       └── versions.tf
+│   ├── ubuntu-lxc/
+│   └── ubuntu-vm/
 ├── archive/
 ├── .gitignore
-├── README.md
-└── terraform.tfvars.example
+└── README.md
 ```
 
-- `environments/dev/` defines the development deployment and calls the reusable module.
-- `modules/ubuntu-lxc/` contains the reusable Ubuntu LXC resource definition.
-- `docs/` contains live-validation and operational documentation.
-- `archive/` preserves the earlier prototype configuration for project history.
-- `terraform.tfvars.example` documents required inputs using safe placeholder values.
+- `modules/ubuntu-lxc/` defines a reusable unprivileged Ubuntu container.
+- `modules/ubuntu-vm/` defines a reusable cloud-init Ubuntu virtual machine.
+- `environments/dev/` deploys the development LXC.
+- `environments/k3s/` deploys the isolated three-node VM foundation.
+- `docs/` contains live validation and troubleshooting evidence.
+- `archive/` preserves earlier prototype configuration for project history.
+
+## Reusable Ubuntu VM Module
+
+The `ubuntu-vm` module supports:
+
+- Full cloning from a Proxmox template
+- Stable VM IDs, names, tags, and MAC addresses
+- Configurable CPU, memory, disk, storage, and bridge
+- Cloud-init user and SSH public-key injection
+- DHCP or environment-defined IP configuration
+- QEMU guest-agent integration
+- Start-on-boot behavior
+- Validated startup order and delay values
+- Serial socket and `VGA serial0` recovery access
+- Structured outputs for VM identity and networking
+
+Input validation rejects invalid resource sizes, malformed MAC addresses, and negative or fractional startup values before the provider can modify infrastructure.
 
 ## Requirements
 
-Before using this project, you need:
-
 - Proxmox VE with API access
-- An Ubuntu 24.04 LXC template available in Proxmox storage
 - OpenTofu 1.10.0 or newer
-- Network access from the OpenTofu workstation to the Proxmox API
-- A dedicated Proxmox API identity and token
-- Appropriate Proxmox ACL permissions for the target node, storage, and container resources
+- A compatible Proxmox template
+- The `bpg/proxmox` provider
+- Proxmox storage and virtual bridges
+- A dedicated API service identity
+- Appropriate datastore, network, system, VM, and guest-agent permissions
+- An SSH public key for the cloud-init automation user
+- A gateway and DHCP service for isolated environments
 
-The configuration currently pins the `bpg/proxmox` provider to version `0.66.0`.
+The K3s environment was validated with:
 
-## Quick Start
+- OpenTofu 1.12.4
+- `bpg/proxmox` provider 0.66.0
+- Proxmox VE 9.2.x
+- Ubuntu 24.04 Noble
 
-From the repository root, enter the development environment:
+## Safe Workflow
 
-```bash
-cd proxmox/opentofu/environments/dev
-```
+Run environment commands from the repository root.
 
-Copy the sanitized example configuration:
-
-```bash
-cp ../../terraform.tfvars.example terraform.tfvars
-```
-
-Edit `terraform.tfvars` and replace the placeholder endpoint, API token, template, storage, and environment values with values for your Proxmox environment.
-
-Initialize the working directory:
+Initialize:
 
 ```bash
-tofu init
+tofu -chdir=proxmox/opentofu/environments/k3s init
 ```
 
-Format and validate the configuration:
+Check formatting and configuration:
 
 ```bash
-tofu fmt -check -recursive
-tofu validate
+tofu fmt -check proxmox/opentofu/modules/ubuntu-vm
+tofu fmt -check proxmox/opentofu/environments/k3s
+tofu -chdir=proxmox/opentofu/environments/k3s validate
 ```
 
-Review the proposed infrastructure changes:
+Review the entire environment:
 
 ```bash
-tofu plan
+tofu -chdir=proxmox/opentofu/environments/k3s plan
 ```
 
-Only after carefully reviewing the plan, deploy the configuration:
+Apply only after reviewing every proposed action and resolving the exact target resources:
 
 ```bash
-tofu apply
+tofu -chdir=proxmox/opentofu/environments/k3s apply
 ```
 
-Never run `tofu apply` against an environment you do not understand or have permission to modify.
+Targeted operations may be useful for controlled canary deployment or recovery, but a normal full plan is always required afterward.
 
 ## Security Practices
 
-- Real `terraform.tfvars` files are excluded from Git.
-- OpenTofu state, saved plans, downloaded providers, and local override files are excluded from Git.
-- The committed example file contains placeholders only.
-- Proxmox automation uses a dedicated service identity and API token.
-- API tokens must be granted only the permissions required for the managed resources.
-- Secrets must never be pasted into documentation, terminal output shared publicly, commits, or screenshots.
-- A previously exposed development token was revoked and replaced.
-- State files must be treated as sensitive because providers can store infrastructure details or secret values in them.
+- Real `terraform.tfvars` files are excluded from Git
+- OpenTofu state and saved plans are excluded from Git
+- Provider caches and local override files are excluded from Git
+- Example files contain placeholder credentials only
+- API tokens are marked sensitive
+- Read-only and provisioning workflows use separate tokens
+- Provisioning uses a purpose-built Proxmox role
+- Effective permissions are verified for privilege-separated tokens
+- OPNsense configuration exports remain outside the repository
+- Cloud-image templates are sanitized before reuse
+- State files are treated as sensitive infrastructure data
+- Previously exposed credentials were revoked and replaced
+
+## Validation Approach
+
+Infrastructure is not considered complete after a successful apply alone.
+
+Validation includes:
+
+1. OpenTofu formatting and configuration validation
+2. Plan review before every apply
+3. Guest-agent verification of MAC and IP mappings
+4. Hostname and cloud-init verification
+5. Default-route, NAT, and DNS checks
+6. Service checks inside each guest
+7. A final non-targeted OpenTofu plan
+8. Confirmation that no drift or pending replacement remains
+
+This workflow distinguishes successful resource creation from a validated, operational environment.
 
 ## Current Limitations
 
-- The project currently deploys one development LXC container.
-- State is stored locally rather than in a remote state backend.
-- The development environment uses DHCP instead of a reserved or static address.
-- TLS verification can be disabled for the homelab's self-signed Proxmox certificate.
-- Automated configuration management has not yet been added.
-- Production environment configuration and CI validation are not yet implemented.
-- The live deployment depends on environment-specific Proxmox storage, networking, templates, and ACLs.
+- OpenTofu state remains local rather than using a remote backend
+- The homelab permits a self-signed Proxmox certificate
+- OPNsense and DHCP reservations are external prerequisites
+- The management workstation does not directly route into the isolated subnet
+- Management access to the isolated subnet intentionally depends on a restricted, forwarding-only Proxmox bastion
+- The broader parent API ACL requires staged hardening after both tokens are verified
+- K3s has not yet been installed
+- Persistent Kubernetes storage, monitoring, backups, and GitOps are future phases
 
 ## Next Milestone
 
-The next milestone is to add Ansible configuration management for the OpenTofu-provisioned container. OpenTofu will remain responsible for infrastructure lifecycle, while Ansible will configure the operating system, packages, users, security settings, and services.
+The infrastructure and Linux baseline phases are complete. The next phase will:
 
-This separation demonstrates a standard automation pattern:
-
-```text
-OpenTofu provisions infrastructure
-              ↓
-Ansible configures the operating system
-              ↓
-Validation confirms the delivered service
-```
+1. Build and review the Ansible K3s installation automation
+2. Deploy the initial K3s server as a controlled canary
+3. Join the remaining two control-plane servers
+4. Validate embedded etcd membership, cluster health, scheduling, DNS, storage, and networking
+5. Document the live cluster evidence and publish v0.4.0
+6. Add persistent storage, monitoring, backups, and GitOps

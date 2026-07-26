@@ -1,0 +1,30 @@
+---
+- name: Run K3s preflight checks
+  ansible.builtin.import_tasks: preflight.yml
+  tags:
+    - always
+    - k3s_preflight
+
+- name: Configure K3s operating-system prerequisites
+  ansible.builtin.import_tasks: prerequisites.yml
+  tags:
+    - k3s
+    - k3s_prerequisites
+
+- name: Configure the K3s server
+  ansible.builtin.import_tasks: configure.yml
+  tags:
+    - k3s
+    - k3s_configuration
+
+- name: Install and start the pinned K3s server
+  ansible.builtin.import_tasks: install.yml
+  tags:
+    - k3s
+    - k3s_installation
+
+- name: Validate the running K3s server
+  ansible.builtin.import_tasks: validate.yml
+  tags:
+    - k3s
+    - k3s_validation

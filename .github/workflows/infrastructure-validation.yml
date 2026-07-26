@@ -39,6 +39,14 @@ jobs:
         working-directory: proxmox/opentofu/environments/dev
         run: tofu validate -no-color
 
+      - name: Initialize K3s configuration
+        working-directory: proxmox/opentofu/environments/k3s
+        run: tofu init -backend=false -input=false -lockfile=readonly
+
+      - name: Validate K3s configuration
+        working-directory: proxmox/opentofu/environments/k3s
+        run: tofu validate -no-color
+
   ansible:
     name: Ansible validation
     runs-on: ubuntu-24.04
@@ -64,8 +72,11 @@ jobs:
       - name: Validate sanitized inventory
         run: ansible-inventory -i ansible/inventory/hosts.example.yml --graph
 
-      - name: Check playbook syntax
+      - name: Check Linux baseline playbook syntax
         run: ansible-playbook -i ansible/inventory/hosts.example.yml ansible/playbooks/linux_baseline.yml --syntax-check
+
+      - name: Check K3s cluster playbook syntax
+        run: ansible-playbook -i ansible/inventory/hosts.example.yml ansible/playbooks/k3s_cluster.yml --syntax-check
 
       - name: Lint Ansible project
         run: ansible-lint --profile production ansible/
