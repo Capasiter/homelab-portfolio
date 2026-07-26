@@ -4,21 +4,25 @@
 
 Employment-focused homelab demonstrating Linux administration, Infrastructure as Code, configuration management, isolated networking, troubleshooting, continuous integration, and infrastructure operations across Proxmox VE and Unraid.
 
-> **Current build:** Three Ubuntu VMs for a highly available K3s control plane are deployed on an isolated OPNsense network. The infrastructure, restricted bastion access, and Linux baseline are live-validated; K3s installation is next.
+> **Current build:** An isolated three-server K3s control plane with embedded etcd is deployed on Proxmox. OpenTofu provisions the infrastructure, Ansible deploys K3s, and live validation confirms cluster health, security controls, cross-node networking, and idempotence.
 
 **Career focus:** Linux Systems Administration · Infrastructure Engineering · Cloud Support · Junior DevOps
 
-## Current Milestone — K3s Infrastructure
+## Current Milestone — Three-Server K3s Control Plane
 
 The v0.4.0 milestone extends the portfolio from a single managed development system into a dependency-aware, isolated multi-VM environment.
+
+**Validated live:** Three `Ready` control-plane and etcd members; healthy Kubernetes API and etcd; encrypted secrets; working cross-node DNS and networking; metrics, local-path storage configuration, and snapshot creation; and a complete Ansible rerun with `changed=0` on every node.
+
+[Review the complete K3s cluster validation evidence](ansible/docs/k3s-cluster-validation.md)
 
 OpenTofu currently manages:
 
 | Node | VM ID | Reserved address | Role |
 |---|---:|---|---|
-| `k3s-server-01` | 401 | `10.20.0.101` | Future K3s server |
-| `k3s-server-02` | 402 | `10.20.0.102` | Future K3s server |
-| `k3s-server-03` | 403 | `10.20.0.103` | Future K3s server |
+| `k3s-server-01` | 401 | `10.20.0.101` | K3s server (control plane + etcd) |
+| `k3s-server-02` | 402 | `10.20.0.102` | K3s server (control plane + etcd) |
+| `k3s-server-03` | 403 | `10.20.0.103` | K3s server (control plane + etcd) |
 
 Each node is a full clone of a sanitized Ubuntu 24.04 cloud-image template with:
 
@@ -60,12 +64,24 @@ The deployment demonstrated:
 - Cloud-init, guest-agent, routing, NAT, DNS, and SSH validation
 - A final non-targeted OpenTofu plan reporting no changes
 
-> **Scope note:** The VM infrastructure is complete. K3s software has not yet been installed, and the v0.4.0 release remains in progress.
+The K3s deployment additionally demonstrated:
+
+- Dependency-aware bootstrap and sequential joins through idempotent Ansible automation
+- Pinned K3s installer and binary artifacts with SHA-256 verification
+- Secure in-memory join-token handling and root-owned configuration
+- Kubernetes Secrets encryption validated across all three servers
+- Healthy Kubernetes API and three-member embedded etcd control plane
+- Cross-node scheduling, networking, Service routing, and DNS validation
+- Successful local etcd snapshot creation and a full `changed=0` rerun
+- Evidence-based correction of an obsolete Kubernetes role-label assertion
+
+> **Current limitations:** The Kubernetes API does not yet use a virtual IP or external load balancer. The etcd snapshot is local-only and restore testing remains pending. Unraid-backed persistent storage, monitoring, and GitOps are future milestones.
 
 Documentation:
 
 - [K3s environment and architecture](proxmox/opentofu/environments/k3s/README.md)
 - [K3s live-validation report](proxmox/opentofu/docs/k3s-live-validation.md)
+- [K3s cluster live-validation report](ansible/docs/k3s-cluster-validation.md)
 - [Proxmox OpenTofu project](proxmox/opentofu/)
 
 ## Milestone History
@@ -75,7 +91,7 @@ Documentation:
 | v0.1.0 | Reusable OpenTofu module and live Proxmox Ubuntu LXC deployment | Released |
 | v0.2.0 | Idempotent Ansible Linux baseline with SSH hardening | Released |
 | v0.3.0 | Read-only GitHub Actions infrastructure validation | Released |
-| v0.4.0 | Isolated three-node K3s infrastructure and cluster deployment | In progress |
+| v0.4.0 | Isolated three-node K3s infrastructure and cluster deployment | Released |
 
 ## Featured Infrastructure Projects
 
@@ -134,11 +150,12 @@ The workflow uses read-only repository permissions and contains no Proxmox crede
 | Linux containers | Ubuntu 24.04 LXC | Deployed and configured |
 | Virtual machines | Ubuntu 24.04 cloud-init VMs | Three deployed and drift-free |
 | Network security | OPNsense isolated lab | Operational |
-| Configuration management | Ansible | Live validated; K3s inventory pending |
+| Configuration management | Ansible | Linux baseline and K3s deployment live validated |
 | Continuous integration | GitHub Actions | Automated validation passing |
-| Orchestration | Kubernetes/K3s | VM foundation deployed; installation pending |
-| Storage | Unraid | Operational |
-| Secure remote access | Tailscale | Used in homelab |
+| Orchestration | K3s with embedded etcd | Three-server control plane deployed and live validated |
+| Cluster storage | K3s local-path provisioner | Operational; node-local only |
+| Shared storage | Unraid | Platform operational; K3s integration planned |
+| Secure remote access | OpenSSH bastion access | Restricted access live validated |
 | Version control | Git and GitHub | Active |
 
 ## Engineering Practices Demonstrated
@@ -161,6 +178,13 @@ The workflow uses read-only repository permissions and contains no Proxmox crede
 - Purpose-built service roles and effective-permission testing
 - Secret, state, and plan-file protection
 - Role-based Ansible configuration management
+- Dependency-aware K3s bootstrap and sequential server joins
+- Immutable installer pinning and SHA-256 artifact verification
+- Secure in-memory handling of cluster join credentials
+- Kubernetes Secrets encryption validation
+- Cross-node scheduling, networking, Service routing, and DNS testing
+- Embedded-etcd health and local snapshot validation
+- Evidence-driven troubleshooting with minimal corrective changes
 - Key-only SSH automation with controlled privilege escalation
 - Pre-restart SSH validation
 - Idempotence verification
@@ -175,10 +199,10 @@ The workflow uses read-only repository permissions and contains no Proxmox crede
 homelab-portfolio/
 ├── .github/
 │   └── workflows/    # Automated infrastructure validation
-├── ansible/          # Linux configuration-management roles and playbooks
+├── ansible/          # Linux baseline and K3s deployment roles, playbooks, and validation
 ├── diagrams/         # Architecture diagrams
 ├── docs/             # Runbooks and technical documentation
-├── kubernetes/       # K3s automation and manifests
+├── kubernetes/       # Future application and GitOps manifests
 └── proxmox/
     └── opentofu/     # Proxmox modules, environments, and validation evidence
 ```
@@ -195,12 +219,16 @@ homelab-portfolio/
 - [x] Configure dedicated key-based bastion access
 - [x] Apply the Ansible Linux baseline to all three nodes
 - [x] Prove three-node baseline idempotency
-- [ ] Deploy the highly available K3s control plane
-- [ ] Validate embedded etcd, cluster DNS, networking, and scheduling
-- [ ] Integrate persistent storage from Unraid
-- [ ] Add monitoring and backup validation
+- [x] Deploy a three-server K3s control plane with embedded etcd
+- [x] Validate embedded etcd, cluster DNS, networking, Service routing, and scheduling
+- [x] Validate Kubernetes Secrets encryption and local etcd snapshot creation
+- [x] Prove full K3s Ansible idempotence with `changed=0`
+- [ ] Add an API virtual IP or external control-plane load balancer
+- [ ] Integrate shared persistent storage from Unraid
+- [ ] Add off-host etcd snapshot backups and complete a documented restore test
+- [ ] Add monitoring and alerting
 - [ ] Add GitOps deployment
-- [ ] Publish the v0.4.0 release
+- [x] Publish the v0.4.0 release
 
 ## Security
 
@@ -209,6 +237,10 @@ Credentials, API-token secrets, private keys, live inventory, local variable fil
 Public example configuration contains placeholders only. Proxmox automation uses separate read-only and provisioning tokens, with a purpose-built provisioning role and documented effective-permission testing.
 
 The validation record transparently documents a temporary broader parent ACL and the staged verification required before safely removing it.
+
+K3s installation uses an immutable installer commit plus SHA-256 verification of both the installer and installed binary. Cluster configuration and token files are root-owned with mode `0600`.
+
+Join credentials are suppressed from logs, held in a non-cacheable in-memory Ansible fact during deployment, and never committed to Git. Kubernetes Secrets encryption was enabled and validated across all three servers.
 
 GitHub Actions uses read-only repository permissions and no live infrastructure credentials. Public CI performs static validation only and never runs OpenTofu `plan` or `apply`.
 
