@@ -82,6 +82,7 @@ Documentation:
 - [K3s environment and architecture](proxmox/opentofu/environments/k3s/README.md)
 - [K3s live-validation report](proxmox/opentofu/docs/k3s-live-validation.md)
 - [K3s cluster live-validation report](ansible/docs/k3s-cluster-validation.md)
+- [Kubernetes rolling-update reliability lab](kubernetes/k8s-learning/README.md)
 - [Proxmox OpenTofu project](proxmox/opentofu/)
 
 ## Milestone History
@@ -202,7 +203,7 @@ homelab-portfolio/
 ├── ansible/          # Linux baseline and K3s deployment roles, playbooks, and validation
 ├── diagrams/         # Architecture diagrams
 ├── docs/             # Runbooks and technical documentation
-├── kubernetes/       # Future application and GitOps manifests
+├── kubernetes/       # Kubernetes workload manifests and live-traffic validation
 └── proxmox/
     └── opentofu/     # Proxmox modules, environments, and validation evidence
 ```
