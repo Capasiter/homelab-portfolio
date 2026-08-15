@@ -4,15 +4,19 @@
 
 Employment-focused homelab demonstrating Linux administration, Infrastructure as Code, configuration management, isolated networking, troubleshooting, continuous integration, and infrastructure operations across Proxmox VE and Unraid.
 
-> **Current build:** An isolated three-server K3s control plane with embedded etcd is deployed on Proxmox. OpenTofu provisions the infrastructure, Ansible deploys K3s, and live validation confirms cluster health, security controls, cross-node networking, and idempotence.
+> **Current build:** A live-validated three-server K3s control plane on Proxmox now runs a version-controlled application workload. OpenTofu provisions the infrastructure, Ansible deploys K3s, and Kubernetes manifests define the workload and its rolling-update, readiness, Service, and Traefik Ingress behavior.
 
 **Career focus:** Linux Systems Administration · Infrastructure Engineering · Cloud Support · Junior DevOps
 
-## Current Milestone — Three-Server K3s Control Plane
+## Current Milestone — K3s Application Rollout Reliability
 
-The v0.4.0 milestone extends the portfolio from a single managed development system into a dependency-aware, isolated multi-VM environment.
+The v0.5.0 milestone advances the portfolio from deploying a Kubernetes platform to operating a workload reliably and validating availability through live client traffic.
 
-**Validated live:** Three `Ready` control-plane and etcd members; healthy Kubernetes API and etcd; encrypted secrets; working cross-node DNS and networking; metrics, local-path storage configuration, and snapshot creation; and a complete Ansible rerun with `changed=0` on every node.
+**Validated live:** An initial rolling restart completed successfully in Kubernetes but produced one client-visible timeout. After adding an HTTP readiness probe, `minReadySeconds`, `maxUnavailable: 0`, controlled surge capacity, and a 10-second `preStop` drain window, live-traffic tests observed 148 successful requests with 0 failures and a separate revalidation observed 120 successful requests with 0 failures. The final Deployment returned to 3/3 Ready and available, with one pod running on each K3s server.
+
+[Review the complete rolling-update reliability evidence](kubernetes/k8s-learning/README.md)
+
+### Platform Foundation — v0.4.0
 
 [Review the complete K3s cluster validation evidence](ansible/docs/k3s-cluster-validation.md)
 
@@ -93,6 +97,7 @@ Documentation:
 | v0.2.0 | Idempotent Ansible Linux baseline with SSH hardening | Released |
 | v0.3.0 | Read-only GitHub Actions infrastructure validation | Released |
 | v0.4.0 | Isolated three-node K3s infrastructure and cluster deployment | Released |
+| v0.5.0 | K3s application rollout reliability with readiness, graceful termination, and live-traffic validation | Released |
 
 ## Featured Infrastructure Projects
 
@@ -154,6 +159,7 @@ The workflow uses read-only repository permissions and contains no Proxmox crede
 | Configuration management | Ansible | Linux baseline and K3s deployment live validated |
 | Continuous integration | GitHub Actions | Automated validation passing |
 | Orchestration | K3s with embedded etcd | Three-server control plane deployed and live validated |
+| Application delivery | Kubernetes Deployment, Service, and Traefik Ingress | Protected rolling restart validated under live traffic |
 | Cluster storage | K3s local-path provisioner | Operational; node-local only |
 | Shared storage | Unraid | Platform operational; K3s integration planned |
 | Secure remote access | OpenSSH bastion access | Restricted access live validated |
@@ -184,6 +190,8 @@ The workflow uses read-only repository permissions and contains no Proxmox crede
 - Secure in-memory handling of cluster join credentials
 - Kubernetes Secrets encryption validation
 - Cross-node scheduling, networking, Service routing, and DNS testing
+- Kubernetes readiness, rolling-update, and graceful-termination design
+- Client-visible availability testing during workload changes
 - Embedded-etcd health and local snapshot validation
 - Evidence-driven troubleshooting with minimal corrective changes
 - Key-only SSH automation with controlled privilege escalation
@@ -224,12 +232,16 @@ homelab-portfolio/
 - [x] Validate embedded etcd, cluster DNS, networking, Service routing, and scheduling
 - [x] Validate Kubernetes Secrets encryption and local etcd snapshot creation
 - [x] Prove full K3s Ansible idempotence with `changed=0`
+- [x] Deploy a declarative Kubernetes workload through Traefik
+- [x] Validate application availability during protected rolling restarts
 - [ ] Add an API virtual IP or external control-plane load balancer
 - [ ] Integrate shared persistent storage from Unraid
 - [ ] Add off-host etcd snapshot backups and complete a documented restore test
 - [ ] Add monitoring and alerting
+- [ ] Evaluate [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) from [**PrimeIntellect-ai**](https://github.com/PrimeIntellect-ai) in an isolated Unraid sandbox for long-running infrastructure operations and incident-analysis workflows
 - [ ] Add GitOps deployment
 - [x] Publish the v0.4.0 release
+- [x] Publish the v0.5.0 release
 
 ## Security
 
