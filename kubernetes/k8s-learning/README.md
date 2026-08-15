@@ -16,7 +16,8 @@ The deployable workload is defined in [web-demo.yaml](./web-demo.yaml).
 | Replicas | 3 |
 | Ingress controller | Traefik |
 | Ingress hostname | `web-demo.home.arpa` |
-| Validation date | August 9, 2026 |
+| Initial validation date | August 9, 2026 |
+| Revalidation date | August 15, 2026 |
 
 ## Initial Observation
 
@@ -152,6 +153,8 @@ The protected rolling restart completed with:
 - One running pod on each K3s server at the end of the test
 
 This result demonstrates zero observed failures during this controlled validation run. It does not guarantee that every future rollout or infrastructure failure will be interruption-free.
+
+A second validation run on August 15, 2026, observed 120 successful requests and 0 failures. The Deployment returned to 3/3 Ready and available, with one pod running on each K3s server.
 
 ## Skills Demonstrated
 
