@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Version-pinned `kube-prometheus-stack` chart `88.3.0` configuration with Prometheus Operator `v0.93.0`, Prometheus, Grafana, Alertmanager, kube-state-metrics, and node-exporter.
+- Resource requests and limits, seven-day Prometheus retention, and persistent K3s local-path storage for Prometheus, Grafana, and Alertmanager.
+- Initial live-validation evidence covering pod readiness, restart state, persistent volumes, resource usage, scrape health, and `web-demo` replica state.
+- GitHub Actions validation that installs Helm `v4.2.4` and renders the pinned monitoring configuration without accessing the live cluster.
+
+### Changed
+
+- Disabled monitoring and default rules for loopback-only K3s controller-manager, scheduler, kube-proxy, and etcd metrics endpoints to prevent unreachable targets and false alerts.
+- Updated portfolio documentation for the in-progress v0.6.0 observability milestone.
+
+### Security
+
+- Kept Grafana credentials, Kubernetes Secrets, tokens, and kubeconfig contents outside version control.
+
 ## [0.5.0] - 2026-08-16
 
 ### Added

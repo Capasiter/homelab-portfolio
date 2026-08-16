@@ -80,3 +80,40 @@ jobs:
 
       - name: Lint Ansible project
         run: ansible-lint --profile production ansible/
+
+  observability:
+    name: Helm observability validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install pinned Helm
+        uses: azure/setup-helm@v5.0.0
+        with:
+          version: v4.2.4
+
+      - name: Add Prometheus Community chart repository
+        run: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+      - name: Verify pinned chart version
+        run: |
+          helm show chart prometheus-community/kube-prometheus-stack \
+            --version 88.3.0 |
+            grep -qx 'version: 88.3.0'
+
+      - name: Render pinned observability configuration
+        run: |
+          helm template monitoring prometheus-community/kube-prometheus-stack \
+            --version 88.3.0 \
+            --namespace monitoring \
+            --include-crds \
+            --values kubernetes/observability/kube-prometheus-stack-values.yaml \
+            > /tmp/kube-prometheus-stack-rendered.yaml
+
+      - name: Confirm rendered manifest is not empty
+        run: test -s /tmp/kube-prometheus-stack-rendered.yaml

@@ -150,7 +150,7 @@ A difference between desired and available replicas indicates that Kubernetes ha
 2. Add one meaningful availability alert.
 3. Trigger a controlled failure and capture the firing alert.
 4. Restore the application and capture alert recovery.
-5. Add CI rendering validation.
+5. Confirm the new Helm rendering job passes in GitHub Actions.
 6. Document evidence and operational limitations.
 7. Complete the v0.6 pull request, changelog, tag, and release.
 8. Use these metrics and alerts as read-only evidence for an isolated AI incident-analysis agent.
