@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-16
+
+### Added
+
+- Version-controlled Kubernetes Namespace, three-replica Deployment, ClusterIP Service, and Traefik Ingress for the `web-demo` workload.
+- Explicit rollout protections with an HTTP readiness probe, `minReadySeconds: 5`, `maxUnavailable: 0`, `maxSurge: 1`, and a 10-second `preStop` drain window.
+- A rolling-update reliability lab documenting the initial client-visible timeout, diagnosis, corrective configuration, and live-traffic testing.
+
+### Changed
+
+- Advanced the portfolio from K3s platform deployment to operating and validating an application workload under live traffic.
+- Updated milestone, technology, engineering-practice, and roadmap documentation for v0.5.0.
+
+### Validated
+
+- The complete workload manifest passed server-side dry-run validation against the live K3s API.
+- The initial rolling restart completed successfully in Kubernetes but produced one client-visible timeout.
+- The protected rollout observed 148 successful requests with 0 failures.
+- A separate August 15 revalidation observed 120 successful requests with 0 failures and returned the Deployment to 3/3 Ready and available, with one pod on each K3s server.
+
+### Known Limitations
+
+- Testing used short HTTP requests from inside the isolated network and did not cover long-lived connections, TLS, unexpected node failure, or network failure.
+
 ## [0.4.0] - 2026-07-26
 
 ### Added
