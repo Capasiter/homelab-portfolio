@@ -4,13 +4,23 @@
 
 Employment-focused homelab demonstrating Linux administration, Infrastructure as Code, configuration management, isolated networking, troubleshooting, continuous integration, and infrastructure operations across Proxmox VE and Unraid.
 
-> **Current build:** A live-validated three-server K3s control plane on Proxmox now runs a version-controlled application workload. OpenTofu provisions the infrastructure, Ansible deploys K3s, and Kubernetes manifests define the workload and its rolling-update, readiness, Service, and Traefik Ingress behavior.
+> **Current build:** A live-validated three-server K3s control plane on Proxmox now runs a protected application workload and a resource-tuned observability foundation. OpenTofu provisions the infrastructure, Ansible deploys K3s, Kubernetes manifests define the workload, and a version-pinned Helm configuration deploys Prometheus, Grafana, Alertmanager, kube-state-metrics, and node-exporter.
 
 **Career focus:** Linux Systems Administration · Infrastructure Engineering · Cloud Support · Junior DevOps
 
-## Current Milestone — K3s Application Rollout Reliability
+## Current Milestone — K3s Observability (v0.6.0 in progress)
 
-The v0.5.0 milestone advances the portfolio from deploying a Kubernetes platform to operating a workload reliably and validating availability through live client traffic.
+The v0.6.0 milestone adds version-pinned and resource-tuned monitoring through the official `kube-prometheus-stack` chart `88.3.0`, including Prometheus Operator `v0.93.0`, Prometheus, Grafana, Alertmanager, kube-state-metrics, and node-exporter.
+
+**Validated live:** Helm revision 1 deployed successfully, every monitoring container became Ready with 0 restarts, and one node-exporter pod ran on each K3s server. The 10 GiB Prometheus, 2 GiB Grafana, and 1 GiB Alertmanager claims are Bound through K3s local-path storage. Post-install CPU remained approximately 2–3%, node memory remained approximately 53–57%, Grafana displayed live cluster and workload metrics, `min(up)` returned `1`, and `web-demo` reported 3 desired and 3 available replicas.
+
+Live socket inspection showed that K3s exposes API-server and kubelet metrics to the cluster while controller-manager, scheduler, kube-proxy, and etcd metrics remain loopback-only. The unreachable component monitors and associated rules are intentionally disabled instead of weakening K3s defaults or accepting false alerts.
+
+[Review the observability architecture, configuration, validation, and learning queries](kubernetes/observability/README.md)
+
+### Previous Milestone — v0.5.0 Rollout Reliability
+
+The v0.5.0 milestone advanced the portfolio from deploying a Kubernetes platform to operating a workload reliably and validating availability through live client traffic.
 
 **Validated live:** An initial rolling restart completed successfully in Kubernetes but produced one client-visible timeout. After adding an HTTP readiness probe, `minReadySeconds`, `maxUnavailable: 0`, controlled surge capacity, and a 10-second `preStop` drain window, live-traffic tests observed 148 successful requests with 0 failures and a separate revalidation observed 120 successful requests with 0 failures. The final Deployment returned to 3/3 Ready and available, with one pod running on each K3s server.
 
@@ -79,7 +89,7 @@ The K3s deployment additionally demonstrated:
 - Successful local etcd snapshot creation and a full `changed=0` rerun
 - Evidence-based correction of an obsolete Kubernetes role-label assertion
 
-> **Current limitations:** The Kubernetes API does not yet use a virtual IP or external load balancer. The etcd snapshot is local-only and restore testing remains pending. Unraid-backed persistent storage, monitoring, and GitOps are future milestones.
+> **Current limitations:** The Kubernetes API does not yet use a virtual IP or external load balancer. The etcd snapshot is local-only and restore testing remains pending. Monitoring storage is node-local, and black-box application probing, controlled alert recovery, Unraid-backed shared storage, and GitOps remain future work.
 
 Documentation:
 
@@ -87,6 +97,7 @@ Documentation:
 - [K3s live-validation report](proxmox/opentofu/docs/k3s-live-validation.md)
 - [K3s cluster live-validation report](ansible/docs/k3s-cluster-validation.md)
 - [Kubernetes rolling-update reliability lab](kubernetes/k8s-learning/README.md)
+- [K3s observability architecture and validation](kubernetes/observability/README.md)
 - [Proxmox OpenTofu project](proxmox/opentofu/)
 
 ## Milestone History
@@ -98,6 +109,7 @@ Documentation:
 | v0.3.0 | Read-only GitHub Actions infrastructure validation | Released |
 | v0.4.0 | Isolated three-node K3s infrastructure and cluster deployment | Released |
 | v0.5.0 | K3s application rollout reliability with readiness, graceful termination, and live-traffic validation | Released |
+| v0.6.0 | Resource-tuned K3s observability, application probing, and controlled alert recovery | In progress |
 
 ## Featured Infrastructure Projects
 
@@ -160,6 +172,7 @@ The workflow uses read-only repository permissions and contains no Proxmox crede
 | Continuous integration | GitHub Actions | Automated validation passing |
 | Orchestration | K3s with embedded etcd | Three-server control plane deployed and live validated |
 | Application delivery | Kubernetes Deployment, Service, and Traefik Ingress | Protected rolling restart validated under live traffic |
+| Observability | Prometheus Operator, Prometheus, Grafana, Alertmanager, kube-state-metrics, node-exporter | Foundation deployed and live validated; application alert test pending |
 | Cluster storage | K3s local-path provisioner | Operational; node-local only |
 | Shared storage | Unraid | Platform operational; K3s integration planned |
 | Secure remote access | OpenSSH bastion access | Restricted access live validated |
@@ -192,6 +205,10 @@ The workflow uses read-only repository permissions and contains no Proxmox crede
 - Cross-node scheduling, networking, Service routing, and DNS testing
 - Kubernetes readiness, rolling-update, and graceful-termination design
 - Client-visible availability testing during workload changes
+- Version-pinned Helm rendering and atomic deployment
+- Resource budgeting, retention limits, and persistent-volume planning
+- K3s-aware metrics-endpoint inspection and false-alert prevention
+- Prometheus target health and Kubernetes-state validation with PromQL
 - Embedded-etcd health and local snapshot validation
 - Evidence-driven troubleshooting with minimal corrective changes
 - Key-only SSH automation with controlled privilege escalation
@@ -211,7 +228,7 @@ homelab-portfolio/
 ├── ansible/          # Linux baseline and K3s deployment roles, playbooks, and validation
 ├── diagrams/         # Architecture diagrams
 ├── docs/             # Runbooks and technical documentation
-├── kubernetes/       # Kubernetes workload manifests and live-traffic validation
+├── kubernetes/       # Kubernetes workloads, observability, and live validation
 └── proxmox/
     └── opentofu/     # Proxmox modules, environments, and validation evidence
 ```
@@ -237,11 +254,11 @@ homelab-portfolio/
 - [ ] Add an API virtual IP or external control-plane load balancer
 - [ ] Integrate shared persistent storage from Unraid
 - [ ] Add off-host etcd snapshot backups and complete a documented restore test
-- [ ] Add monitoring and alerting
+- [x] Deploy a version-pinned, resource-tuned monitoring foundation
+- [x] Validate cluster dashboards, scrape health, and persistent storage
+- [ ] Add black-box application probing and controlled alert/recovery evidence
 - [ ] Evaluate [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) from [**PrimeIntellect-ai**](https://github.com/PrimeIntellect-ai) in an isolated Unraid sandbox for long-running infrastructure operations and incident-analysis workflows
 - [ ] Add GitOps deployment
-- [x] Publish the v0.4.0 release
-- [x] Publish the v0.5.0 release
 
 ## Security
 
@@ -254,6 +271,8 @@ The validation record transparently documents a temporary broader parent ACL and
 K3s installation uses an immutable installer commit plus SHA-256 verification of both the installer and installed binary. Cluster configuration and token files are root-owned with mode `0600`.
 
 Join credentials are suppressed from logs, held in a non-cacheable in-memory Ansible fact during deployment, and never committed to Git. Kubernetes Secrets encryption was enabled and validated across all three servers.
+
+Grafana admin credentials are generated in a separately managed Kubernetes Secret. The committed Helm values reference only the Secret name, while kubeconfig contents remain outside the repository.
 
 GitHub Actions uses read-only repository permissions and no live infrastructure credentials. Public CI performs static validation only and never runs OpenTofu `plan` or `apply`.
 
