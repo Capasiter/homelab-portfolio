@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Disabled monitoring and default rules for loopback-only K3s controller-manager, scheduler, kube-proxy, and etcd metrics endpoints to prevent unreachable targets and false alerts.
 - Updated portfolio documentation for the in-progress v0.6.0 observability milestone.
 
+### Validated
+
+- [GitHub Actions run 16](https://github.com/Capasiter/homelab-portfolio/actions/runs/31963638090) passed OpenTofu, Ansible, and Helm observability validation, including pinned chart rendering without cluster credentials.
+
 ### Security
 
 - Kept Grafana credentials, Kubernetes Secrets, tokens, and kubeconfig contents outside version control.

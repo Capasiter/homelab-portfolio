@@ -90,6 +90,10 @@ sudo k3s kubectl top nodes
 sudo k3s kubectl -n monitoring top pods --containers
 ```
 
+## Automated Validation
+
+[GitHub Actions run 16](https://github.com/Capasiter/homelab-portfolio/actions/runs/31963638090) completed successfully on August 16, 2026. The OpenTofu, Ansible, and Helm observability jobs all passed. The Helm job installed Helm `v4.2.4`, verified chart `88.3.0`, rendered the committed values, and confirmed the generated manifest was not empty without using cluster credentials.
+
 ## Initial Live Validation
 
 Validated on August 16, 2026:
@@ -150,7 +154,6 @@ A difference between desired and available replicas indicates that Kubernetes ha
 2. Add one meaningful availability alert.
 3. Trigger a controlled failure and capture the firing alert.
 4. Restore the application and capture alert recovery.
-5. Confirm the new Helm rendering job passes in GitHub Actions.
-6. Document evidence and operational limitations.
-7. Complete the v0.6 pull request, changelog, tag, and release.
-8. Use these metrics and alerts as read-only evidence for an isolated AI incident-analysis agent.
+5. Document evidence and operational limitations.
+6. Complete the v0.6 pull request, changelog, tag, and release.
+7. Use these metrics and alerts as read-only evidence for an isolated AI incident-analysis agent.
