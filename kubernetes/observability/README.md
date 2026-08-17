@@ -81,6 +81,20 @@ helm template monitoring prometheus-community/kube-prometheus-stack \
   --values kubernetes/observability/kube-prometheus-stack-values.yaml
 ```
 
+Deploy or upgrade the pinned stack with rollback on failure:
+
+```bash
+helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+  --version 88.3.0 \
+  --namespace monitoring \
+  --values kubernetes/observability/kube-prometheus-stack-values.yaml \
+  --atomic \
+  --wait \
+  --wait-for-jobs \
+  --timeout 15m \
+  --history-max 10
+```
+
 Inspect live resources:
 
 ```bash
