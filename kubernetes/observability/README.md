@@ -152,6 +152,32 @@ kube_deployment_status_replicas_available{namespace="k8s-learning", deployment="
 
 A difference between desired and available replicas indicates that Kubernetes has not yet reached the declared state.
 
+## Black-box Application Monitoring
+
+`blackbox-exporter.yaml` deploys the version-pinned Blackbox Exporter, its HTTP probing configuration, and an internal ClusterIP service in the `monitoring` namespace.
+
+`web-demo-availability.yaml` defines a Prometheus Operator `Probe` and `PrometheusRule`. Prometheus runs the `http_2xx` probe every 30 seconds against the internal `web-demo` service. The `WebDemoUnavailable` alert enters the firing state after one continuous minute of failed probes.
+
+The exporter is limited to 100m CPU and 128Mi memory, runs as a non-root user, drops all Linux capabilities, uses a read-only root filesystem, and does not mount a Kubernetes service-account token.
+
+### Controlled Availability Test
+
+Validated on August 23, 2026:
+
+| Stage | Desired replicas | Probe HTTP status | `probe_success` | Alert state |
+|---|---:|---:|---:|---|
+| Healthy baseline | 3 | 200 | 1 | Inactive |
+| Controlled outage | 0 | 0 (no response) | 0 | Pending, then firing |
+| Recovered | 3 | 200 | 1 | Inactive |
+
+- Blackbox Exporter successfully resolved and probed `web-demo.k8s-learning.svc.cluster.local`.
+- Scaling `web-demo` from three replicas to zero caused subsequent black-box probes to fail.
+- `WebDemoUnavailable` transitioned from inactive to pending and then firing after its one-minute hold period.
+- The Prometheus rule remained healthy with no evaluation errors.
+- Restoring three replicas scheduled one Ready pod on each K3s server with zero restarts.
+- Prometheus observed `probe_success = 1` after recovery.
+- The alert returned to inactive with no active alert instances.
+
 ## Current Limitations
 
 - Prometheus, Grafana, and Alertmanager each run as a single replica.
@@ -160,14 +186,13 @@ A difference between desired and available replicas indicates that Kubernetes ha
 - Loopback-only K3s component metrics are intentionally not collected.
 - Grafana is accessed through a local SSH tunnel rather than a public ingress.
 - External alert notification routing is not configured yet.
-- Black-box application probing and the controlled alert test remain pending.
+- Blackbox Exporter currently runs as a single replica.
+- Availability probing currently covers only the internal `web-demo` service.
 
 ## Next Steps
 
-1. Add black-box availability probing for `web-demo`.
-2. Add one meaningful availability alert.
-3. Trigger a controlled failure and capture the firing alert.
-4. Restore the application and capture alert recovery.
-5. Document evidence and operational limitations.
-6. Complete the v0.6 pull request, changelog, tag, and release.
-7. Use these metrics and alerts as read-only evidence for an isolated AI incident-analysis agent.
+1. Complete repository validation, CI, pull-request review, and the v0.6.0 release.
+2. Configure and test Alertmanager routing, delivery, acknowledgement, and recovery notifications.
+3. Evaluate Blackbox Exporter redundancy and alert when the expected probe time series disappears.
+4. Expand controlled testing to partial replica loss, node and network failure, slow responses, and intermittent failures.
+5. Capture timestamped evidence to measure detection, firing, notification, and recovery latency.

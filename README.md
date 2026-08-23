@@ -8,11 +8,13 @@ Employment-focused homelab demonstrating Linux administration, Infrastructure as
 
 **Career focus:** Linux Systems Administration · Infrastructure Engineering · Cloud Support · Junior DevOps
 
-## Current Milestone — K3s Observability (v0.6.0 in progress)
+## Current Milestone — K3s Observability (v0.6.0)
 
-The v0.6.0 milestone adds version-pinned and resource-tuned monitoring through the official `kube-prometheus-stack` chart `88.3.0`, including Prometheus Operator `v0.93.0`, Prometheus, Grafana, Alertmanager, kube-state-metrics, and node-exporter.
+The v0.6.0 milestone adds version-pinned and resource-tuned monitoring through the official `kube-prometheus-stack` chart `88.3.0`, including Prometheus Operator `v0.93.0`, Prometheus, Grafana, Alertmanager, kube-state-metrics, and node-exporter. It also adds a hardened blackbox exporter, a 30-second Prometheus Operator `Probe`, and the `WebDemoUnavailable` alert with a one-minute firing hold.
 
 **Validated live:** Helm revision 1 deployed successfully, every monitoring container became Ready with 0 restarts, and one node-exporter pod ran on each K3s server. The 10 GiB Prometheus, 2 GiB Grafana, and 1 GiB Alertmanager claims are Bound through K3s local-path storage. Post-install CPU remained approximately 2–3%, node memory remained approximately 53–57%, Grafana displayed live cluster and workload metrics, `min(up)` returned `1`, and `web-demo` reported 3 desired and 3 available replicas.
+
+**Availability validation:** The healthy endpoint returned `probe_http_status_code 200` and `probe_success 1`. During a controlled scale-to-zero exercise, the failure produced `probe_http_status_code 0` and `probe_success 0`, and `WebDemoUnavailable` transitioned from inactive to pending to firing. Restoring all three replicas returned `probe_success` to `1` and the alert to inactive; `kubectl diff` reported no drift between the two version-controlled manifests and the live cluster.
 
 Live socket inspection showed that K3s exposes API-server and kubelet metrics to the cluster while controller-manager, scheduler, kube-proxy, and etcd metrics remain loopback-only. The unreachable component monitors and associated rules are intentionally disabled instead of weakening K3s defaults or accepting false alerts.
 
@@ -89,7 +91,7 @@ The K3s deployment additionally demonstrated:
 - Successful local etcd snapshot creation and a full `changed=0` rerun
 - Evidence-based correction of an obsolete Kubernetes role-label assertion
 
-> **Current limitations:** The Kubernetes API does not yet use a virtual IP or external load balancer. The etcd snapshot is local-only and restore testing remains pending. Monitoring storage is node-local, and black-box application probing, controlled alert recovery, Unraid-backed shared storage, and GitOps remain future work.
+> **Current limitations:** The Kubernetes API does not yet use a virtual IP or external load balancer. The etcd snapshot is local-only and restore testing remains pending. Monitoring storage remains node-local. Alertmanager notification delivery, blackbox-exporter redundancy, Unraid-backed shared storage, and GitOps remain future work.
 
 Documentation:
 
@@ -109,7 +111,7 @@ Documentation:
 | v0.3.0 | Read-only GitHub Actions infrastructure validation | Released |
 | v0.4.0 | Isolated three-node K3s infrastructure and cluster deployment | Released |
 | v0.5.0 | K3s application rollout reliability with readiness, graceful termination, and live-traffic validation | Released |
-| v0.6.0 | Resource-tuned K3s observability, application probing, and controlled alert recovery | In progress |
+| v0.6.0 | Resource-tuned K3s observability, application probing, and controlled alert recovery | Released |
 
 ## Featured Infrastructure Projects
 
@@ -153,9 +155,9 @@ The same baseline is now live-validated on all three K3s nodes, including a full
 
 [View the validation workflow](.github/workflows/infrastructure-validation.yml)
 
-Every pull request and push to `main` runs independent OpenTofu and Ansible jobs on Ubuntu 24.04.
+Every pull request and push to `main` runs independent OpenTofu, Ansible, and Kubernetes observability validation jobs on Ubuntu 24.04.
 
-CI validates formatting, initializes both the development and K3s OpenTofu environments without backends, validates both configurations, parses only sanitized Ansible inventory, checks playbook syntax, and runs `ansible-lint` without accessing live infrastructure.
+CI validates OpenTofu formatting and configuration, parses only sanitized Ansible inventory, checks playbook syntax, runs `ansible-lint`, renders the pinned observability Helm chart, and performs strict schema validation of standalone Kubernetes manifests without accessing live infrastructure.
 
 The workflow uses read-only repository permissions and contains no Proxmox credentials, SSH keys, live inventory, or infrastructure state.
 
@@ -172,7 +174,7 @@ The workflow uses read-only repository permissions and contains no Proxmox crede
 | Continuous integration | GitHub Actions | Automated validation passing |
 | Orchestration | K3s with embedded etcd | Three-server control plane deployed and live validated |
 | Application delivery | Kubernetes Deployment, Service, and Traefik Ingress | Protected rolling restart validated under live traffic |
-| Observability | Prometheus Operator, Prometheus, Grafana, Alertmanager, kube-state-metrics, node-exporter | Foundation deployed and live validated; application alert test pending |
+| Observability | Prometheus Operator, Prometheus, Grafana, Alertmanager, Blackbox Exporter, kube-state-metrics, node-exporter | Application probing and controlled alert firing and recovery live validated |
 | Cluster storage | K3s local-path provisioner | Operational; node-local only |
 | Shared storage | Unraid | Platform operational; K3s integration planned |
 | Secure remote access | OpenSSH bastion access | Restricted access live validated |
@@ -256,9 +258,9 @@ homelab-portfolio/
 - [ ] Add off-host etcd snapshot backups and complete a documented restore test
 - [x] Deploy a version-pinned, resource-tuned monitoring foundation
 - [x] Validate cluster dashboards, scrape health, and persistent storage
-- [ ] Add black-box application probing and controlled alert/recovery evidence
+- [x] Add black-box application probing and controlled alert/recovery evidence
 - [ ] Evaluate [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) from [**PrimeIntellect-ai**](https://github.com/PrimeIntellect-ai) in an isolated Unraid sandbox for long-running infrastructure operations and incident-analysis workflows
-- [ ] Add GitOps deployment
+- [ ] Deploy Argo CD and demonstrate GitOps drift detection and self-healing
 
 ## Security
 

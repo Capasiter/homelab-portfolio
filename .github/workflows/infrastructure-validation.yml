@@ -82,9 +82,15 @@ jobs:
         run: ansible-lint --profile production ansible/
 
   observability:
-    name: Helm observability validation
+    name: Kubernetes observability validation
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      KUBECONFORM_VERSION: "0.8.0"
+      KUBECONFORM_SHA256: "9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883"
+      KUBERNETES_SCHEMA_VERSION: "1.36.2"
+      KUBERNETES_SCHEMA_COMMIT: "5a69f8365c9d3ed7de997f5365e22481cf775fa2"
+      CRD_CATALOG_COMMIT: "7b1e26ef9deea49293714d204c1a2270aab1178f"
 
     steps:
       - name: Check out repository
@@ -117,3 +123,25 @@ jobs:
 
       - name: Confirm rendered manifest is not empty
         run: test -s /tmp/kube-prometheus-stack-rendered.yaml
+
+      - name: Install pinned Kubeconform
+        run: |
+          curl -fsSL \
+            "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            -o /tmp/kubeconform-linux-amd64.tar.gz
+          echo "${KUBECONFORM_SHA256}  /tmp/kubeconform-linux-amd64.tar.gz" | sha256sum --check
+          tar -xzf /tmp/kubeconform-linux-amd64.tar.gz -C /tmp kubeconform
+          /tmp/kubeconform -v
+
+      - name: Validate standalone Kubernetes manifests
+        run: |
+          /tmp/kubeconform \
+            -kubernetes-version "${KUBERNETES_SCHEMA_VERSION}" \
+            -strict \
+            -summary \
+            -schema-location "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/${KUBERNETES_SCHEMA_COMMIT}/{{.NormalizedKubernetesVersion}}-standalone{{.StrictSuffix}}/{{.ResourceKind}}{{.KindSuffix}}.json" \
+            -schema-location "https://raw.githubusercontent.com/datreeio/CRDs-catalog/${CRD_CATALOG_COMMIT}/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
+            kubernetes/k8s-learning/web-demo.yaml \
+            kubernetes/observability/namespace.yaml \
+            kubernetes/observability/blackbox-exporter.yaml \
+            kubernetes/observability/web-demo-availability.yaml
