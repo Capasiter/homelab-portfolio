@@ -100,6 +100,8 @@ Documentation:
 - [K3s cluster live-validation report](ansible/docs/k3s-cluster-validation.md)
 - [Kubernetes rolling-update reliability lab](kubernetes/k8s-learning/README.md)
 - [K3s observability architecture and validation](kubernetes/observability/README.md)
+- [v0.6.0 release: K3s observability and black-box monitoring](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.6.0)
+- [GitHub Actions run 20: infrastructure validation](https://github.com/Capasiter/homelab-portfolio/actions/runs/32668970647)
 - [Proxmox OpenTofu project](proxmox/opentofu/)
 
 ## Milestone History

@@ -106,7 +106,7 @@ sudo k3s kubectl -n monitoring top pods --containers
 
 ## Automated Validation
 
-[GitHub Actions run 16](https://github.com/Capasiter/homelab-portfolio/actions/runs/31963638090) completed successfully on August 16, 2026. The OpenTofu, Ansible, and Helm observability jobs all passed. The Helm job installed Helm `v4.2.4`, verified chart `88.3.0`, rendered the committed values, and confirmed the generated manifest was not empty without using cluster credentials.
+[GitHub Actions run 20](https://github.com/Capasiter/homelab-portfolio/actions/runs/32668970647) completed successfully on August 23, 2026. The OpenTofu validation, Ansible validation, and Kubernetes observability validation jobs all passed. The observability job validated the pinned Helm configuration and Kubernetes manifests without using live-cluster credentials.
 
 ## Initial Live Validation
 
