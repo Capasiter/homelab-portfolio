@@ -1,0 +1,47 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: web-demo-availability
+  namespace: monitoring
+  labels:
+    release: monitoring
+    app.kubernetes.io/name: web-demo-availability
+spec:
+  jobName: web-demo-availability
+  interval: 30s
+  scrapeTimeout: 10s
+  module: http_2xx
+  prober:
+    url: blackbox-exporter.monitoring.svc.cluster.local:9115
+    scheme: http
+    path: /probe
+  targets:
+    staticConfig:
+      static:
+        - http://web-demo.k8s-learning.svc.cluster.local/
+      labels:
+        service: web-demo
+        environment: homelab
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: web-demo-availability
+  namespace: monitoring
+  labels:
+    release: monitoring
+    app.kubernetes.io/name: web-demo-availability
+spec:
+  groups:
+    - name: web-demo.availability
+      rules:
+        - alert: WebDemoUnavailable
+          expr: probe_success{service="web-demo"} == 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: web-demo is unavailable
+            description: >-
+              The black-box HTTP probe for {{ $labels.instance }} has failed
+              for at least one minute.

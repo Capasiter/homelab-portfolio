@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2026-08-23
 
 ### Added
 
@@ -12,19 +12,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Resource requests and limits, seven-day Prometheus retention, and persistent K3s local-path storage for Prometheus, Grafana, and Alertmanager.
 - Initial live-validation evidence covering pod readiness, restart state, persistent volumes, resource usage, scrape health, and `web-demo` replica state.
 - GitHub Actions validation that installs Helm `v4.2.4` and renders the pinned monitoring configuration without accessing the live cluster.
+- A hardened `prom/blackbox-exporter:v0.28.0` ConfigMap, Deployment, and ClusterIP Service with health checks and explicit resource controls.
+- A Prometheus Operator `Probe` for 30-second HTTP 2xx checks and a `PrometheusRule` containing the `WebDemoUnavailable` alert with a one-minute firing hold.
 
 ### Changed
 
 - Disabled monitoring and default rules for loopback-only K3s controller-manager, scheduler, kube-proxy, and etcd metrics endpoints to prevent unreachable targets and false alerts.
-- Updated portfolio documentation for the in-progress v0.6.0 observability milestone.
+- Updated portfolio documentation for the completed v0.6.0 observability milestone.
 
 ### Validated
 
 - [GitHub Actions run 16](https://github.com/Capasiter/homelab-portfolio/actions/runs/31963638090) passed OpenTofu, Ansible, and Helm observability validation, including pinned chart rendering without cluster credentials.
+- A controlled scale-to-zero test changed `probe_http_status_code` from `200` to `0` and `probe_success` from `1` to `0`; `WebDemoUnavailable` transitioned from inactive to pending to firing while its rule remained healthy.
+- Restoring `web-demo` to three replicas returned the Deployment to 3/3 Ready and available, restored `probe_success` to `1`, cleared the alert to inactive, and left one Ready pod on each K3s server with zero restarts.
+- Both repository manifests matched the live cluster with no `kubectl diff` output.
 
 ### Security
 
+- Ran the exporter as UID/GID 65534 with a read-only root filesystem, all capabilities dropped, and service-account token automount disabled.
 - Kept Grafana credentials, Kubernetes Secrets, tokens, and kubeconfig contents outside version control.
+
+### Known Limitations
+
+- Alertmanager notification delivery and human acknowledgement were not validated.
+- The exporter remains a single replica, and the exercise did not cover partial replica loss, node failure, network failure, slow responses, or intermittent errors.
 
 ## [0.5.0] - 2026-08-16
 
