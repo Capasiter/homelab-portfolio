@@ -8,7 +8,33 @@ Employment-focused homelab demonstrating Linux administration, Infrastructure as
 
 **Career focus:** Linux Systems Administration · Infrastructure Engineering · Cloud Support · Junior DevOps
 
-## Current Milestone — K3s Observability (v0.6.0)
+## Architecture at a Glance
+
+```mermaid
+flowchart TD
+    Source["Version-controlled configuration"] --> CI["GitHub Actions: static validation"]
+    Source --> Tofu["OpenTofu: VM provisioning"]
+    Source --> Ansible["Ansible: Linux and K3s"]
+    Tofu --> Proxmox["Proxmox VE: single physical host"]
+    Ansible --> Cluster["Three K3s server VMs"]
+    Proxmox --> Cluster
+    Cluster --> Workload["Traefik and web-demo"]
+    Cluster --> Monitoring["Prometheus, Grafana, Alertmanager, and Blackbox"]
+```
+
+## Validation Evidence
+
+| Area | Verified result |
+|---|---|
+| Platform | Three K3s server VMs with embedded etcd |
+| Application rollout | 148 successful HTTP requests and 0 observed failures |
+| Revalidation | 120 successful HTTP requests and 0 observed failures |
+| Availability probe | Healthy `200` response, controlled failure, and recovery to healthy |
+| Observability | Prometheus, Grafana, Alertmanager, and Blackbox Exporter live validated |
+| CI validation | OpenTofu, Ansible, and Kubernetes validation jobs |
+| Latest release | [v0.6.0 K3s observability](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.6.0) |
+
+## Latest Release — K3s Observability (v0.6.0)
 
 The v0.6.0 milestone adds version-pinned and resource-tuned monitoring through the official `kube-prometheus-stack` chart `88.3.0`, including Prometheus Operator `v0.93.0`, Prometheus, Grafana, Alertmanager, kube-state-metrics, and node-exporter. It also adds a hardened blackbox exporter, a 30-second Prometheus Operator `Probe`, and the `WebDemoUnavailable` alert with a one-minute firing hold.
 
@@ -184,55 +210,26 @@ The workflow uses read-only repository permissions and contains no Proxmox crede
 
 ## Engineering Practices Demonstrated
 
-- Reusable Infrastructure as Code modules
-- Environment-specific composition and configuration
-- Input validation and provider version pinning
-- Full-clone cloud-image provisioning
-- Cloud-init bootstrap automation
-- Deterministic addressing with MAC-based DHCP reservations
-- Isolated virtual networking and firewall routing
-- Dependency-aware startup and shutdown ordering
-- Serial-console recovery design
-- Controlled canary deployment
-- Tainted-resource recovery
-- Full-plan reconciliation after targeted operations
-- Infrastructure drift detection
-- Runtime validation against live systems
-- API troubleshooting based on authentication and authorization boundaries
-- Purpose-built service roles and effective-permission testing
-- Secret, state, and plan-file protection
-- Role-based Ansible configuration management
-- Dependency-aware K3s bootstrap and sequential server joins
-- Immutable installer pinning and SHA-256 artifact verification
-- Secure in-memory handling of cluster join credentials
-- Kubernetes Secrets encryption validation
-- Cross-node scheduling, networking, Service routing, and DNS testing
-- Kubernetes readiness, rolling-update, and graceful-termination design
-- Client-visible availability testing during workload changes
-- Version-pinned Helm rendering and atomic deployment
-- Resource budgeting, retention limits, and persistent-volume planning
-- K3s-aware metrics-endpoint inspection and false-alert prevention
-- Prometheus target health and Kubernetes-state validation with PromQL
-- Embedded-etcd health and local snapshot validation
-- Evidence-driven troubleshooting with minimal corrective changes
-- Key-only SSH automation with controlled privilege escalation
-- Pre-restart SSH validation
-- Idempotence verification
-- Feature-branch Git workflow
-- Automated pull-request validation
-- Read-only CI without infrastructure credentials
-- Honest documentation of delivered work, limitations, and security debt
+- Reusable Infrastructure as Code modules and environment-specific composition
+- Input validation, dependency pinning, and SHA-256 artifact verification
+- Deterministic addressing and isolated virtual networking
+- Least-privilege access plus secret, state, and plan-file protection
+- Idempotent Ansible roles with validation before service changes
+- Dependency-aware K3s bootstrap and secure join-token handling
+- Kubernetes readiness, graceful termination, and protected rolling updates
+- Live client-traffic testing and infrastructure drift detection
+- Resource-tuned Helm deployments and persistent-volume planning
+- Prometheus target validation, application probing, and controlled alert recovery
+- Evidence-driven troubleshooting with documented limitations
+- Feature branches, pull-request review, and read-only CI validation
 
 ## Repository Structure
 
 ```text
 homelab-portfolio/
-├── .github/
-│   └── workflows/    # Automated infrastructure validation
-├── ansible/          # Linux baseline and K3s deployment roles, playbooks, and validation
-├── diagrams/         # Architecture diagrams
-├── docs/             # Runbooks and technical documentation
-├── kubernetes/       # Kubernetes workloads, observability, and live validation
+├── .github/          # GitHub Actions validation
+├── ansible/          # Linux baseline, K3s automation, and validation
+├── kubernetes/       # Workloads, observability, and live-validation evidence
 └── proxmox/
     └── opentofu/     # Proxmox modules, environments, and validation evidence
 ```
