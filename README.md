@@ -236,6 +236,8 @@ homelab-portfolio/
 
 ## Roadmap
 
+> **Next hands-on experiment — human-supervised AI operations:** Evaluate [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) in an isolated Unraid sandbox to explore how AI agents can support log analysis, incident triage, and runbook workflows. **Status: planned and not yet implemented; infrastructure changes will remain human-reviewed and auditable.**
+
 - [x] Provision and validate an Ubuntu LXC with OpenTofu
 - [x] Build and live-validate an idempotent Ansible Linux baseline
 - [x] Add read-only GitHub Actions infrastructure validation
