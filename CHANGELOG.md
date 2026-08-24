@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.0] - 2026-08-23
+## [0.6.0](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.6.0) - 2026-08-23
 
 ### Added
 
@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Validated
 
-- [GitHub Actions run 16](https://github.com/Capasiter/homelab-portfolio/actions/runs/31963638090) passed OpenTofu, Ansible, and Helm observability validation, including pinned chart rendering without cluster credentials.
+- [GitHub Actions run 20](https://github.com/Capasiter/homelab-portfolio/actions/runs/32668970647) passed OpenTofu, Ansible, and Kubernetes observability validation, including pinned Helm rendering and manifest validation without cluster credentials.
 - A controlled scale-to-zero test changed `probe_http_status_code` from `200` to `0` and `probe_success` from `1` to `0`; `WebDemoUnavailable` transitioned from inactive to pending to firing while its rule remained healthy.
 - Restoring `web-demo` to three replicas returned the Deployment to 3/3 Ready and available, restored `probe_success` to `1`, cleared the alert to inactive, and left one Ready pod on each K3s server with zero restarts.
 - Both repository manifests matched the live cluster with no `kubectl diff` output.
