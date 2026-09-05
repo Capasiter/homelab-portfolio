@@ -8,7 +8,8 @@ readonly SNAPSHOT_PREFIX="${SNAPSHOT_PREFIX:-k3s-etcd}"
 readonly LOCK_FILE="${LOCK_FILE:-/run/lock/k3s-backup.lock}"
 HOST_NAME="$(hostname -s)"
 readonly HOST_NAME
-readonly BACKUP_DIR="${BACKUP_ROOT}/etcd/${HOST_NAME}"
+readonly BACKUP_DIR="${BACKUP_ROOT}/etcd/${HOST_NAME}/rolling"
+readonly ROLLING_RETENTION="${ROLLING_RETENTION:-3}"
 
 marker_file=""
 partial_path=""
@@ -36,6 +37,10 @@ trap cleanup EXIT
 
 if ((EUID != 0)); then
   fail "Run this script as root."
+fi
+
+if ! [[ "$ROLLING_RETENTION" =~ ^[1-9][0-9]*$ ]]; then
+  fail "ROLLING_RETENTION must be a positive integer."
 fi
 
 for command_name in k3s findmnt mountpoint sha256sum flock timeout; do
@@ -98,4 +103,21 @@ printf '%s  %s\n' "$destination_checksum" "$snapshot_name" \
 chmod 0640 "${destination_path}.sha256"
 
 log "Checksum verified: ${destination_checksum}"
+
+while IFS= read -r expired_snapshot; do
+  expired_name="$(basename "$expired_snapshot")"
+  rm -f -- "$expired_snapshot" "${expired_snapshot}.sha256"
+  log "Pruned expired rolling backup: ${expired_name}"
+done < <(
+  find "$BACKUP_DIR" -maxdepth 1 -type f \
+    -name "${SNAPSHOT_PREFIX}-*.zip" \
+    -printf '%T@ %p\n' |
+    sort -nr |
+    awk -v keep="$ROLLING_RETENTION" '
+      NR > keep {
+        sub(/^[^ ]+ /, "")
+        print
+      }
+    '
+)
 log "Backup completed: ${destination_path}"
