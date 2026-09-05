@@ -1,0 +1,12 @@
+[Unit]
+Description=Run verified K3s etcd backups daily
+
+[Timer]
+OnCalendar={{ k3s_backup_on_calendar }}
+Persistent=true
+RandomizedDelaySec={{ k3s_backup_randomized_delay }}
+AccuracySec=1min
+Unit={{ k3s_backup_service_name }}
+
+[Install]
+WantedBy=timers.target

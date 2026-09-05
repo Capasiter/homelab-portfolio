@@ -47,3 +47,27 @@
     name: 'mnt-k3s\x2dbackups.automount'
     daemon_reload: true
     state: started
+
+- name: Install the K3s backup service unit
+  ansible.builtin.template:
+    src: k3s-backup.service.j2
+    dest: "{{ k3s_backup_service_unit_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install the K3s backup timer unit
+  ansible.builtin.template:
+    src: k3s-backup.timer.j2
+    dest: "{{ k3s_backup_timer_unit_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable and start the K3s backup timer
+  ansible.builtin.systemd_service:
+    name: "{{ k3s_backup_timer_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode

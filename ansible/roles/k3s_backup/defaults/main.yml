@@ -12,3 +12,10 @@ k3s_backup_snapshot_dir: /var/lib/rancher/k3s/server/db/snapshots
 k3s_backup_token_path: /var/lib/rancher/k3s/server/token
 
 k3s_backup_script_path: /usr/local/sbin/k3s-backup
+
+k3s_backup_service_name: k3s-backup.service
+k3s_backup_timer_name: k3s-backup.timer
+k3s_backup_service_unit_path: /etc/systemd/system/k3s-backup.service
+k3s_backup_timer_unit_path: /etc/systemd/system/k3s-backup.timer
+k3s_backup_on_calendar: "*-*-* 03:15:00"
+k3s_backup_randomized_delay: 10m
