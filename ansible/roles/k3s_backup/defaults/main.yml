@@ -10,3 +10,5 @@ k3s_backup_mount_options: >-
 
 k3s_backup_snapshot_dir: /var/lib/rancher/k3s/server/db/snapshots
 k3s_backup_token_path: /var/lib/rancher/k3s/server/token
+
+k3s_backup_script_path: /usr/local/sbin/k3s-backup

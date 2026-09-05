@@ -87,6 +87,9 @@ jobs:
       - name: Lint Ansible project
         run: ansible-lint --profile production ansible/
 
+      - name: Lint K3s backup script
+        run: shellcheck ansible/roles/k3s_backup/files/k3s-backup.sh
+
   observability:
     name: Kubernetes observability validation
     runs-on: ubuntu-24.04
