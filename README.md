@@ -8,6 +8,22 @@ Employment-focused homelab demonstrating Linux administration, Infrastructure as
 
 **Career focus:** Linux Systems Administration · Infrastructure Engineering · Cloud Support · Junior DevOps
 
+## Project Snapshot
+
+This repository documents a live homelab infrastructure environment built to practice and demonstrate real operations work: provisioning, configuration management, Kubernetes deployment, observability, backup automation, and validation.
+
+| System area | Current implementation |
+|---|---|
+| Virtualization | Proxmox VE host running deterministic Ubuntu VMs |
+| Network | Isolated K3s lab network behind OPNsense with no upstream router changes |
+| Infrastructure provisioning | OpenTofu modules and environment definitions for repeatable VM builds |
+| Configuration management | Ansible roles for Linux baseline, K3s deployment, and backup automation |
+| Kubernetes platform | Three-server K3s control plane with embedded etcd |
+| Application workload | Replicated `web-demo` service with readiness checks and graceful rollout behavior |
+| Observability | Prometheus, Grafana, Alertmanager, kube-state-metrics, node-exporter, and blackbox probing |
+| Backup operations | Automated off-server etcd snapshots to Unraid NFS with checksum verification and retention |
+| CI validation | GitHub Actions validation for OpenTofu, Ansible, Helm rendering, and Kubernetes manifests |
+
 ## Architecture at a Glance
 
 ```mermaid
