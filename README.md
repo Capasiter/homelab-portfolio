@@ -163,7 +163,6 @@ Documentation:
 | v0.5.0 | K3s application rollout reliability with readiness, graceful termination, and live-traffic validation | Released |
 | v0.6.0 | Resource-tuned K3s observability, application probing, and controlled alert recovery | Released |
 | v0.7.0 | Automated off-server K3s etcd backups with checksum verification, retention, and daily scheduling | Released |
-| v0.7.0 | Automated off-server K3s etcd backups with checksum verification, retention, and daily scheduling | Released |
 
 ## Featured Infrastructure Projects
 
