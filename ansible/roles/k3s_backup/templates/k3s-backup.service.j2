@@ -1,0 +1,19 @@
+[Unit]
+Description=Create and verify an off-server K3s etcd snapshot
+Wants=network-online.target
+After=network-online.target
+RequiresMountsFor={{ k3s_backup_mount_path }}
+ConditionPathIsExecutable={{ k3s_backup_script_path }}
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0027
+ExecStart={{ k3s_backup_script_path }}
+TimeoutStartSec=15min
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+StandardOutput=journal
+StandardError=journal

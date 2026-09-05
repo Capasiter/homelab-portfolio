@@ -1,0 +1,21 @@
+---
+k3s_backup_packages:
+  - nfs-common
+
+k3s_backup_nfs_server: 192.168.0.102
+k3s_backup_nfs_export: /mnt/user/k3s-backups
+k3s_backup_mount_path: /mnt/k3s-backups
+k3s_backup_mount_options: >-
+  rw,hard,vers=3,_netdev,nofail,x-systemd.automount,x-systemd.device-timeout=10s
+
+k3s_backup_snapshot_dir: /var/lib/rancher/k3s/server/db/snapshots
+k3s_backup_token_path: /var/lib/rancher/k3s/server/token
+
+k3s_backup_script_path: /usr/local/sbin/k3s-backup
+
+k3s_backup_service_name: k3s-backup.service
+k3s_backup_timer_name: k3s-backup.timer
+k3s_backup_service_unit_path: /etc/systemd/system/k3s-backup.service
+k3s_backup_timer_unit_path: /etc/systemd/system/k3s-backup.timer
+k3s_backup_on_calendar: "*-*-* 03:15:00"
+k3s_backup_randomized_delay: 10m

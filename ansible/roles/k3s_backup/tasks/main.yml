@@ -1,0 +1,73 @@
+---
+- name: Install K3s backup prerequisite packages
+  ansible.builtin.apt:
+    name: "{{ k3s_backup_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install the K3s backup script
+  ansible.builtin.copy:
+    src: k3s-backup.sh
+    dest: "{{ k3s_backup_script_path }}"
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Check whether the K3s backup path is already mounted
+  ansible.builtin.command:
+    argv:
+      - mountpoint
+      - --quiet
+      - "{{ k3s_backup_mount_path }}"
+  register: k3s_backup_mountpoint_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Create the K3s backup mount point
+  ansible.builtin.file:
+    path: "{{ k3s_backup_mount_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  when: k3s_backup_mountpoint_check.rc != 0
+
+- name: Persist the K3s backup NFS export
+  ansible.posix.mount:
+    path: "{{ k3s_backup_mount_path }}"
+    src: "{{ k3s_backup_nfs_server }}:{{ k3s_backup_nfs_export }}"
+    fstype: nfs
+    opts: "{{ k3s_backup_mount_options }}"
+    state: present
+
+- name: Reload systemd and activate the K3s backup automount
+  ansible.builtin.systemd_service:
+    name: 'mnt-k3s\x2dbackups.automount'
+    daemon_reload: true
+    state: started
+
+- name: Install the K3s backup service unit
+  ansible.builtin.template:
+    src: k3s-backup.service.j2
+    dest: "{{ k3s_backup_service_unit_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install the K3s backup timer unit
+  ansible.builtin.template:
+    src: k3s-backup.timer.j2
+    dest: "{{ k3s_backup_timer_unit_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable and start the K3s backup timer
+  ansible.builtin.systemd_service:
+    name: "{{ k3s_backup_timer_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
