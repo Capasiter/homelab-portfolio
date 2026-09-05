@@ -4,7 +4,7 @@
 
 Employment-focused homelab demonstrating Linux administration, Infrastructure as Code, configuration management, isolated networking, troubleshooting, continuous integration, and infrastructure operations across Proxmox VE and Unraid.
 
-> **Current build:** A live-validated three-server K3s control plane on Proxmox now runs a protected application workload and a resource-tuned observability foundation. OpenTofu provisions the infrastructure, Ansible deploys K3s, Kubernetes manifests define the workload, and a version-pinned Helm configuration deploys Prometheus, Grafana, Alertmanager, kube-state-metrics, and node-exporter.
+> **Current build:** A live-validated three-server K3s control plane on Proxmox now runs a protected application workload, resource-tuned observability, and automated off-server etcd backups to Unraid NFS. OpenTofu provisions the infrastructure, Ansible deploys K3s and backup automation, Kubernetes manifests define the workload, and version-pinned monitoring validates cluster and application health.
 
 **Career focus:** Linux Systems Administration · Infrastructure Engineering · Cloud Support · Junior DevOps
 
@@ -32,9 +32,15 @@ flowchart TD
 | Availability probe | Healthy `200` response, controlled failure, and recovery to healthy |
 | Observability | Prometheus, Grafana, Alertmanager, and Blackbox Exporter live validated |
 | CI validation | OpenTofu, Ansible, and Kubernetes validation jobs |
-| Latest release | [v0.6.0 K3s observability](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.6.0) |
+| Latest release | v0.7.0 K3s backup and recovery readiness |
 
-## Latest Release — K3s Observability (v0.6.0)
+## Latest Release — K3s Backup and Recovery Readiness (v0.7.0)
+
+The v0.7.0 milestone adds automated off-server K3s etcd backups to Unraid NFS storage. The backup workflow is deployed with Ansible, runs from a systemd timer, creates a fresh etcd snapshot, copies it to off-server storage, verifies the SHA-256 checksum, writes a matching `.sha256` manifest, and keeps one permanent baseline plus the three newest rolling backups.
+
+**Validated live:** The Unraid NFS export mounted successfully from `k3s-server-01`, create/read/delete access passed, an on-demand backup completed successfully, all baseline and rolling checksum manifests verified with `sha256sum -c`, retention pruning kept exactly one baseline and three rolling backups, and the daily `k3s-backup.timer` was enabled, active, and scheduled for its next run.
+
+### Previous Milestone — K3s Observability (v0.6.0)
 
 The v0.6.0 milestone adds version-pinned and resource-tuned monitoring through the official `kube-prometheus-stack` chart `88.3.0`, including Prometheus Operator `v0.93.0`, Prometheus, Grafana, Alertmanager, kube-state-metrics, and node-exporter. It also adds a hardened blackbox exporter, a 30-second Prometheus Operator `Probe`, and the `WebDemoUnavailable` alert with a one-minute firing hold.
 
@@ -140,6 +146,8 @@ Documentation:
 | v0.4.0 | Isolated three-node K3s infrastructure and cluster deployment | Released |
 | v0.5.0 | K3s application rollout reliability with readiness, graceful termination, and live-traffic validation | Released |
 | v0.6.0 | Resource-tuned K3s observability, application probing, and controlled alert recovery | Released |
+| v0.7.0 | Automated off-server K3s etcd backups with checksum verification, retention, and daily scheduling | Released |
+| v0.7.0 | Automated off-server K3s etcd backups with checksum verification, retention, and daily scheduling | Released |
 
 ## Featured Infrastructure Projects
 
