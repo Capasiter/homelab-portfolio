@@ -48,9 +48,9 @@ flowchart TD
 | Availability probe | Healthy `200` response, controlled failure, and recovery to healthy |
 | Observability | Prometheus, Grafana, Alertmanager, and Blackbox Exporter live validated |
 | CI validation | OpenTofu, Ansible, and Kubernetes validation jobs |
-| Latest release | v0.7.0 K3s backup and recovery readiness |
+| Latest release | [v0.6.0 K3s observability](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.6.0) |
 
-## Latest Release — K3s Backup and Recovery Readiness (v0.7.0)
+## Current Milestone - K3s Backup and Recovery Readiness (v0.7.0)
 
 The v0.7.0 milestone adds automated off-server K3s etcd backups to Unraid NFS storage. The backup workflow is deployed with Ansible, runs from a systemd timer, creates a fresh etcd snapshot, copies it to off-server storage, verifies the SHA-256 checksum, writes a matching `.sha256` manifest, and keeps one permanent baseline plus the three newest rolling backups.
 
@@ -139,7 +139,7 @@ The K3s deployment additionally demonstrated:
 - Successful local etcd snapshot creation and a full `changed=0` rerun
 - Evidence-based correction of an obsolete Kubernetes role-label assertion
 
-> **Current limitations:** The Kubernetes API does not yet use a virtual IP or external load balancer. The etcd snapshot is local-only and restore testing remains pending. Monitoring storage remains node-local. Alertmanager notification delivery, blackbox-exporter redundancy, Unraid-backed shared storage, and GitOps remain future work.
+> **Current limitations:** Kubernetes API access does not yet use a virtual IP or external load balancer. Off-server etcd backups to Unraid are implemented, but recovery-token protection and a documented restore test remain pending. Monitoring storage remains node-local; etcd snapshots do not back up persistent-volume contents. Alertmanager notification delivery, blackbox-exporter redundancy, shared storage for application volumes, and GitOps remain future work.
 
 Documentation:
 
@@ -162,7 +162,7 @@ Documentation:
 | v0.4.0 | Isolated three-node K3s infrastructure and cluster deployment | Released |
 | v0.5.0 | K3s application rollout reliability with readiness, graceful termination, and live-traffic validation | Released |
 | v0.6.0 | Resource-tuned K3s observability, application probing, and controlled alert recovery | Released |
-| v0.7.0 | Automated off-server K3s etcd backups with checksum verification, retention, and daily scheduling | Released |
+| v0.7.0 | Automated off-server K3s etcd backups with checksum verification, retention, and daily scheduling | Implemented; release pending |
 
 ## Featured Infrastructure Projects
 
@@ -227,7 +227,7 @@ The workflow uses read-only repository permissions and contains no Proxmox crede
 | Application delivery | Kubernetes Deployment, Service, and Traefik Ingress | Protected rolling restart validated under live traffic |
 | Observability | Prometheus Operator, Prometheus, Grafana, Alertmanager, Blackbox Exporter, kube-state-metrics, node-exporter | Application probing and controlled alert firing and recovery live validated |
 | Cluster storage | K3s local-path provisioner | Operational; node-local only |
-| Shared storage | Unraid | Platform operational; K3s integration planned |
+| Shared storage | Unraid NFS | Off-server etcd backups operational; application volumes remain node-local |
 | Secure remote access | OpenSSH bastion access | Restricted access live validated |
 | Version control | Git and GitHub | Active |
 
