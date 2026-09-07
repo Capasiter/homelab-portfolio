@@ -10,7 +10,6 @@ HOST_NAME="$(hostname -s)"
 readonly HOST_NAME
 readonly BACKUP_DIR="${BACKUP_ROOT}/etcd/${HOST_NAME}/rolling"
 readonly ROLLING_RETENTION="${ROLLING_RETENTION:-3}"
-
 marker_file=""
 partial_path=""
 
@@ -21,6 +20,11 @@ log() {
 fail() {
   log "ERROR: $*" >&2
   exit 1
+}
+
+prune_local_snapshots() {
+  log "Pruning local on-demand snapshots using the K3s retention policy."
+  k3s etcd-snapshot prune --name "$SNAPSHOT_PREFIX"
 }
 
 cleanup() {
@@ -120,4 +124,5 @@ done < <(
       }
     '
 )
+prune_local_snapshots
 log "Backup completed: ${destination_path}"
