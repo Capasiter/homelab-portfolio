@@ -2,9 +2,25 @@
 
 [![Infrastructure Validation](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml/badge.svg)](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml)
 
-Employment-focused homelab demonstrating Linux administration, Infrastructure as Code, configuration management, isolated networking, troubleshooting, continuous integration, and infrastructure operations across Proxmox VE and Unraid.
+A live-validated, three-server Kubernetes control plane — provisioned, deployed, monitored, backed up, and disaster-recovery tested, with every claim backed by evidence in this repository.
 
-> **Current build:** A live-validated three-server K3s control plane on Proxmox now runs a protected application workload, resource-tuned observability, and automated off-server etcd backups to Unraid NFS. OpenTofu provisions the infrastructure, Ansible deploys K3s and backup automation, Kubernetes manifests define the workload, and version-pinned monitoring validates cluster and application health.
+| | | |
+|---|---|---|
+| **3-node K3s control plane** with embedded etcd | **Automated off-server backups**, checksum-verified | **2 real bugs found and fixed**, documented with evidence |
+| **Live-validated rolling updates** — 148 requests, 0 failures | **Full observability stack** — Prometheus, Grafana, Alertmanager | **Isolated restore-drill evidence**, including an upstream bug report |
+
+```mermaid
+flowchart TD
+    Source["Version-controlled configuration"] --> CI["GitHub Actions: static validation"]
+    Source --> Tofu["OpenTofu: VM provisioning"]
+    Source --> Ansible["Ansible: Linux, K3s, and backups"]
+    Tofu --> Proxmox["Proxmox VE: single physical host"]
+    Ansible --> Cluster["Three K3s server VMs, embedded etcd"]
+    Proxmox --> Cluster
+    Cluster --> Workload["Traefik and web-demo"]
+    Cluster --> Monitoring["Prometheus, Grafana, Alertmanager, Blackbox"]
+    Cluster --> Backup["Automated etcd backups → Unraid NFS"]
+```
 
 **Career focus:** Linux Systems Administration · Infrastructure Engineering · Cloud Support · Junior DevOps
 
@@ -23,20 +39,6 @@ This repository documents a live homelab infrastructure environment built to pra
 | Observability | Prometheus, Grafana, Alertmanager, kube-state-metrics, node-exporter, and blackbox probing |
 | Backup operations | Automated off-server etcd snapshots to Unraid NFS with checksum verification and retention |
 | CI validation | GitHub Actions validation for OpenTofu, Ansible, Helm rendering, and Kubernetes manifests |
-
-## Architecture at a Glance
-
-```mermaid
-flowchart TD
-    Source["Version-controlled configuration"] --> CI["GitHub Actions: static validation"]
-    Source --> Tofu["OpenTofu: VM provisioning"]
-    Source --> Ansible["Ansible: Linux and K3s"]
-    Tofu --> Proxmox["Proxmox VE: single physical host"]
-    Ansible --> Cluster["Three K3s server VMs"]
-    Proxmox --> Cluster
-    Cluster --> Workload["Traefik and web-demo"]
-    Cluster --> Monitoring["Prometheus, Grafana, Alertmanager, and Blackbox"]
-```
 
 ## Validation Evidence
 
