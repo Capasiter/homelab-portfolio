@@ -28,6 +28,26 @@ fail() {
   exit 1
 }
 
+# Writes $content to $final_path atomically: write to a .partial sibling,
+# fsync it, then rename into place. Ensures the visible file is always
+# either the old complete version or the new complete version, and always
+# gets fresh ownership from the current NFS mapping (a plain '>' onto an
+# existing file would keep that file's old ownership/inode).
+atomic_write() {
+  local final_path="$1"
+  local content="$2"
+  local mode="$3"
+
+  local write_partial="${final_path}.partial"
+  partial_path="$write_partial"
+
+  printf '%s' "$content" >"$write_partial"
+  chmod "$mode" "$write_partial"
+  sync "$write_partial"
+  mv "$write_partial" "$final_path"
+  partial_path=""
+}
+
 prune_local_snapshots() {
   log "Pruning local on-demand snapshots using the K3s retention policy."
   k3s etcd-snapshot prune --name "$SNAPSHOT_PREFIX"
@@ -58,8 +78,12 @@ backup_baseline_if_missing() {
 
   mv "$partial_path" "$baseline_dest"
   partial_path=""
-  printf '%s  %s\n' "$baseline_checksum" "$snapshot_name" >"${baseline_dest}.sha256"
-  chmod 0640 "${baseline_dest}.sha256"
+
+  atomic_write "${baseline_dest}.sha256" \
+    "${baseline_checksum}  ${snapshot_name}
+" \
+    0640
+
   log "Baseline snapshot saved: ${baseline_dest}"
 }
 
@@ -88,8 +112,12 @@ backup_token() {
 
   mv "$partial_path" "$token_dest"
   partial_path=""
-  printf '%s  token\n' "$token_dest_checksum" >"${token_dest}.sha256"
-  chmod 0600 "${token_dest}.sha256"
+
+  atomic_write "${token_dest}.sha256" \
+    "${token_dest_checksum}  token
+" \
+    0600
+
   log "Token backup verified and updated."
 }
 
@@ -168,9 +196,10 @@ fi
 mv "$partial_path" "$destination_path"
 partial_path=""
 
-printf '%s  %s\n' "$destination_checksum" "$snapshot_name" \
-  >"${destination_path}.sha256"
-chmod 0640 "${destination_path}.sha256"
+atomic_write "${destination_path}.sha256" \
+  "${destination_checksum}  ${snapshot_name}
+" \
+  0640
 
 log "Checksum verified: ${destination_checksum}"
 
