@@ -5,13 +5,19 @@ set -Eeuo pipefail
 readonly SNAPSHOT_DIR="${SNAPSHOT_DIR:-/var/lib/rancher/k3s/server/db/snapshots}"
 readonly BACKUP_ROOT="${BACKUP_ROOT:-/mnt/k3s-backups}"
 readonly SNAPSHOT_PREFIX="${SNAPSHOT_PREFIX:-k3s-etcd}"
+readonly TOKEN_PATH="${TOKEN_PATH:-/var/lib/rancher/k3s/server/token}"
 readonly LOCK_FILE="${LOCK_FILE:-/run/lock/k3s-backup.lock}"
 HOST_NAME="$(hostname -s)"
 readonly HOST_NAME
 readonly BACKUP_DIR="${BACKUP_ROOT}/etcd/${HOST_NAME}/rolling"
+readonly BASELINE_DIR="${BACKUP_ROOT}/etcd/${HOST_NAME}/baseline"
+readonly TOKEN_BACKUP_DIR="${BACKUP_ROOT}/token/${HOST_NAME}"
 readonly ROLLING_RETENTION="${ROLLING_RETENTION:-3}"
 marker_file=""
 partial_path=""
+snapshot_path=""
+snapshot_name=""
+source_checksum=""
 
 log() {
   printf '%s %s\n' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" "$*"
@@ -25,6 +31,66 @@ fail() {
 prune_local_snapshots() {
   log "Pruning local on-demand snapshots using the K3s retention policy."
   k3s etcd-snapshot prune --name "$SNAPSHOT_PREFIX"
+}
+
+backup_baseline_if_missing() {
+  install -d -m 0750 "$BASELINE_DIR"
+
+  if find "$BASELINE_DIR" -maxdepth 1 -type f \
+       -name "${SNAPSHOT_PREFIX}-*.zip" -print -quit | grep -q .; then
+    log "Baseline snapshot already exists; leaving it untouched."
+    return
+  fi
+
+  log "No baseline snapshot found. Preserving this snapshot as the permanent baseline."
+  local baseline_dest="${BASELINE_DIR}/${snapshot_name}"
+  partial_path="${baseline_dest}.partial"
+
+  cp --preserve=timestamps "$snapshot_path" "$partial_path"
+  chmod 0640 "$partial_path"
+  sync "$partial_path"
+
+  local baseline_checksum
+  baseline_checksum="$(sha256sum "$partial_path" | awk '{print $1}')"
+  if [[ "$baseline_checksum" != "$source_checksum" ]]; then
+    fail "Checksum verification failed for baseline copy of ${snapshot_name}."
+  fi
+
+  mv "$partial_path" "$baseline_dest"
+  partial_path=""
+  printf '%s  %s\n' "$baseline_checksum" "$snapshot_name" >"${baseline_dest}.sha256"
+  chmod 0640 "${baseline_dest}.sha256"
+  log "Baseline snapshot saved: ${baseline_dest}"
+}
+
+backup_token() {
+  if [[ ! -r "$TOKEN_PATH" ]]; then
+    log "WARNING: token not readable at ${TOKEN_PATH}; skipping token backup."
+    return
+  fi
+
+  install -d -m 0700 "$TOKEN_BACKUP_DIR"
+
+  local token_dest="${TOKEN_BACKUP_DIR}/token"
+  partial_path="${token_dest}.partial"
+
+  cp --preserve=timestamps "$TOKEN_PATH" "$partial_path"
+  chmod 0600 "$partial_path"
+  sync "$partial_path"
+
+  local token_source_checksum token_dest_checksum
+  token_source_checksum="$(sha256sum "$TOKEN_PATH" | awk '{print $1}')"
+  token_dest_checksum="$(sha256sum "$partial_path" | awk '{print $1}')"
+
+  if [[ "$token_source_checksum" != "$token_dest_checksum" ]]; then
+    fail "Checksum verification failed for token backup."
+  fi
+
+  mv "$partial_path" "$token_dest"
+  partial_path=""
+  printf '%s  token\n' "$token_dest_checksum" >"${token_dest}.sha256"
+  chmod 0600 "${token_dest}.sha256"
+  log "Token backup verified and updated."
 }
 
 cleanup() {
@@ -107,6 +173,9 @@ printf '%s  %s\n' "$destination_checksum" "$snapshot_name" \
 chmod 0640 "${destination_path}.sha256"
 
 log "Checksum verified: ${destination_checksum}"
+
+backup_baseline_if_missing
+backup_token
 
 while IFS= read -r expired_snapshot; do
   expired_name="$(basename "$expired_snapshot")"
