@@ -90,6 +90,10 @@ jobs:
       - name: Lint K3s backup script
         run: shellcheck ansible/roles/k3s_backup/files/k3s-backup.sh
 
+      - name: Render K3s backup systemd templates
+        working-directory: ansible
+        run: ansible-playbook -i localhost, --connection=local playbooks/ci/render-backup-templates.yml
+
   observability:
     name: Kubernetes observability validation
     runs-on: ubuntu-24.04

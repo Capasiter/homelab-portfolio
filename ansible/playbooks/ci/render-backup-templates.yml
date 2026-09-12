@@ -1,0 +1,38 @@
+---
+- name: Render k3s_backup templates for CI validation
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: false
+  vars_files:
+    - ../../roles/k3s_backup/defaults/main.yml
+  tasks:
+    - name: Render backup service unit
+      ansible.builtin.template:
+        src: ../../roles/k3s_backup/templates/k3s-backup.service.j2
+        dest: /tmp/k3s-backup.service.rendered
+        mode: "0644"
+
+    - name: Render backup timer unit
+      ansible.builtin.template:
+        src: ../../roles/k3s_backup/templates/k3s-backup.timer.j2
+        dest: /tmp/k3s-backup.timer.rendered
+        mode: "0644"
+
+    - name: Confirm rendered service unit is not empty
+      ansible.builtin.stat:
+        path: /tmp/k3s-backup.service.rendered
+      register: service_stat
+
+    - name: Confirm rendered timer unit is not empty
+      ansible.builtin.stat:
+        path: /tmp/k3s-backup.timer.rendered
+      register: timer_stat
+
+    - name: Assert both rendered units have content
+      ansible.builtin.assert:
+        that:
+          - service_stat.stat.exists
+          - service_stat.stat.size > 0
+          - timer_stat.stat.exists
+          - timer_stat.stat.size > 0
