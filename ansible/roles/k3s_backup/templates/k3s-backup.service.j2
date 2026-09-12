@@ -10,6 +10,11 @@ Type=oneshot
 User=root
 Group=root
 UMask=0027
+Environment=SNAPSHOT_DIR={{ k3s_backup_snapshot_dir }}
+Environment=BACKUP_ROOT={{ k3s_backup_mount_path }}
+Environment=SNAPSHOT_PREFIX={{ k3s_backup_snapshot_prefix }}
+Environment=TOKEN_PATH={{ k3s_backup_token_path }}
+Environment=ROLLING_RETENTION={{ k3s_backup_rolling_retention }}
 ExecStart={{ k3s_backup_script_path }}
 TimeoutStartSec=15min
 Nice=10

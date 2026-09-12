@@ -52,9 +52,25 @@ flowchart TD
 
 ## Current Milestone - K3s Backup and Recovery Readiness (v0.7.0)
 
-The v0.7.0 milestone adds automated off-server K3s etcd backups to Unraid NFS storage. The backup workflow is deployed with Ansible, runs from a systemd timer, creates a fresh etcd snapshot, copies it to off-server storage, verifies the SHA-256 checksum, writes a matching `.sha256` manifest, and keeps one permanent baseline plus the three newest rolling backups.
+The v0.7.0 milestone adds automated off-server K3s etcd backups to Unraid NFS storage, with a protected token backup and an isolated single-node restore drill. The backup workflow is deployed with Ansible, runs from a systemd timer, creates a fresh etcd snapshot, copies it to off-server storage, verifies the SHA-256 checksum, writes a matching `.sha256` manifest, backs up the K3s server token with matching permissions, and keeps one permanent baseline plus the three newest rolling backups.
 
-**Validated live:** The Unraid NFS export mounted successfully from `k3s-server-01`, create/read/delete access passed, an on-demand backup completed successfully, all baseline and rolling checksum manifests verified with `sha256sum -c`, retention pruning kept exactly one baseline and three rolling backups, and the daily `k3s-backup.timer` was enabled, active, and scheduled for its next run.
+**Validated live:** The Unraid NFS export mounted successfully from `k3s-server-01`, create/read/delete access passed, an on-demand backup completed successfully, all baseline, rolling, and token checksum manifests verified with `sha256sum -c`, retention pruning kept exactly one baseline and three rolling backups, and the daily `k3s-backup.timer` was enabled, active, and scheduled for its next run.
+
+**Bugs found and fixed during live testing:**
+- *NFS root-squash ownership:* the Unraid export initially lacked `no_root_squash`, so backup files landed owned by `nobody:nogroup` instead of `root:root`, silently weakening the intended file permissions. Fixed in the Unraid NFS export configuration, scoped to a single trusted host IP. Verified with `stat` on both sides of the fix.
+- *Non-atomic checksum writes:* `.sha256` manifest files were written with a plain shell redirect, which updates an existing file's contents in place but does not reset its ownership — meaning a checksum file created before the root-squash fix stayed on stale ownership even after the fix was applied. Rewrote all checksum writes to use the same atomic write-then-rename pattern already used for the snapshot payloads.
+
+### Restore Validation
+
+[#restore-validation](#restore-validation)
+
+A full single-node restore drill was performed in an isolated Ubuntu 24.04 VM running a standalone K3s v1.36.2+k3s1 instance (matching the production K3s version), completely separate from the live control plane.
+
+**Confirmed working:** a real, automated off-server snapshot was pulled from production, its SHA-256 checksum was verified, and K3s successfully decompressed the snapshot every time — confirming backup integrity end-to-end.
+
+**Finding:** K3s v1.36.2+k3s1's `--cluster-reset --cluster-reset-restore-path` restore workflow reproducibly panics with a nil-pointer segmentation fault inside its own etcd reset code (`pkg/etcd/etcd.go`, in the internal cluster-health check called during reset), confirmed on a clean install and unrelated to file paths, permissions, or process. No matching report was found in the upstream K3s issue tracker at the time of testing. This was deliberately caught in an isolated test environment instead of during a real incident — which is the point of testing a restore path before it's needed.
+
+**Current status:** backup creation, integrity, and off-server storage are fully validated. Full etcd restore is validated up through snapshot decompression; completing a live restore is blocked on the upstream issue above and will be revisited against a newer K3s patch release.
 
 ### Previous Milestone — K3s Observability (v0.6.0)
 
@@ -139,7 +155,7 @@ The K3s deployment additionally demonstrated:
 - Successful local etcd snapshot creation and a full `changed=0` rerun
 - Evidence-based correction of an obsolete Kubernetes role-label assertion
 
-> **Current limitations:** Kubernetes API access does not yet use a virtual IP or external load balancer. Off-server etcd backups to Unraid are implemented, but recovery-token protection and a documented restore test remain pending. Monitoring storage remains node-local; etcd snapshots do not back up persistent-volume contents. Alertmanager notification delivery, blackbox-exporter redundancy, shared storage for application volumes, and GitOps remain future work.
+> **Current limitations:** Kubernetes API access does not yet use a virtual IP or external load balancer. Off-server etcd backups to Unraid, including token protection, are implemented and live-validated; a full live restore is pending an upstream K3s fix (see Restore Validation above). Monitoring storage remains node-local; etcd snapshots do not back up persistent-volume contents. Alertmanager notification delivery, blackbox-exporter redundancy, shared storage for application volumes, and GitOps remain future work.
 
 Documentation:
 
@@ -279,7 +295,7 @@ homelab-portfolio/
 - [x] Validate application availability during protected rolling restarts
 - [ ] Add an API virtual IP or external control-plane load balancer
 - [ ] Integrate shared persistent storage from Unraid
-- [ ] Add off-host etcd snapshot backups and complete a documented restore test
+- [x] Add off-host etcd snapshot backups, verify integrity end-to-end, and document a restore-validation drill (full live restore pending an upstream K3s fix — see Restore Validation)
 - [x] Deploy a version-pinned, resource-tuned monitoring foundation
 - [x] Validate cluster dashboards, scrape health, and persistent storage
 - [x] Add black-box application probing and controlled alert/recovery evidence
