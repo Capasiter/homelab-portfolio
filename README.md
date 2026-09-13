@@ -7,7 +7,7 @@ A live-validated, three-server Kubernetes control plane — provisioned, deploye
 | | | |
 |---|---|---|
 | **3-node K3s control plane** with embedded etcd | **Automated off-server backups**, checksum-verified | **2 real bugs found and fixed**, documented with evidence |
-| **Live-validated rolling updates** — 148 requests, 0 failures | **Full observability stack** — Prometheus, Grafana, Alertmanager | **Isolated restore-drill evidence**, including an upstream bug report |
+| **Live-validated rolling updates** — 148 requests, 0 failures | **Full observability stack** — Prometheus, Grafana, Alertmanager | **Isolated restore-drill evidence**, including an upstream K3s finding |
 
 ```mermaid
 flowchart TD
@@ -50,7 +50,7 @@ This repository documents a live homelab infrastructure environment built to pra
 | Availability probe | Healthy `200` response, controlled failure, and recovery to healthy |
 | Observability | Prometheus, Grafana, Alertmanager, and Blackbox Exporter live validated |
 | CI validation | OpenTofu, Ansible, and Kubernetes validation jobs |
-| Latest release | [v0.6.0 K3s observability](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.6.0) |
+| Latest release | [v0.7.0 K3s backup and recovery](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.7.0) |
 
 ## Current Milestone - K3s Backup and Recovery Readiness (v0.7.0)
 
@@ -64,7 +64,6 @@ The v0.7.0 milestone adds automated off-server K3s etcd backups to Unraid NFS st
 
 ### Restore Validation
 
-[#restore-validation](#restore-validation)
 
 A full single-node restore drill was performed in an isolated Ubuntu 24.04 VM running a standalone K3s v1.36.2+k3s1 instance (matching the production K3s version), completely separate from the live control plane.
 
@@ -180,7 +179,7 @@ Documentation:
 | v0.4.0 | Isolated three-node K3s infrastructure and cluster deployment | Released |
 | v0.5.0 | K3s application rollout reliability with readiness, graceful termination, and live-traffic validation | Released |
 | v0.6.0 | Resource-tuned K3s observability, application probing, and controlled alert recovery | Released |
-| v0.7.0 | Automated off-server K3s etcd backups with checksum verification, retention, and daily scheduling | Implemented; release pending |
+| v0.7.0 | Automated off-server K3s etcd backups with checksum verification, retention, and daily scheduling | Released |
 
 ## Featured Infrastructure Projects
 
@@ -277,7 +276,7 @@ homelab-portfolio/
 
 ## Roadmap
 
-> **Next hands-on experiment — human-supervised AI operations:** Evaluate [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) in an isolated Unraid sandbox to explore how AI agents can support log analysis, incident triage, and runbook workflows. **Status: planned and not yet implemented; infrastructure changes will remain human-reviewed and auditable.**
+> **Later exploration — human-supervised AI operations:** After the core portfolio and resume are complete, evaluate [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) in an isolated Unraid sandbox to explore how AI agents can support log analysis, incident triage, and runbook workflows. **Status: planned and not yet implemented; infrastructure changes will remain human-reviewed and auditable.**
 
 - [x] Provision and validate an Ubuntu LXC with OpenTofu
 - [x] Build and live-validate an idempotent Ansible Linux baseline
@@ -315,6 +314,8 @@ The validation record transparently documents a temporary broader parent ACL and
 K3s installation uses an immutable installer commit plus SHA-256 verification of both the installer and installed binary. Cluster configuration and token files are root-owned with mode `0600`.
 
 Join credentials are suppressed from logs, held in a non-cacheable in-memory Ansible fact during deployment, and never committed to Git. Kubernetes Secrets encryption was enabled and validated across all three servers.
+
+To preserve intended root ownership on backup artifacts, the dedicated Unraid `k3s-backups` NFS export uses `no_root_squash` only for the trusted backup client. This is a deliberate, scoped tradeoff for this single-host homelab—not a production-default recommendation.
 
 Grafana admin credentials are generated in a separately managed Kubernetes Secret. The committed Helm values reference only the Secret name, while kubeconfig contents remain outside the repository.
 
