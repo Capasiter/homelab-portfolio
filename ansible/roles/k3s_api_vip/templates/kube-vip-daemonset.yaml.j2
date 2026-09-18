@@ -1,0 +1,75 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kube-vip-ds
+  namespace: {{ k3s_api_vip_namespace }}
+  labels:
+    app.kubernetes.io/name: kube-vip
+    app.kubernetes.io/component: control-plane-vip
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-vip
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kube-vip
+        app.kubernetes.io/component: control-plane-vip
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      serviceAccountName: {{ k3s_api_vip_service_account }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: Exists
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+      containers:
+        - name: kube-vip
+          image: {{ k3s_api_vip_image }}
+          imagePullPolicy: {{ k3s_api_vip_image_pull_policy }}
+          args:
+            - manager
+          env:
+            - name: vip_arp
+              value: "true"
+            - name: port
+              value: "{{ k3s_api_vip_port }}"
+            - name: vip_interface
+              value: "{{ k3s_api_vip_interface }}"
+            - name: vip_subnet
+              value: "32"
+            - name: cp_enable
+              value: "true"
+            - name: cp_namespace
+              value: "{{ k3s_api_vip_namespace }}"
+            - name: vip_ddns
+              value: "false"
+            - name: svc_enable
+              value: "false"
+            - name: vip_leaderelection
+              value: "true"
+            - name: vip_leaseduration
+              value: "{{ k3s_api_vip_lease_duration }}"
+            - name: vip_renewdeadline
+              value: "{{ k3s_api_vip_renew_deadline }}"
+            - name: vip_retryperiod
+              value: "{{ k3s_api_vip_retry_period }}"
+            - name: address
+              value: "{{ k3s_api_vip_address }}"
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+                - SYS_TIME

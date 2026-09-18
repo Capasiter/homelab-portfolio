@@ -1,0 +1,53 @@
+---
+- name: Wait for the kube-vip DaemonSet to report every server ready
+  ansible.builtin.command:
+    argv:
+      - /usr/local/bin/k3s
+      - kubectl
+      - --namespace
+      - "{{ k3s_api_vip_namespace }}"
+      - get
+      - daemonset
+      - kube-vip-ds
+      - --output
+      - "jsonpath={.status.desiredNumberScheduled}/{.status.numberReady}"
+  register: k3s_api_vip_daemonset_status
+  changed_when: false
+  retries: 30
+  delay: 10
+  until: >-
+    k3s_api_vip_daemonset_status.rc == 0 and
+    k3s_api_vip_daemonset_status.stdout ==
+    ((groups["k3s_servers"] | length) ~ "/" ~ (groups["k3s_servers"] | length))
+  when: not ansible_check_mode
+
+- name: Verify the API VIP accepts TCP connections from another server
+  ansible.builtin.wait_for:
+    host: "{{ k3s_api_vip_address }}"
+    port: "{{ k3s_api_vip_port }}"
+    timeout: 60
+  delegate_to: "{{ groups['k3s_join_servers'][0] }}"
+  when: not ansible_check_mode
+
+- name: Read the cluster nodes through the API VIP
+  ansible.builtin.command:
+    argv:
+      - /usr/local/bin/k3s
+      - kubectl
+      - --server
+      - "https://{{ k3s_api_vip_address }}:{{ k3s_api_vip_port }}"
+      - get
+      - nodes
+      - --output
+      - name
+  register: k3s_api_vip_nodes
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Verify every server is visible through the API VIP
+  ansible.builtin.assert:
+    that:
+      - k3s_api_vip_nodes.stdout_lines | length == groups["k3s_servers"] | length
+    fail_msg: The API VIP did not return every K3s server node.
+    success_msg: Every K3s server node is reachable through the API VIP.
+  when: not ansible_check_mode

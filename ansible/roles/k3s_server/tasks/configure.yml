@@ -41,7 +41,6 @@
     owner: root
     group: root
     mode: "0600"
-  when: not ansible_check_mode
   notify: Restart K3s
 
 - name: Report successful check-mode configuration rendering
