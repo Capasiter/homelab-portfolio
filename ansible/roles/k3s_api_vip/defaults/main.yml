@@ -1,0 +1,20 @@
+---
+# kube-vip provides only the stable K3s API endpoint in this role.
+# Kubernetes Service LoadBalancer handling remains disabled.
+k3s_api_vip_enabled: true
+
+k3s_api_vip_image: "ghcr.io/kube-vip/kube-vip:v1.2.4"
+k3s_api_vip_image_pull_policy: IfNotPresent
+
+k3s_api_vip_interface: eth0
+k3s_api_vip_port: 6443
+k3s_api_vip_namespace: kube-system
+k3s_api_vip_service_account: kube-vip
+
+k3s_api_vip_manifest_dir: /var/lib/rancher/k3s/server/manifests
+k3s_api_vip_rbac_manifest_path: "{{ k3s_api_vip_manifest_dir }}/kube-vip-rbac.yaml"
+k3s_api_vip_daemonset_manifest_path: "{{ k3s_api_vip_manifest_dir }}/kube-vip-daemonset.yaml"
+
+k3s_api_vip_lease_duration: 5
+k3s_api_vip_renew_deadline: 3
+k3s_api_vip_retry_period: 1

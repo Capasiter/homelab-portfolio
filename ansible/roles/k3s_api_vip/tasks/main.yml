@@ -1,0 +1,47 @@
+---
+- name: Verify the kube-vip API endpoint configuration
+  ansible.builtin.assert:
+    that:
+      - k3s_api_vip_enabled | bool
+      - k3s_api_vip_address | length > 0
+      - k3s_api_vip_interface | length > 0
+      - k3s_api_vip_port | int == 6443
+    fail_msg: The kube-vip API endpoint configuration is incomplete.
+    success_msg: The kube-vip API endpoint configuration is complete.
+
+- name: Render the kube-vip DaemonSet in memory
+  ansible.builtin.set_fact:
+    k3s_api_vip_rendered_daemonset: >-
+      {{ lookup("ansible.builtin.template", "kube-vip-daemonset.yaml.j2") }}
+  changed_when: false
+
+- name: Verify the rendered kube-vip DaemonSet is valid YAML
+  ansible.builtin.assert:
+    that:
+      - (k3s_api_vip_rendered_daemonset | from_yaml) is mapping
+    fail_msg: The rendered kube-vip DaemonSet is not valid YAML.
+    success_msg: The rendered kube-vip DaemonSet is valid YAML.
+
+- name: Install the kube-vip RBAC manifest
+  ansible.builtin.copy:
+    src: kube-vip-rbac.yaml
+    dest: "{{ k3s_api_vip_rbac_manifest_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install the kube-vip DaemonSet manifest
+  ansible.builtin.copy:
+    content: "{{ k3s_api_vip_rendered_daemonset }}"
+    dest: "{{ k3s_api_vip_daemonset_manifest_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Report successful check-mode kube-vip rendering
+  ansible.builtin.debug:
+    msg: The kube-vip DaemonSet rendered and parsed successfully without being written.
+  when: ansible_check_mode
+
+- name: Validate the stable K3s API endpoint
+  ansible.builtin.import_tasks: validate.yml

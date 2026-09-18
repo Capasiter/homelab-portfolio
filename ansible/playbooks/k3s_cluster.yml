@@ -95,3 +95,14 @@
       loop_control:
         label: "{{ item.metadata.name }}"
       when: not ansible_check_mode
+
+- name: Deploy the stable K3s API endpoint
+  hosts: k3s_bootstrap_server
+  become: true
+  gather_facts: false
+  any_errors_fatal: true
+  tags:
+    - k3s_api_vip
+
+  roles:
+    - role: k3s_api_vip

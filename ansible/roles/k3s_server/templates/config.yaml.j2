@@ -18,6 +18,13 @@ etcd-snapshot-compress: {{ k3s_etcd_snapshot_compress | bool | lower }}
 node-ip: "{{ ansible_host }}"
 advertise-address: "{{ ansible_host }}"
 
+{% if k3s_tls_san | length > 0 %}
+tls-san:
+{% for san in k3s_tls_san %}
+  - "{{ san }}"
+{% endfor %}
+
+{% endif %}
 {% if k3s_server_mode == "bootstrap" %}
 cluster-init: true
 {% elif k3s_server_mode == "join" %}

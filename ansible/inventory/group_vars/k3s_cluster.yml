@@ -1,0 +1,7 @@
+---
+# Stable internal API endpoint for the K3s control plane.
+k3s_api_vip_address: "10.20.0.110"
+
+# Add the VIP to the K3s API server certificate.
+k3s_tls_san:
+  - "{{ k3s_api_vip_address }}"
