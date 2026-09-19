@@ -4,6 +4,60 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### v0.8.0 — Stable internal K3s API endpoint
+
+#### Added
+
+- An Ansible-managed kube-vip DaemonSet, RBAC manifest, defaults, rendering checks, and runtime validation.
+- Internal API VIP `10.20.0.110` and K3s TLS SAN configuration.
+- [Live validation report](ansible/docs/k3s-api-vip-validation.md) covering the September 19, 2026 leader-pod failover exercise.
+- A redesigned portfolio landing page with architecture and failover diagrams, evidence links, and explicit delivered/planned status.
+- A [historical portfolio record](docs/portfolio-history-through-v0.7.md) retaining the earlier detailed engineering write-ups.
+
+#### Validated
+
+- All three kube-vip pods Running and all three K3s nodes Ready through the VIP.
+- VIP present in the inspected API certificate's SANs.
+- VIP ownership moved from server 02 to server 03 following deletion of the leader pod; a replacement pod ran on server 02.
+- No failed API probes found in the recorded test log; request latency and a downtime bound were not measured.
+
+#### Known limitations
+
+- The exercise covered a controlled kube-vip pod deletion, not node power loss or physical-host failure.
+- Probes were sampled and had no explicit request deadline; zero downtime is not claimed.
+- Application availability was not measured during the VIP test.
+- Three control-plane VMs share one physical Proxmox host.
+- v0.8.0 is not yet tagged or released.
+
+## [0.7.0](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.7.0)
+
+This entry backfills the delivered milestone from the existing portfolio record. The release date is omitted rather than inferred.
+
+### Added
+
+- Ansible-managed off-server K3s etcd backups to Unraid NFS storage.
+- Daily systemd scheduling, a protected baseline, and retention of the three newest rolling backups.
+- SHA-256 sidecars and verification for snapshot and protected server-token backups.
+
+### Fixed
+
+- Backup-artifact ownership through a scoped NFS export configuration for the trusted backup client.
+- Stale checksum-file ownership by using atomic write-then-rename handling.
+
+### Validated
+
+- Off-server storage access, successful on-demand backup execution, checksum verification, and retention.
+- Protected token backup and active daily scheduling.
+- Snapshot integrity and decompression during an isolated restore attempt using K3s `v1.36.2+k3s1`.
+
+### Known limitations
+
+- Full etcd restore was not completed: the documented standalone reset/restore attempt encountered a reproducible panic in the K3s reset path.
+- Etcd backups do not include application persistent-volume contents.
+- The NFS export's scoped `no_root_squash` setting is a deliberate lab tradeoff, not a general production default.
+
 ## [0.6.0](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.6.0) - 2026-08-23
 
 ### Added
