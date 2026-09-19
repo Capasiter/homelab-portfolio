@@ -1,332 +1,207 @@
 # Homelab Infrastructure Portfolio
 
+### Build it. Operate it. Test what happens when it breaks.
+
+A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastructure, a three-server Kubernetes control plane, repeatable automation, live monitoring, and tested recovery workflows.
+
 [![Infrastructure Validation](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml/badge.svg)](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml)
+[![Infrastructure as Code](https://img.shields.io/badge/IaC-OpenTofu-844FBA?style=flat-square)](proxmox/opentofu/)
+[![Automation](https://img.shields.io/badge/Automation-Ansible-EE0000?style=flat-square)](ansible/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s-326CE5?style=flat-square)](ansible/docs/k3s-cluster-validation.md)
+[![Observability](https://img.shields.io/badge/Observability-Prometheus%20%2B%20Grafana-F46800?style=flat-square)](kubernetes/observability/README.md)
 
-A live-validated, three-server Kubernetes control plane — provisioned, deployed, monitored, backed up, and disaster-recovery tested, with every claim backed by evidence in this repository.
+**[Architecture](#architecture)** · **[Live evidence](#live-evidence)** · **[Engineering stories](#engineering-stories)** · **[Roadmap](#roadmap)** · **[About Lee](#about-lee)**
 
-| | | |
-|---|---|---|
-| **3-node K3s control plane** with embedded etcd | **Automated off-server backups**, checksum-verified | **2 real bugs found and fixed**, documented with evidence |
-| **Live-validated rolling updates** — 148 requests, 0 failures | **Full observability stack** — Prometheus, Grafana, Alertmanager | **Isolated restore-drill evidence**, including an upstream K3s finding |
+| Infrastructure | Reliability | Recovery |
+|:---|:---|:---|
+| **3 K3s server VMs**<br>Control plane + embedded etcd | **148 successful HTTP requests**<br>0 observed failures in a protected rollout | **Off-server etcd backups**<br>SHA-256 verification + protected token |
+| **Internal API VIP**<br>kube-vip DaemonSet across all 3 servers | **Leader-pod handoff observed**<br>VIP moved from server 02 to server 03 | **Restore drill attempted**<br>Decompression verified; full restore blocked |
+
+> **Latest live validation:** September 19, 2026 — API VIP ownership moved between servers after leader-pod deletion; no failed API probes were recorded in the test log. All three nodes were Ready in the post-test check.
+>
+> **Release status:** [v0.7.0 released](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.7.0) · v0.8.0 API VIP work merged and live-validated; release pending.
+>
+> **Scope:** Three VMs on **one physical Proxmox host**. This demonstrates control-plane redundancy and a pod-level failover exercise, not physical-host high availability. Full etcd restore remains incomplete.
+
+## Architecture
+
+The lab separates provisioning, configuration, runtime services, and off-server backups. Kubernetes API access stays inside the isolated lab; administration uses an SSH bastion.
 
 ```mermaid
 flowchart TD
-    Source["Version-controlled configuration"] --> CI["GitHub Actions: static validation"]
-    Source --> Tofu["OpenTofu: VM provisioning"]
-    Source --> Ansible["Ansible: Linux, K3s, and backups"]
-    Tofu --> Proxmox["Proxmox VE: single physical host"]
-    Ansible --> Cluster["Three K3s server VMs, embedded etcd"]
-    Proxmox --> Cluster
-    Cluster --> Workload["Traefik and web-demo"]
-    Cluster --> Monitoring["Prometheus, Grafana, Alertmanager, Blackbox"]
-    Cluster --> Backup["Automated etcd backups → Unraid NFS"]
+    Git["Version-controlled infrastructure"] --> CI["GitHub Actions / static validation"]
+    Git --> Tofu["OpenTofu / VM provisioning"]
+    Git --> Ansible["Ansible / Linux, K3s, VIP, backups"]
+    Admin["Administration / SSH bastion"]
+
+    subgraph PVE["Proxmox VE — one physical host"]
+        Gateway["OPNsense / isolated lab gateway"]
+        subgraph Lab["vmbr1 / 10.20.0.0/24"]
+            VIP["API VIP / 10.20.0.110:6443"]
+            Cluster["3 K3s server VMs / embedded etcd"]
+            App["Traefik / replicated web-demo"]
+            Observe["Prometheus / Grafana / Alertmanager / Blackbox"]
+        end
+        Gateway --- Cluster
+        VIP -->|"current VIP owner"| Cluster
+        Cluster --> App
+        Observe -->|"metrics and HTTP probes"| Cluster
+        Observe -->|"availability probes"| App
+    end
+
+    Tofu -->|"provisions"| Cluster
+    Ansible -->|"configures"| Cluster
+    Admin -->|"restricted SSH access"| Cluster
+    Cluster -->|"etcd snapshots and protected token"| Backup["Unraid NFS / off-server backup storage"]
+
+    classDef delivery fill:#172554,stroke:#60a5fa,color:#eff6ff
+    classDef runtime fill:#064e3b,stroke:#34d399,color:#ecfdf5
+    classDef recovery fill:#4c1d95,stroke:#c4b5fd,color:#f5f3ff
+    classDef boundary fill:#1e293b,stroke:#94a3b8,color:#f8fafc
+    class Git,CI,Tofu,Ansible delivery
+    class VIP,Cluster,App,Observe runtime
+    class Backup recovery
+    class Admin,Gateway boundary
 ```
 
-**Career focus:** Linux Systems Administration · Infrastructure Engineering · Cloud Support · Junior DevOps
+**Blue:** delivery and automation · **Green:** running platform · **Purple:** off-server recovery data.
 
-## Project Snapshot
+The diagram groups workloads logically. The three K3s VMs share the same physical host; the VIP is owned by one server at a time, not a separate appliance. CI performs static checks and does not deploy to the live lab.
 
-This repository documents a live homelab infrastructure environment built to practice and demonstrate real operations work: provisioning, configuration management, Kubernetes deployment, observability, backup automation, and validation.
+<details>
+<summary><strong>Expand: node sizing and network design</strong></summary>
 
-| System area | Current implementation |
-|---|---|
-| Virtualization | Proxmox VE host running deterministic Ubuntu VMs |
-| Network | Isolated K3s lab network behind OPNsense with no upstream router changes |
-| Infrastructure provisioning | OpenTofu modules and environment definitions for repeatable VM builds |
-| Configuration management | Ansible roles for Linux baseline, K3s deployment, and backup automation |
-| Kubernetes platform | Three-server K3s control plane with embedded etcd |
-| Application workload | Replicated `web-demo` service with readiness checks and graceful rollout behavior |
-| Observability | Prometheus, Grafana, Alertmanager, kube-state-metrics, node-exporter, and blackbox probing |
-| Backup operations | Automated off-server etcd snapshots to Unraid NFS with checksum verification and retention |
-| CI validation | GitHub Actions validation for OpenTofu, Ansible, Helm rendering, and Kubernetes manifests |
-
-## Validation Evidence
-
-| Area | Verified result |
-|---|---|
-| Platform | Three K3s server VMs with embedded etcd |
-| Application rollout | 148 successful HTTP requests and 0 observed failures |
-| Revalidation | 120 successful HTTP requests and 0 observed failures |
-| Availability probe | Healthy `200` response, controlled failure, and recovery to healthy |
-| Observability | Prometheus, Grafana, Alertmanager, and Blackbox Exporter live validated |
-| CI validation | OpenTofu, Ansible, and Kubernetes validation jobs |
-| Latest release | [v0.7.0 K3s backup and recovery](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.7.0) |
-
-## Current Milestone - K3s Backup and Recovery Readiness (v0.7.0)
-
-The v0.7.0 milestone adds automated off-server K3s etcd backups to Unraid NFS storage, with a protected token backup and an isolated single-node restore drill. The backup workflow is deployed with Ansible, runs from a systemd timer, creates a fresh etcd snapshot, copies it to off-server storage, verifies the SHA-256 checksum, writes a matching `.sha256` manifest, backs up the K3s server token with matching permissions, and keeps one permanent baseline plus the three newest rolling backups.
-
-**Validated live:** The Unraid NFS export mounted successfully from `k3s-server-01`, create/read/delete access passed, an on-demand backup completed successfully, all baseline, rolling, and token checksum manifests verified with `sha256sum -c`, retention pruning kept exactly one baseline and three rolling backups, and the daily `k3s-backup.timer` was enabled, active, and scheduled for its next run.
-
-**Bugs found and fixed during live testing:**
-- *NFS root-squash ownership:* the Unraid export initially lacked `no_root_squash`, so backup files landed owned by `nobody:nogroup` instead of `root:root`, silently weakening the intended file permissions. Fixed in the Unraid NFS export configuration, scoped to a single trusted host IP. Verified with `stat` on both sides of the fix.
-- *Non-atomic checksum writes:* `.sha256` manifest files were written with a plain shell redirect, which updates an existing file's contents in place but does not reset its ownership — meaning a checksum file created before the root-squash fix stayed on stale ownership even after the fix was applied. Rewrote all checksum writes to use the same atomic write-then-rename pattern already used for the snapshot payloads.
-
-### Restore Validation
-
-
-A full single-node restore drill was performed in an isolated Ubuntu 24.04 VM running a standalone K3s v1.36.2+k3s1 instance (matching the production K3s version), completely separate from the live control plane.
-
-**Confirmed working:** a real, automated off-server snapshot was pulled from production, its SHA-256 checksum was verified, and K3s successfully decompressed the snapshot every time — confirming backup integrity end-to-end.
-
-**Finding:** K3s v1.36.2+k3s1's `--cluster-reset --cluster-reset-restore-path` restore workflow reproducibly panics with a nil-pointer segmentation fault inside its own etcd reset code (`pkg/etcd/etcd.go`, in the internal cluster-health check called during reset), confirmed on a clean install and unrelated to file paths, permissions, or process. No matching report was found in the upstream K3s issue tracker at the time of testing. This was deliberately caught in an isolated test environment instead of during a real incident — which is the point of testing a restore path before it's needed.
-
-**Current status:** backup creation, integrity, and off-server storage are fully validated. Full etcd restore is validated up through snapshot decompression; completing a live restore is blocked on the upstream issue above and will be revisited against a newer K3s patch release.
-
-### Previous Milestone — K3s Observability (v0.6.0)
-
-The v0.6.0 milestone adds version-pinned and resource-tuned monitoring through the official `kube-prometheus-stack` chart `88.3.0`, including Prometheus Operator `v0.93.0`, Prometheus, Grafana, Alertmanager, kube-state-metrics, and node-exporter. It also adds a hardened blackbox exporter, a 30-second Prometheus Operator `Probe`, and the `WebDemoUnavailable` alert with a one-minute firing hold.
-
-**Validated live:** Helm revision 1 deployed successfully, every monitoring container became Ready with 0 restarts, and one node-exporter pod ran on each K3s server. The 10 GiB Prometheus, 2 GiB Grafana, and 1 GiB Alertmanager claims are Bound through K3s local-path storage. Post-install CPU remained approximately 2–3%, node memory remained approximately 53–57%, Grafana displayed live cluster and workload metrics, `min(up)` returned `1`, and `web-demo` reported 3 desired and 3 available replicas.
-
-**Availability validation:** The healthy endpoint returned `probe_http_status_code 200` and `probe_success 1`. During a controlled scale-to-zero exercise, the failure produced `probe_http_status_code 0` and `probe_success 0`, and `WebDemoUnavailable` transitioned from inactive to pending to firing. Restoring all three replicas returned `probe_success` to `1` and the alert to inactive; `kubectl diff` reported no drift between the two version-controlled manifests and the live cluster.
-
-Live socket inspection showed that K3s exposes API-server and kubelet metrics to the cluster while controller-manager, scheduler, kube-proxy, and etcd metrics remain loopback-only. The unreachable component monitors and associated rules are intentionally disabled instead of weakening K3s defaults or accepting false alerts.
-
-[Review the observability architecture, configuration, validation, and learning queries](kubernetes/observability/README.md)
-
-### Previous Milestone — v0.5.0 Rollout Reliability
-
-The v0.5.0 milestone advanced the portfolio from deploying a Kubernetes platform to operating a workload reliably and validating availability through live client traffic.
-
-**Validated live:** An initial rolling restart completed successfully in Kubernetes but produced one client-visible timeout. After adding an HTTP readiness probe, `minReadySeconds`, `maxUnavailable: 0`, controlled surge capacity, and a 10-second `preStop` drain window, live-traffic tests observed 148 successful requests with 0 failures and a separate revalidation observed 120 successful requests with 0 failures. The final Deployment returned to 3/3 Ready and available, with one pod running on each K3s server.
-
-[Review the complete rolling-update reliability evidence](kubernetes/k8s-learning/README.md)
-
-### Platform Foundation — v0.4.0
-
-[Review the complete K3s cluster validation evidence](ansible/docs/k3s-cluster-validation.md)
-
-OpenTofu currently manages:
-
-| Node | VM ID | Reserved address | Role |
+| Node | VM ID | Address | Role |
 |---|---:|---|---|
-| `k3s-server-01` | 401 | `10.20.0.101` | K3s server (control plane + etcd) |
-| `k3s-server-02` | 402 | `10.20.0.102` | K3s server (control plane + etcd) |
-| `k3s-server-03` | 403 | `10.20.0.103` | K3s server (control plane + etcd) |
+| `k3s-server-01` | 401 | `10.20.0.101` | Control plane + etcd |
+| `k3s-server-02` | 402 | `10.20.0.102` | Control plane + etcd |
+| `k3s-server-03` | 403 | `10.20.0.103` | Control plane + etcd |
 
-Each node is a full clone of a sanitized Ubuntu 24.04 cloud-image template with:
+Each VM uses 2 CPU cores, 3072 MB RAM, a 32 GB disk, Ubuntu 24.04, cloud-init, and the QEMU guest agent. OpenTofu defines stable VM identities, addressing, and startup dependencies.
 
-- 2 CPU cores using the host CPU type
-- 3072 MB of memory
-- 32 GB disk on Proxmox storage
-- Cloud-init automation user and SSH public key
-- QEMU guest-agent integration
-- Deterministic MAC address and DHCP reservation
-- Automatic startup after the OPNsense gateway
-- Serial-console recovery access
-- Networking only on the isolated `vmbr1` bridge
+OPNsense VM 400 provides routing, DHCP, DNS forwarding, and outbound NAT. `vmbr0` carries management and OPNsense WAN traffic; `vmbr1` is the isolated lab bridge. No upstream-router changes or physical uplink on the isolated bridge are required.
 
-### Network Design
+[Provisioning and network implementation](proxmox/opentofu/environments/k3s/README.md)
 
-OPNsense separates the K3s environment from the management network:
+</details>
 
-| Component | Function |
-|---|---|
-| `vmbr0` | Proxmox management and OPNsense WAN |
-| OPNsense VM 400 | Firewall, routing, DHCP, DNS forwarding, and outbound NAT |
-| `vmbr1` | Isolated `10.20.0.0/24` lab network |
-| VMs 401–403 | K3s infrastructure attached only to `vmbr1` |
+## Live evidence
 
-The isolated bridge carries VM traffic internally and does not require a connected physical uplink. No upstream-router configuration was changed.
+These are bounded test results, not uptime guarantees. Each link leads to implementation details or a validation record.
 
-### Deployment Evidence
-
-The deployment demonstrated:
-
-- Reusable OpenTofu VM module design
-- Stable VM identity through `for_each`, VM IDs, and MAC addresses
-- Controlled canary deployment using `k3s-server-01`
-- Recovery from a partially completed, tainted canary resource
-- Diagnosis of HTTP `401` authentication and HTTP `403` authorization failures
-- A purpose-built Proxmox provisioning role
-- Understanding of privilege-separated parent and token ACL intersections
-- Dependency-aware startup and reverse-order shutdown
-- Cloud-init, guest-agent, routing, NAT, DNS, and SSH validation
-- A final non-targeted OpenTofu plan reporting no changes
-
-The K3s deployment additionally demonstrated:
-
-- Dependency-aware bootstrap and sequential joins through idempotent Ansible automation
-- Pinned K3s installer and binary artifacts with SHA-256 verification
-- Secure in-memory join-token handling and root-owned configuration
-- Kubernetes Secrets encryption validated across all three servers
-- Healthy Kubernetes API and three-member embedded etcd control plane
-- Cross-node scheduling, networking, Service routing, and DNS validation
-- Successful local etcd snapshot creation and a full `changed=0` rerun
-- Evidence-based correction of an obsolete Kubernetes role-label assertion
-
-> **Current limitations:** Kubernetes API access does not yet use a virtual IP or external load balancer. Off-server etcd backups to Unraid, including token protection, are implemented and live-validated; a full live restore is pending an upstream K3s fix (see Restore Validation above). Monitoring storage remains node-local; etcd snapshots do not back up persistent-volume contents. Alertmanager notification delivery, blackbox-exporter redundancy, shared storage for application volumes, and GitOps remain future work.
-
-Documentation:
-
-- [K3s environment and architecture](proxmox/opentofu/environments/k3s/README.md)
-- [K3s live-validation report](proxmox/opentofu/docs/k3s-live-validation.md)
-- [K3s cluster live-validation report](ansible/docs/k3s-cluster-validation.md)
-- [Kubernetes rolling-update reliability lab](kubernetes/k8s-learning/README.md)
-- [K3s observability architecture and validation](kubernetes/observability/README.md)
-- [v0.6.0 release: K3s observability and black-box monitoring](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.6.0)
-- [GitHub Actions run 20: infrastructure validation](https://github.com/Capasiter/homelab-portfolio/actions/runs/32668970647)
-- [Proxmox OpenTofu project](proxmox/opentofu/)
-
-## Milestone History
-
-| Milestone | Delivered capability | Status |
+| Test | Observed result | Evidence |
 |---|---|---|
-| v0.1.0 | Reusable OpenTofu module and live Proxmox Ubuntu LXC deployment | Released |
-| v0.2.0 | Idempotent Ansible Linux baseline with SSH hardening | Released |
-| v0.3.0 | Read-only GitHub Actions infrastructure validation | Released |
-| v0.4.0 | Isolated three-node K3s infrastructure and cluster deployment | Released |
-| v0.5.0 | K3s application rollout reliability with readiness, graceful termination, and live-traffic validation | Released |
-| v0.6.0 | Resource-tuned K3s observability, application probing, and controlled alert recovery | Released |
-| v0.7.0 | Automated off-server K3s etcd backups with checksum verification, retention, and daily scheduling | Released |
+| Infrastructure convergence | Full OpenTofu checks reported no changes in the documented runs | [Provisioning validation](proxmox/opentofu/docs/k3s-live-validation.md) |
+| Linux and cluster automation | Live Ansible idempotence demonstrated with `changed=0` | [Node baseline](ansible/docs/k3s-node-validation.md) · [Cluster deployment](ansible/docs/k3s-cluster-validation.md) |
+| Protected application rollout | 148 successful HTTP requests, 0 observed failures; separate revalidation: 120 successful, 0 failures | [Rolling-update lab](kubernetes/k8s-learning/README.md) |
+| Availability alert lifecycle | Healthy → controlled failure → firing alert → recovery | [Observability validation](kubernetes/observability/README.md) |
+| Off-server backup workflow | Snapshot, baseline/rolling retention, token protection, and checksum verification validated | [Backup and restore record](docs/portfolio-history-through-v0.7.md#restore-validation) |
+| API leader-pod failover | VIP moved 02 → 03; no failed API probes recorded; 3/3 kube-vip pods and 3 Ready nodes afterward | [September 19 validation](ansible/docs/k3s-api-vip-validation.md) |
 
-## Featured Infrastructure Projects
+**What the CI badge means:** repository validation status. It is not a live cluster-health indicator.
 
-### Proxmox OpenTofu Infrastructure
+## Engineering stories
 
-[View the Proxmox OpenTofu project](proxmox/opentofu/)
+### 01 / A green rollout was not enough
 
-The OpenTofu project separates reusable modules from environment compositions:
+The first rolling restart completed in Kubernetes but still produced a client-visible timeout. I added readiness checks, a minimum readiness interval, zero-unavailable rolling updates, controlled surge capacity, and a graceful drain window, then retested with live HTTP traffic.
 
-- `modules/ubuntu-lxc` provisions unprivileged Ubuntu containers
-- `modules/ubuntu-vm` provisions cloud-init Ubuntu virtual machines
-- `environments/dev` manages the live development container
-- `environments/k3s` manages the isolated three-VM foundation
+**Result:** 148 successful requests with no observed failures in the protected rollout test.
 
-Both live environments have completed full drift checks reporting no changes.
+[Read the failure, fix, and revalidation](kubernetes/k8s-learning/README.md)
 
-### Ansible Linux Baseline
+### 02 / Backups needed more than a successful copy
 
-[View the Ansible Linux baseline](ansible/)
+Live testing exposed unexpected NFS ownership and checksum files retaining stale ownership. The fixes scoped the export policy to the trusted backup client and applied atomic write-then-rename handling to checksum files.
 
-[Read the original development-LXC validation report](ansible/docs/live-validation.md)
+**Result:** verified off-server snapshot and token backups, protected baseline plus three rolling backups, and daily scheduling. An isolated restore attempt verified snapshot decompression but encountered a reproducible K3s reset-path panic. Full restore is **not** claimed as successful.
 
-[Read the three-node K3s bootstrap validation report](ansible/docs/k3s-node-validation.md)
+[Read the backup findings and restore limitation](docs/portfolio-history-through-v0.7.md#current-milestone---k3s-backup-and-recovery-readiness-v070)
 
-The reusable `linux_baseline` role provides:
+### 03 / The API endpoint survived a leader-pod handoff
 
-- Ubuntu platform validation
-- Administration package installation
-- Timezone configuration
-- Key-only SSH authentication
-- Disabled password and keyboard-interactive authentication
-- Disabled direct root SSH login
-- SSH configuration validation before restart
-- Handler-based service management
-- Production-profile linting
-- Proven idempotency with `changed=0`
+The API VIP is included in the K3s certificate SANs and managed by a kube-vip DaemonSet. During the September 19 test, the current leader pod on server 02 was deleted while API readiness probes ran through the VIP.
 
-The same baseline is now live-validated on all three K3s nodes, including a full idempotent run with `changed=0` on every node.
-
-### GitHub Actions Infrastructure Validation
-
-[View the validation workflow](.github/workflows/infrastructure-validation.yml)
-
-Every pull request and push to `main` runs independent OpenTofu, Ansible, and Kubernetes observability validation jobs on Ubuntu 24.04.
-
-CI validates OpenTofu formatting and configuration, parses only sanitized Ansible inventory, checks playbook syntax, runs `ansible-lint`, renders the pinned observability Helm chart, and performs strict schema validation of standalone Kubernetes manifests without accessing live infrastructure.
-
-The workflow uses read-only repository permissions and contains no Proxmox credentials, SSH keys, live inventory, or infrastructure state.
-
-## Technology and Status
-
-| Area | Technology | Status |
-|---|---|---|
-| Virtualization | Proxmox VE 9.2.x | Operational |
-| Infrastructure as Code | OpenTofu 1.12.4 and `bpg/proxmox` | Live validated |
-| Linux containers | Ubuntu 24.04 LXC | Deployed and configured |
-| Virtual machines | Ubuntu 24.04 cloud-init VMs | Three deployed and drift-free |
-| Network security | OPNsense isolated lab | Operational |
-| Configuration management | Ansible | Linux baseline and K3s deployment live validated |
-| Continuous integration | GitHub Actions | Automated validation passing |
-| Orchestration | K3s with embedded etcd | Three-server control plane deployed and live validated |
-| Application delivery | Kubernetes Deployment, Service, and Traefik Ingress | Protected rolling restart validated under live traffic |
-| Observability | Prometheus Operator, Prometheus, Grafana, Alertmanager, Blackbox Exporter, kube-state-metrics, node-exporter | Application probing and controlled alert firing and recovery live validated |
-| Cluster storage | K3s local-path provisioner | Operational; node-local only |
-| Shared storage | Unraid NFS | Off-server etcd backups operational; application volumes remain node-local |
-| Secure remote access | OpenSSH bastion access | Restricted access live validated |
-| Version control | Git and GitHub | Active |
-
-## Engineering Practices Demonstrated
-
-- Reusable Infrastructure as Code modules and environment-specific composition
-- Input validation, dependency pinning, and SHA-256 artifact verification
-- Deterministic addressing and isolated virtual networking
-- Least-privilege access plus secret, state, and plan-file protection
-- Idempotent Ansible roles with validation before service changes
-- Dependency-aware K3s bootstrap and secure join-token handling
-- Kubernetes readiness, graceful termination, and protected rolling updates
-- Live client-traffic testing and infrastructure drift detection
-- Resource-tuned Helm deployments and persistent-volume planning
-- Prometheus target validation, application probing, and controlled alert recovery
-- Evidence-driven troubleshooting with documented limitations
-- Feature branches, pull-request review, and read-only CI validation
-
-## Repository Structure
-
-```text
-homelab-portfolio/
-├── .github/          # GitHub Actions validation
-├── ansible/          # Linux baseline, K3s automation, and validation
-├── kubernetes/       # Workloads, observability, and live-validation evidence
-└── proxmox/
-    └── opentofu/     # Proxmox modules, environments, and validation evidence
+```mermaid
+flowchart TD
+    Before["Before / server 02 owns VIP"] --> Delete["Delete leader pod on server 02"]
+    Delete --> Move["Ownership observed on server 03"]
+    Delete --> Replace["Replacement pod running on server 02"]
+    Move --> After["After / 3 kube-vip pods running, 3 nodes Ready"]
+    Replace --> After
+    classDef initial fill:#172554,stroke:#60a5fa,color:#eff6ff
+    classDef action fill:#78350f,stroke:#fbbf24,color:#fffbeb
+    classDef healthy fill:#064e3b,stroke:#34d399,color:#ecfdf5
+    class Before initial
+    class Delete action
+    class Move,Replace,After healthy
 ```
+
+**Result:** ownership moved to server 03, the deleted pod was replaced, and no failed API probes were recorded. The test did not measure application traffic or establish a zero-downtime bound.
+
+[Read the test method, observed state, and limitations](ansible/docs/k3s-api-vip-validation.md)
+
+## Explore the implementation
+
+| Area | What to inspect |
+|---|---|
+| Infrastructure as code | [OpenTofu modules and environments](proxmox/opentofu/) |
+| Host and cluster automation | [Ansible roles and playbooks](ansible/) |
+| Stable API endpoint | [kube-vip role](ansible/roles/k3s_api_vip/) · [Cluster orchestration](ansible/playbooks/k3s_cluster.yml) |
+| Application reliability | [Kubernetes workload and validation](kubernetes/k8s-learning/README.md) |
+| Monitoring and alerting | [Observability configuration and evidence](kubernetes/observability/README.md) |
+| CI and change history | [Validation workflow](.github/workflows/infrastructure-validation.yml) · [Changelog](CHANGELOG.md) |
+| Earlier engineering detail | [Preserved v0.1–v0.7 portfolio record](docs/portfolio-history-through-v0.7.md) |
+
+<details>
+<summary><strong>Expand: security and operating practices</strong></summary>
+
+- Isolated lab networking and key-based SSH bastion access; no public Kubernetes API.
+- Dedicated automation identities and documented Proxmox permission testing.
+- Pinned K3s artifacts with SHA-256 verification.
+- Root-owned K3s configuration and token files with mode `0600`.
+- Sensitive join-token operations suppressed from logs and transferred through a non-cacheable in-memory Ansible fact.
+- Kubernetes Secrets encryption validated across all three servers.
+- Grafana credentials managed separately from committed Helm values.
+- Read-only GitHub Actions repository permissions; static checks without live infrastructure credentials.
+- Credentials, private keys, kubeconfigs, sensitive local inventory, state, saved plans, and configuration exports excluded from version control.
+- A dedicated NFS export uses `no_root_squash` for the trusted backup client to preserve required ownership. This is a scoped lab tradeoff, not a general production recommendation.
+- Feature branches, pull requests, checks, and documented live validation.
+
+[Detailed security record and tradeoffs](docs/portfolio-history-through-v0.7.md#security)
+
+</details>
 
 ## Roadmap
 
-> **Later exploration — human-supervised AI operations:** After the core portfolio and resume are complete, evaluate [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) in an isolated Unraid sandbox to explore how AI agents can support log analysis, incident triage, and runbook workflows. **Status: planned and not yet implemented; infrastructure changes will remain human-reviewed and auditable.**
+| Stage | Capability | Status |
+|---|---|---|
+| v0.1–v0.3 | OpenTofu foundation, hardened Linux baseline, read-only CI | Released |
+| v0.4 | Three-server K3s control plane with embedded etcd | Released |
+| v0.5 | Protected application rollouts tested under traffic | Released |
+| v0.6 | Monitoring, application probing, and alert recovery | Released |
+| v0.7 | Off-server backups, integrity checks, retention, and restore investigation | Released; full restore incomplete |
+| v0.8 | Stable internal API VIP and leader-pod failover validation | Merged and live-validated; release pending |
+| Next | Argo CD application delivery with drift detection and controlled reconciliation | Planned |
+| Next | Unraid-backed shared application storage and volume-recovery validation | Planned |
+| Follow-up | Complete restore validation; notification delivery; broader failure testing | Not yet completed |
+| Future | Human-supervised AI operations for log analysis, incident triage, and runbook assistance | Planned; not deployed |
 
-- [x] Provision and validate an Ubuntu LXC with OpenTofu
-- [x] Build and live-validate an idempotent Ansible Linux baseline
-- [x] Add read-only GitHub Actions infrastructure validation
-- [x] Build an isolated OPNsense lab network
-- [x] Create and sanitize an Ubuntu cloud-image template
-- [x] Provision three deterministic K3s virtual machines
-- [x] Confirm a final drift-free OpenTofu plan
-- [x] Configure dedicated key-based bastion access
-- [x] Apply the Ansible Linux baseline to all three nodes
-- [x] Prove three-node baseline idempotency
-- [x] Deploy a three-server K3s control plane with embedded etcd
-- [x] Validate embedded etcd, cluster DNS, networking, Service routing, and scheduling
-- [x] Validate Kubernetes Secrets encryption and local etcd snapshot creation
-- [x] Prove full K3s Ansible idempotence with `changed=0`
-- [x] Deploy a declarative Kubernetes workload through Traefik
-- [x] Validate application availability during protected rolling restarts
-- [ ] Add an API virtual IP or external control-plane load balancer
-- [ ] Integrate shared persistent storage from Unraid
-- [x] Add off-host etcd snapshot backups, verify integrity end-to-end, and document a restore-validation drill (full live restore pending an upstream K3s fix — see Restore Validation)
-- [x] Deploy a version-pinned, resource-tuned monitoring foundation
-- [x] Validate cluster dashboards, scrape health, and persistent storage
-- [x] Add black-box application probing and controlled alert/recovery evidence
-- [ ] Evaluate [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) from [**PrimeIntellect-ai**](https://github.com/PrimeIntellect-ai) in an isolated Unraid sandbox for long-running infrastructure operations and incident-analysis workflows
-- [ ] Deploy Argo CD and demonstrate GitOps drift detection and self-healing
+The next-stage ordering is a roadmap, not a release commitment. AI-assisted operations will start in an isolated sandbox, with human-reviewed, auditable infrastructure changes.
 
-## Security
+### Boundaries worth knowing
 
-Credentials, API-token secrets, private keys, live inventory, local variable files, provider caches, saved plans, state files, and OPNsense configuration exports are excluded from version control.
+- **Single physical host:** control-plane VM redundancy does not protect against loss of the Proxmox host.
+- **Recovery:** snapshot integrity and decompression are validated; full etcd restore is not complete.
+- **Storage:** current application and monitoring volumes use node-local storage. Etcd snapshots do not back up persistent-volume contents.
+- **Failover:** the recorded exercise deleted one kube-vip pod. It did not power off a node, interrupt the network, or test physical-host failure.
+- **Monitoring:** outbound alert delivery and blackbox-exporter redundancy remain future work.
+- **Isolation:** Kubernetes NetworkPolicy and GitOps are not claimed as implemented.
 
-Public example configuration contains placeholders only. Proxmox automation uses separate read-only and provisioning tokens, with a purpose-built provisioning role and documented effective-permission testing.
+## About Lee
 
-The validation record transparently documents a temporary broader parent ACL and the staged verification required before safely removing it.
+I am transitioning from manufacturing, field service, and paid computer repair into Linux systems, infrastructure operations, and cloud support. This portfolio shows how I build working systems, investigate failures, automate repeatable operations, and document what the evidence actually proves.
 
-K3s installation uses an immutable installer commit plus SHA-256 verification of both the installer and installed binary. Cluster configuration and token files are root-owned with mode `0600`.
+**Focus:** Linux / Infrastructure Support · Systems Administration · Cloud Operations · Junior DevOps
 
-Join credentials are suppressed from logs, held in a non-cacheable in-memory Ansible fact during deployment, and never committed to Git. Kubernetes Secrets encryption was enabled and validated across all three servers.
-
-To preserve intended root ownership on backup artifacts, the dedicated Unraid `k3s-backups` NFS export uses `no_root_squash` only for the trusted backup client. This is a deliberate, scoped tradeoff for this single-host homelab—not a production-default recommendation.
-
-Grafana admin credentials are generated in a separately managed Kubernetes Secret. The committed Helm values reference only the Secret name, while kubeconfig contents remain outside the repository.
-
-GitHub Actions uses read-only repository permissions and no live infrastructure credentials. Public CI performs static validation only and never runs OpenTofu `plan` or `apply`.
-
-State files are treated as sensitive because infrastructure providers can store environment details and secret values in them.
-
-## About
-
-I am building this portfolio to demonstrate practical infrastructure skills through working systems, repeatable automation, controlled troubleshooting, validation, and clear technical documentation.
-
-**Lee Austin**
-
-[GitHub profile](https://github.com/Capasiter)
+[GitHub](https://github.com/Capasiter) · [LinkedIn](https://www.linkedin.com/in/leeaustinmn/)
