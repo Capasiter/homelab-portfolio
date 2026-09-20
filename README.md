@@ -19,7 +19,7 @@ A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastruc
 
 > **Latest live validation:** September 19, 2026 — API VIP ownership moved between servers after leader-pod deletion; no failed API probes were recorded in the test log. All three nodes were Ready in the post-test check.
 >
-> **Release status:** [v0.7.0 released](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.7.0) · v0.8.0 API VIP work merged and live-validated; release pending.
+> **Latest release:** [v0.8.0 — Stable K3s API Endpoint](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.8.0).
 >
 > **Scope:** Three VMs on **one physical Proxmox host**. This demonstrates control-plane redundancy and a pod-level failover exercise, not physical-host high availability. Full etcd restore remains incomplete.
 
@@ -181,7 +181,7 @@ flowchart TD
 | v0.5 | Protected application rollouts tested under traffic | Released |
 | v0.6 | Monitoring, application probing, and alert recovery | Released |
 | v0.7 | Off-server backups, integrity checks, retention, and restore investigation | Released; full restore incomplete |
-| v0.8 | Stable internal API VIP and leader-pod failover validation | Merged and live-validated; release pending |
+| v0.8 | Stable internal API VIP and leader-pod failover validation | Released |
 | Next | Argo CD application delivery with drift detection and controlled reconciliation | Planned |
 | Next | Unraid-backed shared application storage and volume-recovery validation | Planned |
 | Follow-up | Complete restore validation; notification delivery; broader failure testing | Not yet completed |
