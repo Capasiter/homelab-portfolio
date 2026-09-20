@@ -6,9 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-### v0.8.0 — Stable internal K3s API endpoint
+## [0.8.0](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.8.0) - 2026-09-20
 
-#### Added
+### Added
 
 - An Ansible-managed kube-vip DaemonSet, RBAC manifest, defaults, rendering checks, and runtime validation.
 - Internal API VIP `10.20.0.110` and K3s TLS SAN configuration.
@@ -16,20 +16,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - A redesigned portfolio landing page with architecture and failover diagrams, evidence links, and explicit delivered/planned status.
 - A [historical portfolio record](docs/portfolio-history-through-v0.7.md) retaining the earlier detailed engineering write-ups.
 
-#### Validated
+### Validated
 
 - All three kube-vip pods Running and all three K3s nodes Ready through the VIP.
 - VIP present in the inspected API certificate's SANs.
 - VIP ownership moved from server 02 to server 03 following deletion of the leader pod; a replacement pod ran on server 02.
 - No failed API probes found in the recorded test log; request latency and a downtime bound were not measured.
 
-#### Known limitations
+### Known limitations
 
 - The exercise covered a controlled kube-vip pod deletion, not node power loss or physical-host failure.
 - Probes were sampled and had no explicit request deadline; zero downtime is not claimed.
 - Application availability was not measured during the VIP test.
 - Three control-plane VMs share one physical Proxmox host.
-- v0.8.0 is not yet tagged or released.
 
 ## [0.7.0](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.7.0)
 
