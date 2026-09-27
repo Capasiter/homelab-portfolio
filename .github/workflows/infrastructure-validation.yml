@@ -170,4 +170,6 @@ jobs:
             kubernetes/k8s-learning/web-demo.yaml \
             kubernetes/observability/namespace.yaml \
             kubernetes/observability/blackbox-exporter.yaml \
-            kubernetes/observability/web-demo-availability.yaml
+            kubernetes/observability/web-demo-availability.yaml \
+            kubernetes/argocd/install/namespace.yaml \
+            kubernetes/argocd/applications/web-demo.yaml
