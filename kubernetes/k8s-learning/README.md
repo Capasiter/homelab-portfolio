@@ -3,6 +3,10 @@
 This lab validates application availability during a Kubernetes Deployment rolling restart on a three-server K3s cluster. It demonstrates the difference between a rollout that Kubernetes reports as successful and one that also maintains availability from the application user’s perspective.
 
 The deployable workload is defined in [web-demo.yaml](./web-demo.yaml).
+> **Current deployment:** The manifest enforces a tokenless service account, non-root execution, hardened pod and container security, resource requests and limits, revision-aware node topology spread, and a PodDisruptionBudget.
+>
+> **Revalidated September 26, 2026:** Server-side dry-run passed; a controlled rollout ended with one Ready pod on each K3s server, zero pod restarts, a PodDisruptionBudget allowing one voluntary disruption, and 30/30 successful ingress requests.
+>
 
 ## Environment
 
@@ -69,9 +73,9 @@ The Deployment was updated with the following protections:
 | Endpoint propagation window | Native `preStop` sleep of 10 seconds | Gives Traefik time to stop routing new requests to a terminating pod |
 | Termination budget | 30 seconds | Provides time for the lifecycle hook and container termination |
 
-## Safe Validation
+## Historical Safe Validation
 
-The manifest was checked against the live Kubernetes API without changing the cluster:
+The prior four-resource manifest was checked against the live Kubernetes API without changing the cluster:
 
 ```bash
 ssh k3s-server-01 \
@@ -79,7 +83,7 @@ ssh k3s-server-01 \
   < kubernetes/k8s-learning/web-demo.yaml
 ```
 
-All four resources passed server-side validation:
+All four resources in that historical manifest passed server-side validation:
 
 ```text
 namespace/k8s-learning configured (server dry run)
@@ -170,6 +174,6 @@ A second validation run on August 15, 2026, observed 120 successful requests and
 
 - The test used short HTTP requests rather than long-lived connections.
 - Traffic originated inside the isolated lab network.
-- The manifest does not currently enforce topology spread or pod anti-affinity.
+- The PodDisruptionBudget protects voluntary disruptions; it does not make unexpected node or network failures interruption-free.
 - The test covers a controlled Deployment restart, not an unexpected node or network failure.
 - The demonstration uses HTTP without TLS.

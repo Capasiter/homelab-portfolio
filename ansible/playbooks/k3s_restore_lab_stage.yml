@@ -1,0 +1,96 @@
+---
+- name: Stage isolated K3s restore lab
+  hosts: "192.168.0.182"
+  gather_facts: true
+  become: true
+
+  vars:
+    k3s_restore_lab_version: "v1.36.4+k3s1"
+    k3s_restore_lab_binary_checksum: "835873f37245fc615f547a2fe2af9402a347875f13fa64a1f136de644955ea3f"
+    k3s_restore_lab_install_script_commit: "01b6f04aaa69e8b09303f0393d4b4f1811da23aa"
+    k3s_restore_lab_install_script_checksum: "sha256:46177d4c99440b4c0311b67233823a8e8a2fc09693f6c89af1a7161e152fbfad"
+    k3s_restore_lab_install_script_path: /usr/local/src/k3s-restore-lab-install.sh
+    k3s_restore_lab_binary_path: /usr/local/bin/k3s
+    k3s_restore_lab_service_unit_path: /etc/systemd/system/k3s.service
+
+  pre_tasks:
+    - name: Assert this is the isolated K3s restore VM
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.hostname == "k3s-restore-lab-01"
+          - ansible_facts.default_ipv4.address == "192.168.0.182"
+        fail_msg: >-
+          Refusing to stage K3s unless this is k3s-restore-lab-01 at
+          192.168.0.182.
+
+  tasks:
+    - name: Install staging prerequisites
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Create the installer directory
+      ansible.builtin.file:
+        path: "{{ k3s_restore_lab_install_script_path | dirname }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Download the checksum-pinned K3s installer
+      ansible.builtin.get_url:
+        url: "https://raw.githubusercontent.com/k3s-io/k3s/{{ k3s_restore_lab_install_script_commit }}/install.sh"
+        dest: "{{ k3s_restore_lab_install_script_path }}"
+        checksum: "{{ k3s_restore_lab_install_script_checksum }}"
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Inspect the staged K3s binary
+      ansible.builtin.stat:
+        path: "{{ k3s_restore_lab_binary_path }}"
+        checksum_algorithm: sha256
+        get_checksum: true
+      register: k3s_restore_lab_binary_before
+
+    - name: Inspect the K3s systemd unit
+      ansible.builtin.stat:
+        path: "{{ k3s_restore_lab_service_unit_path }}"
+      register: k3s_restore_lab_service_unit_before
+
+    - name: Install K3s without starting it
+      ansible.builtin.command: "{{ k3s_restore_lab_install_script_path }}"
+      environment:
+        INSTALL_K3S_VERSION: "{{ k3s_restore_lab_version }}"
+        INSTALL_K3S_EXEC: server
+        INSTALL_K3S_SKIP_START: "true"
+      when: >-
+        not k3s_restore_lab_binary_before.stat.exists or
+        (k3s_restore_lab_binary_before.stat.checksum | default("")) != k3s_restore_lab_binary_checksum or
+        not k3s_restore_lab_service_unit_before.stat.exists
+      changed_when: true
+
+    - name: Verify the staged K3s binary
+      ansible.builtin.stat:
+        path: "{{ k3s_restore_lab_binary_path }}"
+        checksum_algorithm: sha256
+        get_checksum: true
+      register: k3s_restore_lab_binary_after
+
+    - name: Assert the staged K3s binary checksum
+      ansible.builtin.assert:
+        that:
+          - k3s_restore_lab_binary_after.stat.exists
+          - k3s_restore_lab_binary_after.stat.checksum == k3s_restore_lab_binary_checksum
+        fail_msg: The staged K3s binary checksum does not match the pinned release checksum.
+
+    - name: Keep K3s stopped until the offline restore phase
+      ansible.builtin.systemd_service:
+        name: k3s
+        enabled: false
+        state: stopped
+        daemon_reload: true

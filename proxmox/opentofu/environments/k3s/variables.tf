@@ -35,7 +35,7 @@ variable "template_vm_id" {
 variable "cpu_cores" {
   description = "Virtual CPU cores allocated to each K3s node."
   type        = number
-  default     = 2
+  default     = 4
 
   validation {
     condition     = var.cpu_cores >= 1
@@ -52,7 +52,7 @@ variable "cpu_type" {
 variable "memory" {
   description = "Memory allocated to each K3s node in megabytes."
   type        = number
-  default     = 3072
+  default     = 6144
 
   validation {
     condition     = var.memory >= 2048
