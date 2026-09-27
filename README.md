@@ -4,6 +4,10 @@
 
 A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastructure, a three-server Kubernetes control plane, repeatable automation, live monitoring, and tested recovery workflows.
 
+> **[🚀 Live Portfolio Homepage](https://claude.ai/artifact/U9Jp8DWLSN8c5YtXA9JZ1R)**
+> 
+> See the infrastructure, nine milestones, and live validation in one visual page. GitOps in production.
+
 [![Infrastructure Validation](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml/badge.svg)](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml)
 [![Infrastructure as Code](https://img.shields.io/badge/IaC-OpenTofu-844FBA?style=flat-square)](proxmox/opentofu/)
 [![Automation](https://img.shields.io/badge/Automation-Ansible-EE0000?style=flat-square)](ansible/)
