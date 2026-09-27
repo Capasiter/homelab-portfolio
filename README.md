@@ -2,7 +2,11 @@
 
 ### Build it. Operate it. Test what happens when it breaks.
 
-A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastructure, a three-server Kubernetes control plane, repeatable automation, live monitoring, and tested recovery workflows.
+A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastructure, a three-server Kubernetes control plane, repeatable automation, live monitoring, Argo CD application delivery, and tested recovery workflows.
+
+> **[🚀 Live Portfolio Homepage](https://claude.ai/artifact/U9Jp8DWLSN8c5YtXA9JZ1R)**
+> 
+> See the infrastructure, nine milestones, and live validation in one visual page. GitOps in production.
 
 [![Infrastructure Validation](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml/badge.svg)](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml)
 [![Infrastructure as Code](https://img.shields.io/badge/IaC-OpenTofu-844FBA?style=flat-square)](proxmox/opentofu/)
@@ -17,7 +21,7 @@ A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastruc
 | **3 K3s server VMs**<br>Control plane + embedded etcd | **148 successful HTTP requests**<br>0 observed failures in a protected rollout | **Off-server etcd backups**<br>SHA-256 verification + protected token |
 | **Internal API VIP**<br>kube-vip DaemonSet across all 3 servers | **Leader-pod handoff observed**<br>VIP moved from server 02 to server 03 | **Restore drill attempted**<br>Decompression verified; full restore blocked |
 
-> **Latest live validation:** September 19, 2026 — API VIP ownership moved between servers after leader-pod deletion; no failed API probes were recorded in the test log. All three nodes were Ready in the post-test check.
+> **Latest live validation:** September 27, 2026 — Argo CD detected a deliberate WebDemo replica change from three to four. Manual reconciliation restored Git's declared three replicas; final status was Synced, Healthy, and 3/3 Ready. [Validation record](kubernetes/argocd/README.md).
 >
 > **Latest release:** [v0.8.0 — Stable K3s API Endpoint](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.8.0).
 >
@@ -40,6 +44,7 @@ flowchart TD
             VIP["API VIP / 10.20.0.110:6443"]
             Cluster["3 K3s server VMs / embedded etcd"]
             App["Traefik / replicated web-demo"]
+            Argo["Argo CD / manual reconciliation"]
             Observe["Prometheus / Grafana / Alertmanager / Blackbox"]
         end
         Gateway --- Cluster
@@ -49,6 +54,8 @@ flowchart TD
         Observe -->|"availability probes"| App
     end
 
+    Git -->|"desired application state"| Argo
+    Argo -->|"manual sync"| App
     Tofu -->|"provisions"| Cluster
     Ansible -->|"configures"| Cluster
     Admin -->|"restricted SSH access"| Cluster
@@ -58,7 +65,7 @@ flowchart TD
     classDef runtime fill:#064e3b,stroke:#34d399,color:#ecfdf5
     classDef recovery fill:#4c1d95,stroke:#c4b5fd,color:#f5f3ff
     classDef boundary fill:#1e293b,stroke:#94a3b8,color:#f8fafc
-    class Git,CI,Tofu,Ansible delivery
+    class Git,CI,Tofu,Ansible,Argo delivery
     class VIP,Cluster,App,Observe runtime
     class Backup recovery
     class Admin,Gateway boundary
@@ -97,6 +104,8 @@ These are bounded test results, not uptime guarantees. Each link leads to implem
 | Availability alert lifecycle | Healthy → controlled failure → firing alert → recovery | [Observability validation](kubernetes/observability/README.md) |
 | Off-server backup workflow | Snapshot, baseline/rolling retention, token protection, and checksum verification validated | [Backup and restore record](docs/portfolio-history-through-v0.7.md#restore-validation) |
 | API leader-pod failover | VIP moved 02 → 03; no failed API probes recorded; 3/3 kube-vip pods and 3 Ready nodes afterward | [September 19 validation](ansible/docs/k3s-api-vip-validation.md) |
+
+| GitOps drift detection and reconciliation | Live replicas changed 3 → 4; Argo detected drift; manual sync restored 3/3 Ready and Synced / Healthy | [Argo CD validation](kubernetes/argocd/README.md) |
 
 **What the CI badge means:** repository validation status. It is not a live cluster-health indicator.
 
@@ -150,6 +159,7 @@ flowchart TD
 | Stable API endpoint | [kube-vip role](ansible/roles/k3s_api_vip/) · [Cluster orchestration](ansible/playbooks/k3s_cluster.yml) |
 | Application reliability | [Kubernetes workload and validation](kubernetes/k8s-learning/README.md) |
 | Monitoring and alerting | [Observability configuration and evidence](kubernetes/observability/README.md) |
+| GitOps application delivery | [Argo CD configuration and validation](kubernetes/argocd/README.md) |
 | CI and change history | [Validation workflow](.github/workflows/infrastructure-validation.yml) · [Changelog](CHANGELOG.md) |
 | Earlier engineering detail | [Preserved v0.1–v0.7 portfolio record](docs/portfolio-history-through-v0.7.md) |
 
@@ -182,7 +192,7 @@ flowchart TD
 | v0.6 | Monitoring, application probing, and alert recovery | Released |
 | v0.7 | Off-server backups, integrity checks, retention, and restore investigation | Released; full restore incomplete |
 | v0.8 | Stable internal API VIP and leader-pod failover validation | Released |
-| Next | Argo CD application delivery with drift detection and controlled reconciliation | Planned |
+| Implemented | Argo CD application delivery with drift detection and manual reconciliation | Live-validated; merged in [PR #26](https://github.com/Capasiter/homelab-portfolio/pull/26); not yet tagged as a release |
 | Next | Unraid-backed shared application storage and volume-recovery validation | Planned |
 | Follow-up | Complete restore validation; notification delivery; broader failure testing | Not yet completed |
 | Future | Human-supervised AI operations for log analysis, incident triage, and runbook assistance | Planned; not deployed |
@@ -196,7 +206,8 @@ The next-stage ordering is a roadmap, not a release commitment. AI-assisted oper
 - **Storage:** current application and monitoring volumes use node-local storage. Etcd snapshots do not back up persistent-volume contents.
 - **Failover:** the recorded exercise deleted one kube-vip pod. It did not power off a node, interrupt the network, or test physical-host failure.
 - **Monitoring:** outbound alert delivery and blackbox-exporter redundancy remain future work.
-- **Isolation:** Kubernetes NetworkPolicy and GitOps are not claimed as implemented.
+- **GitOps:** WebDemo uses manual Argo CD sync. Automatic self-healing and continuous HTTP availability during the drift test were not tested. Argo CD does not manage its own installation.
+- **Isolation:** Argo CD's installation includes NetworkPolicies; broader application network-policy hardening remains future work.
 
 ## About Lee
 
