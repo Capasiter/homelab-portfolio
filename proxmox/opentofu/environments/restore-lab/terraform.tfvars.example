@@ -1,0 +1,20 @@
+proxmox_endpoint  = "https://proxmox.example.com:8006/"
+proxmox_api_token = "opentofu@pve!provisioner=REPLACE_WITH_TOKEN_SECRET"
+proxmox_insecure  = true
+
+node_name      = "pve"
+vm_id          = 404
+name           = "k3s-restore-lab-01"
+template_vm_id = 9100
+datastore_id   = "local-lvm"
+
+cpu_cores = 2
+cpu_type  = "host"
+memory    = 4096
+disk_size = 32
+
+username             = "ansible"
+ssh_public_key_path  = "~/.ssh/homelab_ansible_ed25519.pub"
+bridge               = "vmbr0"
+network_disconnected = true
+mac_address          = "02:00:00:00:04:04"

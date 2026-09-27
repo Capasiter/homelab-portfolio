@@ -1,10 +1,10 @@
 # Proxmox K3s VM Environment
 
-This OpenTofu environment provisions three Ubuntu 24.04 virtual machines that will form a highly available K3s control plane.
+This OpenTofu environment provisions three Ubuntu 24.04 virtual machines that form a highly available K3s control plane.
 
-> **Current status:** The VM infrastructure is deployed and drift-free. K3s has not yet been installed.
+> **Current status:** The K3s control plane is operational. Its API is available through kube-vip at `10.20.0.110`.
 
-OpenTofu manages the virtual-machine lifecycle. OPNsense provides isolated routing, DHCP, DNS forwarding, and outbound NAT. Ansible now manages the Linux baseline on all three nodes; K3s installation is the next phase.
+OpenTofu manages the virtual-machine lifecycle. OPNsense provides isolated routing, DHCP, DNS forwarding, and outbound NAT. Ansible manages the Linux baseline, K3s control plane, API VIP, observability, and backup configuration on all three nodes.
 
 ## Architecture
 
@@ -44,8 +44,8 @@ Each node is provisioned with:
 | Operating system | Ubuntu 24.04 Noble |
 | Template VM ID | 9100 |
 | Clone type | Full clone |
-| CPU | 2 cores, host CPU type |
-| Memory | 3072 MB |
+| CPU | 4 cores, host CPU type |
+| Memory | 6144 MB |
 | Disk | 32 GB on `local-lvm` |
 | Network bridge | `vmbr1` |
 | Cloud-init user | `ansible` |

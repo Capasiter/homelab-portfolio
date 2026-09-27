@@ -5,6 +5,8 @@
 - **Result:** Passed
 - **K3s version:** `v1.36.2+k3s1`
 - **Pull request:** [#6](https://github.com/Capasiter/homelab-portfolio/pull/6)
+> **Historical record:** This documents the v0.4 validation. Subsequent milestones added the API VIP, monitoring, off-cluster backups, and Kubernetes application delivery improvements.
+>
 
 ## Purpose
 
@@ -212,7 +214,7 @@ All affected components subsequently reached `Running` or `Completed`. Metrics c
 - Read-only public CI without infrastructure credentials
 - Proxmox console recovery access
 
-## Current Limitations
+## Limitations at the Time of Validation
 
 - The Kubernetes API has no dedicated virtual IP or external load balancer
 - The validation snapshot is not yet copied off-host

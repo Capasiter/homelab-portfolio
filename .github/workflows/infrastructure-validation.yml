@@ -47,6 +47,14 @@ jobs:
         working-directory: proxmox/opentofu/environments/k3s
         run: tofu validate -no-color
 
+      - name: Initialize isolated restore-lab configuration
+        working-directory: proxmox/opentofu/environments/restore-lab
+        run: tofu init -backend=false -input=false -lockfile=readonly
+
+      - name: Validate isolated restore-lab configuration
+        working-directory: proxmox/opentofu/environments/restore-lab
+        run: tofu validate -no-color
+
   ansible:
     name: Ansible validation
     runs-on: ubuntu-24.04
@@ -83,6 +91,11 @@ jobs:
 
       - name: Check K3s cluster playbook syntax
         run: ansible-playbook -i ansible/inventory/hosts.example.yml ansible/playbooks/k3s_cluster.yml --syntax-check
+
+      - name: Check isolated K3s restore-lab playbook syntax
+        run: >-
+          ansible-playbook -i '192.0.2.1,'
+          ansible/playbooks/k3s_restore_lab_stage.yml --syntax-check
 
       - name: Lint Ansible project
         run: ansible-lint --profile production ansible/

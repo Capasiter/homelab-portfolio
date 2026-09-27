@@ -9,7 +9,7 @@ The portfolio demonstrates modular Infrastructure as Code, isolated virtual netw
 | Milestone | Environment | Managed infrastructure | Status |
 |---|---|---|---|
 | v0.1.0 | `environments/dev` | Ubuntu 24.04 LXC container | Released and drift-free |
-| v0.4.0 | `environments/k3s` | Three Ubuntu 24.04 K3s VMs | Infrastructure deployed; K3s installation pending |
+| v0.4.0 | `environments/k3s` | Three Ubuntu 24.04 K3s VMs | K3s cluster operational; API VIP configuration is maintained in the current source |
 
 ### Development LXC
 
@@ -38,12 +38,13 @@ The K3s environment manages:
 | `k3s-server-02` | 402 | `10.20.0.102` | Isolated `vmbr1` |
 | `k3s-server-03` | 403 | `10.20.0.103` | Isolated `vmbr1` |
 
-Each node is a full clone of a sanitized Ubuntu 24.04 cloud-image template with two CPU cores, 3072 MB of memory, a 32 GB disk, QEMU guest-agent support, cloud-init, automatic startup, and serial-console access.
+Each node is a full clone of a sanitized Ubuntu 24.04 cloud-image template with four CPU cores, 6144 MB of memory, a 32 GB disk, QEMU guest-agent support, cloud-init, automatic startup, and serial-console access.
 
 OPNsense provides DHCP, DNS forwarding, outbound NAT, and the gateway for the isolated lab. OpenTofu does not manage the OPNsense configuration or the upstream household network.
 
 See:
 
+- [Isolated K3s Restore Lab](environments/restore-lab/README.md)
 - [K3s Environment Guide](environments/k3s/README.md)
 - [K3s Live Validation](docs/k3s-live-validation.md)
 
@@ -201,16 +202,10 @@ This workflow distinguishes successful resource creation from a validated, opera
 - The management workstation does not directly route into the isolated subnet
 - Management access to the isolated subnet intentionally depends on a restricted, forwarding-only Proxmox bastion
 - The broader parent API ACL requires staged hardening after both tokens are verified
-- K3s has not yet been installed
-- Persistent Kubernetes storage, monitoring, backups, and GitOps are future phases
+- The Kubernetes control-plane restore has not yet passed an end-to-end isolated recovery drill
+- Persistent Kubernetes storage remains node-local; shared Unraid storage is not yet integrated
+- GitOps-managed application delivery is the next planned phase
 
-## Next Milestone
+## Current Integration Boundary
 
-The infrastructure and Linux baseline phases are complete. The next phase will:
-
-1. Build and review the Ansible K3s installation automation
-2. Deploy the initial K3s server as a controlled canary
-3. Join the remaining two control-plane servers
-4. Validate embedded etcd membership, cluster health, scheduling, DNS, storage, and networking
-5. Document the live cluster evidence and publish v0.4.0
-6. Add persistent storage, monitoring, backups, and GitOps
+OpenTofu remains the source of truth for VM capacity and lifecycle. Kubernetes application delivery will move to GitOps after the remaining isolated restore drill is completed.

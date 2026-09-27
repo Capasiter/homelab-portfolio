@@ -77,7 +77,7 @@ The diagram groups workloads logically. The three K3s VMs share the same physica
 | `k3s-server-02` | 402 | `10.20.0.102` | Control plane + etcd |
 | `k3s-server-03` | 403 | `10.20.0.103` | Control plane + etcd |
 
-Each VM uses 2 CPU cores, 3072 MB RAM, a 32 GB disk, Ubuntu 24.04, cloud-init, and the QEMU guest agent. OpenTofu defines stable VM identities, addressing, and startup dependencies.
+Each VM uses 4 CPU cores, 6144 MB RAM, a 32 GB disk, Ubuntu 24.04, cloud-init, and the QEMU guest agent. OpenTofu defines stable VM identities, addressing, and startup dependencies.
 
 OPNsense VM 400 provides routing, DHCP, DNS forwarding, and outbound NAT. `vmbr0` carries management and OPNsense WAN traffic; `vmbr1` is the isolated lab bridge. No upstream-router changes or physical uplink on the isolated bridge are required.
 

@@ -27,8 +27,8 @@ resource "proxmox_virtual_environment_vm" "vm" {
   }
 
   agent {
-    enabled = true
-    trim    = true
+    enabled = var.agent_enabled
+    trim    = var.agent_trim
     type    = "virtio"
   }
 
@@ -38,6 +38,12 @@ resource "proxmox_virtual_environment_vm" "vm" {
     datastore_id = var.datastore_id
     full         = true
     retries      = 3
+  }
+
+  lifecycle {
+    ignore_changes = [
+      clone,
+    ]
   }
 
   cpu {
@@ -75,9 +81,10 @@ resource "proxmox_virtual_environment_vm" "vm" {
   }
 
   network_device {
-    bridge      = var.bridge
-    model       = "virtio"
-    mac_address = var.mac_address
+    bridge       = var.bridge
+    disconnected = var.network_disconnected
+    model        = "virtio"
+    mac_address  = var.mac_address
   }
 
   operating_system {

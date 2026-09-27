@@ -62,6 +62,18 @@ variable "cpu_type" {
   default     = "host"
 }
 
+variable "agent_enabled" {
+  description = "Enable the QEMU guest agent integration for the VM."
+  type        = bool
+  default     = true
+}
+
+variable "agent_trim" {
+  description = "Enable discard support through the QEMU guest agent."
+  type        = bool
+  default     = true
+}
+
 variable "memory" {
   description = "Dedicated VM memory in megabytes."
   type        = number
@@ -126,6 +138,12 @@ variable "bridge" {
   description = "Proxmox network bridge attached to the VM."
   type        = string
   default     = "vmbr0"
+}
+
+variable "network_disconnected" {
+  description = "Disconnect the VM NIC from its bridge while preserving the device definition."
+  type        = bool
+  default     = false
 }
 
 variable "mac_address" {

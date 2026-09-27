@@ -376,17 +376,16 @@ K3s-specific controls include:
 - Bastion key must be explicitly unlocked and available through `ssh-agent` before use
 - Proxmox is used as a forwarding-only bastion in this homelab
 - A production environment would normally use a dedicated bastion, managed VPN, or identity-aware access proxy
-- Kubernetes API clients do not yet use a virtual IP or external load balancer
-- The validated etcd snapshot remains local-only, and restore testing is pending
+- Kubernetes API clients use a kube-vip virtual IP (`10.20.0.110`); no external load balancer is deployed
+- Off-cluster etcd snapshots and the protected server token are verified, but an end-to-end isolated restore drill has not yet passed
 - Local Path Provisioner storage is node-local; shared Unraid storage is not yet integrated
-- Monitoring, alerting, and GitOps are not yet deployed
+- Monitoring and alerting are deployed; GitOps-managed application delivery is the next planned phase
 
 ## Future Milestones
 
-After v0.4.0, planned production-oriented improvements include:
+Planned production-oriented improvements include:
 
-1. Add a virtual IP or external load balancer for Kubernetes API access.
-2. Copy etcd snapshots off-cluster and complete a documented restore exercise.
-3. Integrate shared persistent storage from Unraid.
-4. Deploy monitoring and alerting.
-5. Add GitOps-managed application deployment.
+1. Complete a passing isolated etcd restore exercise.
+2. Integrate shared persistent storage from Unraid.
+3. Add Kubernetes network-policy controls.
+4. Add GitOps-managed application delivery.
