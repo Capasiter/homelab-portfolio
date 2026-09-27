@@ -40,11 +40,6 @@ resource "proxmox_virtual_environment_vm" "vm" {
     retries      = 3
   }
 
-  lifecycle {
-    ignore_changes = [
-      clone,
-    ]
-  }
 
   cpu {
     cores = var.cpu_cores

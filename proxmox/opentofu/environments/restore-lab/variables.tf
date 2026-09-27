@@ -82,9 +82,14 @@ variable "ssh_public_key_path" {
 }
 
 variable "bridge" {
-  description = "Temporary staging bridge. Do not set this to vmbr1."
+  description = "Temporary staging bridge. The restore lab must use vmbr0."
   type        = string
   default     = "vmbr0"
+
+  validation {
+    condition     = var.bridge == "vmbr0"
+    error_message = "The restore lab must use vmbr0; vmbr1 is the production K3s network."
+  }
 }
 
 variable "network_disconnected" {
