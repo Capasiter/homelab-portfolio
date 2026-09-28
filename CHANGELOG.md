@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Argo CD v3.5.3 installation manifests and a WebDemo Application tracking `main`.
+- [September 27 live-validation record](kubernetes/argocd/README.md) for manual sync, replica-drift detection, and controlled reconciliation.
+
+### Changed
+
+- Removed the external AI-hosted portfolio promotion; the repository README remains the portfolio entry point.
+- Updated the landing page to distinguish implemented Argo CD work from the latest published release, v0.8.0.
+
+### Validated
+
+- The documented live exercise confirmed seven Argo CD pods Ready and WebDemo Synced and Healthy after manual sync.
+- Scaling live replicas from three to four produced an OutOfSync Deployment; manual reconciliation restored 3/3 Ready and available replicas.
+
+### Known limitations
+
+- Automated sync, self-heal, and automatic pruning are disabled; automatic self-healing and continuous HTTP availability were not tested.
+- Argo CD is a non-HA, manually bootstrapped installation on the existing single-physical-host lab.
+- These changes are not yet published as v0.9.0. Full etcd restore remains incomplete.
+
 ## [0.8.0](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.8.0) - 2026-09-20
 
 ### Added
