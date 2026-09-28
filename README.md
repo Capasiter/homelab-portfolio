@@ -1,3 +1,41 @@
+# Lee Austin Homelab Infrastructure Portfolio
+
+[Live portfolio homepage](https://claude.ai/artifact/U9Jp8DWLSN8c5YtXA9JZ1R)
+
+A hands-on infrastructure portfolio showing Linux, Proxmox, OpenTofu, Ansible, K3s, Kubernetes, monitoring, backup validation, and GitOps operations.
+
+## Latest proof: Argo CD GitOps validation
+
+The newest milestone proves controlled GitOps reconciliation with Argo CD:
+
+- Git declared `web-demo` at 3 replicas.
+- The live Kubernetes Deployment was manually changed to 4 replicas.
+- Argo CD detected the drift and marked the Deployment `OutOfSync`.
+- A manual sync restored the cluster back to Git's declared state.
+- Final result: `Synced`, `Healthy`, and `3/3` replicas ready.
+
+This shows the difference between an application being healthy and an application matching its desired state in Git.
+
+## Quick links
+
+| Area | What it shows |
+| --- | --- |
+| [Portfolio homepage](https://claude.ai/artifact/U9Jp8DWLSN8c5YtXA9JZ1R) | Fast visual overview for recruiters and employers |
+| [Argo CD GitOps milestone](kubernetes/argocd/README.md) | Drift detection and manual reconciliation |
+| [K3s learning workload](kubernetes/k8s-learning/README.md) | Kubernetes deployment, service, ingress, and availability checks |
+| [OpenTofu infrastructure](proxmox/opentofu/README.md) | VM provisioning on Proxmox |
+| [Ansible automation](ansible/README.md) | Linux baseline, K3s, backup, and restore-lab automation |
+| [Changelog](CHANGELOG.md) | Release and milestone history |
+
+## Current status
+
+- Latest released tag: `v0.8.0`
+- Latest implemented milestone: Argo CD WebDemo GitOps validation
+- Restore drill: staged separately and not mixed with GitOps work
+- Next planned direction: deeper GitOps documentation, restore completion, then local AI agent experiments
+
+---
+
 # Homelab Infrastructure Portfolio
 
 ### Build it. Operate it. Test what happens when it breaks.
