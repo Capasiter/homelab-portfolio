@@ -9,7 +9,7 @@
 - Source: main branch, kubernetes/k8s-learning/web-demo.yaml.
 - Manual sync; automated sync, self-heal, and automatic pruning disabled.
 
-## Live validation - September 27, 2026
+## Initial live validation
 1. Rendered installation manifests and passed server-side dry-run validation.
 2. Installed Argo CD and confirmed all seven pods Ready.
 3. Validated and registered the WebDemo Application.
@@ -21,9 +21,22 @@
 9. Inspected the replica difference and manually synced the Deployment.
 10. Confirmed Synced, Healthy, and 3/3 Ready and available replicas.
 
+## Revalidation with preserved evidence
+
+A second controlled drift exercise captured the full state transition:
+
+1. Baseline: the Application was `Synced` and `Healthy`; WebDemo was 3/3 Ready, with one pod on each K3s server and zero restarts.
+2. Live drift: the Deployment was scaled from three replicas to four while Git continued to declare three.
+3. Detection: Argo CD reported `OutOfSync` while the application remained `Healthy`; WebDemo reached 4/4 Ready.
+4. Inspection: the Deployment was the only OutOfSync managed resource. Namespace, Service, ServiceAccount, Ingress, and PodDisruptionBudget remained Synced.
+5. Reconciliation: a human-initiated Argo CD operation synchronized only `Deployment/web-demo`.
+6. Recovery: the operation succeeded and returned the Application to `Synced` and `Healthy`, with WebDemo at 3/3 Ready.
+
+**Captured output:** [baseline](evidence/argo-web-demo-before.txt) · [detected drift](evidence/argo-web-demo-drift.txt) · [resource and event evidence](evidence/argo-web-demo-diff.txt) · [reconciled state](evidence/argo-web-demo-after.txt)
+
 ## Repeat the read-only checks
 
-From an administrative shell with authorized cluster access, these commands show the current state. They do not replay the September 27 drift exercise or prove historical availability.
+From an administrative shell with authorized cluster access, these commands show the current state. They do not replay the controlled drift exercise or prove historical availability.
 
 ```bash
 kubectl -n argocd get pods
@@ -33,7 +46,7 @@ kubectl -n k8s-learning get deployment web-demo
 kubectl -n k8s-learning get pods -o wide
 ```
 
-Compare the Application's Sync Status and Health Status with the Deployment's desired, ready, and available replicas. The September 27 observations above are a summarized record; raw command output and timestamped drift logs were not preserved in this document. A future validation should capture the before, drift, diff, and after output with timestamps and redact internal details before publishing.
+Compare the Application's Sync Status and Health Status with the Deployment's desired, ready, and available replicas. The preserved evidence above records the baseline, detected drift, affected resource, manual reconciliation, and recovered state.
 
 ## Limitations
 Automatic self-healing and continuous HTTP availability were not tested.
