@@ -379,7 +379,7 @@ K3s-specific controls include:
 - Kubernetes API clients use a kube-vip virtual IP (`10.20.0.110`); no external load balancer is deployed
 - Off-cluster etcd snapshots and the protected server token are verified, but an end-to-end isolated restore drill has not yet passed
 - Local Path Provisioner storage is node-local; shared Unraid storage is not yet integrated
-- Monitoring and alerting are deployed; GitOps-managed application delivery is the next planned phase
+- Monitoring and alerting are deployed. Argo CD manages the WebDemo application with manual sync; automated self-healing and pruning are not enabled.
 
 ## Future Milestones
 
@@ -388,4 +388,4 @@ Planned production-oriented improvements include:
 1. Complete a passing isolated etcd restore exercise.
 2. Integrate shared persistent storage from Unraid.
 3. Add Kubernetes network-policy controls.
-4. Add GitOps-managed application delivery.
+4. Expand GitOps coverage after validating manual WebDemo reconciliation.
