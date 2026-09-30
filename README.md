@@ -31,39 +31,30 @@ The lab separates provisioning, configuration, runtime services, and off-server 
 
 ```mermaid
 flowchart TD
-    Git["Version-controlled infrastructure"] --> CI["GitHub Actions / static validation"]
-    Git --> Tofu["OpenTofu / VM provisioning"]
-    Git --> Ansible["Ansible / Linux, K3s, VIP, backups"]
-    Admin["Administration / SSH bastion"]
+    Git["Version-controlled infrastructure<br/>GitHub Actions validation"]
+    Automation["OpenTofu provisioning<br/>Ansible configuration"]
+    Access["Proxmox + OPNsense boundary<br/>Administration through SSH bastion"]
+    VIP["Internal Kubernetes API VIP<br/>10.20.0.110:6443"]
+    Cluster["Three K3s server VMs<br/>Control plane + embedded etcd"]
+    Services["Runtime services<br/>WebDemo + Prometheus + Grafana"]
+    Backup["Unraid off-server backups<br/>Etcd snapshots + protected token"]
 
-    subgraph PVE["Proxmox VE — one physical host"]
-        Gateway["OPNsense / isolated lab gateway"]
-        subgraph Lab["vmbr1 / 10.20.0.0/24"]
-            VIP["API VIP / 10.20.0.110:6443"]
-            Cluster["3 K3s server VMs / embedded etcd"]
-            App["Traefik / replicated web-demo"]
-            Observe["Prometheus / Grafana / Alertmanager / Blackbox"]
-        end
-        Gateway --- Cluster
-        VIP -->|"current VIP owner"| Cluster
-        Cluster --> App
-        Observe -->|"metrics and HTTP probes"| Cluster
-        Observe -->|"availability probes"| App
-    end
+    Git --> Automation
+    Automation --> Access
+    Access --> VIP
+    VIP --> Cluster
+    Cluster --> Services
+    Cluster --> Backup
 
-    Tofu -->|"provisions"| Cluster
-    Ansible -->|"configures"| Cluster
-    Admin -->|"restricted SSH access"| Cluster
-    Cluster -->|"etcd snapshots and protected token"| Backup["Unraid NFS / off-server backup storage"]
+    classDef delivery fill:#DBEAFE,stroke:#1D4ED8,color:#111827,stroke-width:3px,font-size:18px
+    classDef boundary fill:#F3F4F6,stroke:#4B5563,color:#111827,stroke-width:3px,font-size:18px
+    classDef runtime fill:#DCFCE7,stroke:#15803D,color:#111827,stroke-width:3px,font-size:18px
+    classDef recovery fill:#F3E8FF,stroke:#7E22CE,color:#111827,stroke-width:3px,font-size:18px
 
-    classDef delivery fill:#DBEAFE,stroke:#1D4ED8,color:#111827,stroke-width:2px,font-size:16px
-    classDef runtime fill:#DCFCE7,stroke:#15803D,color:#111827,stroke-width:2px,font-size:16px
-    classDef recovery fill:#F3E8FF,stroke:#7E22CE,color:#111827,stroke-width:2px,font-size:16px
-    classDef boundary fill:#F3F4F6,stroke:#4B5563,color:#111827,stroke-width:2px,font-size:16px
-    class Git,CI,Tofu,Ansible delivery
-    class VIP,Cluster,App,Observe runtime
+    class Git,Automation delivery
+    class Access boundary
+    class VIP,Cluster,Services runtime
     class Backup recovery
-    class Admin,Gateway boundary
 ```
 
 **Blue:** delivery and automation · **Green:** running platform · **Purple:** off-server recovery data · **Gray:** access and network boundaries.
