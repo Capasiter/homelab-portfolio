@@ -204,8 +204,8 @@ This workflow distinguishes successful resource creation from a validated, opera
 - The broader parent API ACL requires staged hardening after both tokens are verified
 - The Kubernetes control-plane restore has not yet passed an end-to-end isolated recovery drill
 - Persistent Kubernetes storage remains node-local; shared Unraid storage is not yet integrated
-- GitOps-managed application delivery is the next planned phase
+- Argo CD currently manages WebDemo delivery with manual sync; automated self-healing and pruning are not enabled.
 
 ## Current Integration Boundary
 
-OpenTofu remains the source of truth for VM capacity and lifecycle. Kubernetes application delivery will move to GitOps after the remaining isolated restore drill is completed.
+OpenTofu remains the source of truth for VM capacity and lifecycle. Argo CD compares the WebDemo application with Git and supports human-reviewed manual reconciliation. The isolated restore drill remains incomplete.
