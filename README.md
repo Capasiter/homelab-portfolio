@@ -56,17 +56,17 @@ flowchart TD
     Admin -->|"restricted SSH access"| Cluster
     Cluster -->|"etcd snapshots and protected token"| Backup["Unraid NFS / off-server backup storage"]
 
-    classDef delivery fill:#172554,stroke:#60a5fa,color:#eff6ff
-    classDef runtime fill:#064e3b,stroke:#34d399,color:#ecfdf5
-    classDef recovery fill:#4c1d95,stroke:#c4b5fd,color:#f5f3ff
-    classDef boundary fill:#1e293b,stroke:#94a3b8,color:#f8fafc
+    classDef delivery fill:#DBEAFE,stroke:#1D4ED8,color:#111827,stroke-width:2px,font-size:16px
+    classDef runtime fill:#DCFCE7,stroke:#15803D,color:#111827,stroke-width:2px,font-size:16px
+    classDef recovery fill:#F3E8FF,stroke:#7E22CE,color:#111827,stroke-width:2px,font-size:16px
+    classDef boundary fill:#F3F4F6,stroke:#4B5563,color:#111827,stroke-width:2px,font-size:16px
     class Git,CI,Tofu,Ansible delivery
     class VIP,Cluster,App,Observe runtime
     class Backup recovery
     class Admin,Gateway boundary
 ```
 
-**Blue:** delivery and automation · **Green:** running platform · **Purple:** off-server recovery data.
+**Blue:** delivery and automation · **Green:** running platform · **Purple:** off-server recovery data · **Gray:** access and network boundaries.
 
 The diagram groups workloads logically. The three K3s VMs share the same physical host; the VIP is owned by one server at a time, not a separate appliance. CI performs static checks and does not deploy to the live lab.
 
