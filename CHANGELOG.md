@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Argo CD v3.5.3 installation manifests and a WebDemo Application tracking `main`.
-- [September 27 live-validation record](kubernetes/argocd/README.md) for manual sync, replica-drift detection, and controlled reconciliation.
+- [Argo CD validation record with preserved command output](kubernetes/argocd/README.md) for manual sync, replica-drift detection, and controlled reconciliation.
 
 ### Changed
 
