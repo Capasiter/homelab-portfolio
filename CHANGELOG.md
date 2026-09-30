@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.9.0](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.9.0) - 2026-09-30
+
 ### Added
 
 - Argo CD v3.5.3 installation manifests and a WebDemo Application tracking `main`.
@@ -14,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - Removed the external AI-hosted portfolio promotion; the repository README remains the portfolio entry point.
-- Updated the landing page to distinguish implemented Argo CD work from the latest published release, v0.8.0.
+- Updated the landing page with the Argo CD GitOps milestone and links to preserved validation evidence.
 
 ### Validated
 
@@ -25,7 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Automated sync, self-heal, and automatic pruning are disabled; automatic self-healing and continuous HTTP availability were not tested.
 - Argo CD is a non-HA, manually bootstrapped installation on the existing single-physical-host lab.
-- These changes are not yet published as v0.9.0. Full etcd restore remains incomplete.
+- Full etcd restore remains incomplete and is tracked separately from this GitOps milestone.
 
 ## [0.8.0](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.8.0) - 2026-09-20
 
