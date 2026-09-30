@@ -1,0 +1,6 @@
+2026-09-30T18:12:22-05:00
+NAME       SYNC STATUS   HEALTH STATUS
+web-demo   Synced        Healthy
+NAME       READY   UP-TO-DATE   AVAILABLE   AGE
+web-demo   3/3     3            3           60d
+Succeeded successfully synced (all tasks run)
