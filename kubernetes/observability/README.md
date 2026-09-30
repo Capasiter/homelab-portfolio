@@ -191,8 +191,7 @@ Validated on August 23, 2026:
 
 ## Next Steps
 
-1. Complete repository validation, CI, pull-request review, and the v0.6.0 release.
-2. Configure and test Alertmanager routing, delivery, acknowledgement, and recovery notifications.
-3. Evaluate Blackbox Exporter redundancy and alert when the expected probe time series disappears.
-4. Expand controlled testing to partial replica loss, node and network failure, slow responses, and intermittent failures.
-5. Capture timestamped evidence to measure detection, firing, notification, and recovery latency.
+1. Configure and test Alertmanager routing, delivery, acknowledgement, and recovery notifications.
+2. Evaluate Blackbox Exporter redundancy and alert when the expected probe time series disappears.
+3. Expand controlled testing to partial replica loss, node and network failure, slow responses, and intermittent errors.
+4. Capture timestamped evidence to measure detection, firing, notification, and recovery latency.
