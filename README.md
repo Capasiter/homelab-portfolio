@@ -2,7 +2,7 @@
 
 ### Build it. Operate it. Test what happens when it breaks.
 
-A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastructure, a three-server Kubernetes control plane, repeatable automation, live monitoring, and tested recovery workflows.
+A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastructure, a three-server Kubernetes control plane, repeatable automation, live monitoring, verified off-server backups, and a documented restore investigation.
 
 > **Latest implemented milestone: Argo CD application delivery.** Deployed in the lab, with drift detection and manual reconciliation documented on September 27. [Read the configuration and validation evidence](kubernetes/argocd/README.md).
 

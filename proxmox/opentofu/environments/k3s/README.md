@@ -1,10 +1,10 @@
 # Proxmox K3s VM Environment
 
-This OpenTofu environment provisions three Ubuntu 24.04 virtual machines that form a highly available K3s control plane.
+This OpenTofu environment provisions three Ubuntu 24.04 virtual machines for a redundant K3s control plane on one physical Proxmox host.
 
 > **Current status:** The K3s control plane is operational. Its API is available through kube-vip at `10.20.0.110`.
 
-OpenTofu manages the virtual-machine lifecycle. OPNsense provides isolated routing, DHCP, DNS forwarding, and outbound NAT. Ansible manages the Linux baseline, K3s control plane, API VIP, observability, and backup configuration on all three nodes.
+OpenTofu manages the virtual-machine lifecycle. OPNsense provides isolated routing, DHCP, DNS forwarding, and outbound NAT. Ansible manages the Linux baseline, K3s control plane, API VIP, and backup configuration. The monitoring stack is deployed with Helm, and Argo CD manages WebDemo with manual sync.
 
 ## Architecture
 
@@ -147,11 +147,6 @@ Implementation and validation evidence are documented in [K3s Node Bootstrap Liv
 - Serial-console access remains available for recovery
 - A final full plan verifies that targeted recovery work introduced no drift
 
-## Next Steps
+## Current Follow-up
 
-1. Build and review the Ansible K3s installation automation
-2. Deploy the initial K3s server as a controlled canary
-3. Join the remaining two control-plane servers
-4. Validate embedded etcd membership, cluster health, scheduling, DNS, storage, and networking
-5. Document the live cluster evidence and publish v0.4.0
-6. Add persistent storage, monitoring, backups, and GitOps
+The original v0.4 deployment plan is complete. The API VIP, monitoring, off-server etcd backups, and manual Argo CD application delivery are documented in the portfolio README. Remaining work includes a passing isolated etcd restore, shared persistent storage and volume recovery, and broader failure testing.
