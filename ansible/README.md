@@ -89,9 +89,21 @@ The Ansible controller does not directly route into the isolated K3s subnet.
 A dedicated forwarding-only account on the Proxmox host provides the management path:
 
 ```mermaid
-flowchart LR
-    Controller["Ansible controller"] -->|"Bastion ED25519 key"| Bastion["Restricted k3s-jump account"]
-    Bastion -->|"Allowlisted SSH forwarding"| Targets["ansible on k3s-server-01 through 03"]
+flowchart TD
+    Controller["Ansible controller"]
+    Bastion["Restricted k3s-jump account<br/>SSH bastion"]
+    Targets["Automation account<br/>k3s-server-01 through 03"]
+
+    Controller -->|"Bastion ED25519 key"| Bastion
+    Bastion -->|"Allowlisted SSH forwarding"| Targets
+
+    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:16px
+    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:16px
+    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:16px
+
+    class Controller delivery
+    class Bastion boundary
+    class Targets runtime
 ```
 
 The bastion account has:
