@@ -4,7 +4,7 @@
 
 A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastructure, a three-server Kubernetes control plane, repeatable automation, live monitoring, verified off-server backups, and a documented restore investigation.
 
-> **Latest implemented milestone: Argo CD application delivery.** Deployed in the lab, with preserved drift-detection and manual-reconciliation evidence. [Read the configuration and validation evidence](kubernetes/argocd/README.md).
+> **Latest released milestone: Argo CD application delivery.** Deployed in the lab, with preserved drift-detection and manual-reconciliation evidence. [Read the configuration and validation evidence](kubernetes/argocd/README.md).
 
 [![Infrastructure Validation](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml/badge.svg)](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml)
 [![Infrastructure as Code](https://img.shields.io/badge/IaC-OpenTofu-844FBA?style=flat-square)](proxmox/opentofu/)
@@ -21,8 +21,7 @@ A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastruc
 
 > **GitOps validation:** Argo CD detected replica drift from three to four; manual reconciliation restored WebDemo to Synced, Healthy, and 3/3 Ready and available replicas.
 >
-> **Latest release:** [v0.8.0 — Stable K3s API Endpoint](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.8.0).
-> Argo CD implementation is merged into `main`; v0.9.0 has not been released.
+> **Latest release:** [v0.9.0 — Argo CD GitOps Delivery](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.9.0).
 >
 > **Scope:** Three VMs on **one physical Proxmox host**. This demonstrates control-plane redundancy and a pod-level failover exercise, not physical-host high availability. Full etcd restore remains incomplete.
 
@@ -187,7 +186,7 @@ flowchart TD
 | v0.6 | Monitoring, application probing, and alert recovery | Released |
 | v0.7 | Off-server backups, integrity checks, retention, and restore investigation | Released; full restore incomplete |
 | v0.8 | Stable internal API VIP and leader-pod failover validation | Released |
-| v0.9 candidate | Argo CD application delivery with drift detection and manual reconciliation | Implemented and live validation documented; not released |
+| v0.9 | Argo CD application delivery with drift detection and manual reconciliation | Released |
 | Next | Unraid-backed shared application storage and volume-recovery validation | Planned |
 | Follow-up | Complete restore validation; notification delivery; broader failure testing | Not yet completed |
 | Future | Human-supervised AI operations for log analysis, incident triage, and runbook assistance | Planned; not deployed |
