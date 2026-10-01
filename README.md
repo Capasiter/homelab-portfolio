@@ -31,29 +31,37 @@ The lab separates provisioning, configuration, runtime services, and off-server 
 
 ```mermaid
 flowchart TD
-    Git["Version-controlled infrastructure<br/>GitHub Actions validation"]
-    Automation["OpenTofu provisioning<br/>Ansible configuration"]
-    Access["Proxmox + OPNsense boundary<br/>Administration through SSH bastion"]
-    VIP["Internal Kubernetes API VIP<br/>10.20.0.110:6443"]
+    Git["Git repository<br/>Version-controlled infrastructure"]
+    CI["GitHub Actions<br/>Static validation only"]
+    Automation["Infrastructure automation<br/>OpenTofu + Ansible"]
+    Proxmox["Proxmox VE<br/>One physical host"]
+    Admin["Administrator<br/>SSH bastion access"]
+    Gateway["OPNsense gateway<br/>Isolated vmbr1 network"]
+    VIP["Kubernetes API VIP<br/>10.20.0.110:6443"]
     Cluster["Three K3s server VMs<br/>Control plane + embedded etcd"]
-    Services["Runtime services<br/>WebDemo + Prometheus + Grafana"]
-    Backup["Unraid off-server backups<br/>Etcd snapshots + protected token"]
+    Services["Runtime services<br/>Traefik + WebDemo"]
+    Observe["Observability<br/>Prometheus + Grafana + alerts"]
+    Backup["Unraid NFS recovery storage<br/>Etcd snapshots + protected token"]
 
+    Git --> CI
     Git --> Automation
-    Automation --> Access
-    Access --> VIP
+    Automation --> Proxmox
+    Admin --> Gateway
+    Proxmox --> Gateway
+    Gateway --> VIP
     VIP --> Cluster
     Cluster --> Services
+    Cluster --> Observe
     Cluster --> Backup
 
-    classDef delivery fill:#DBEAFE,stroke:#1D4ED8,color:#111827,stroke-width:3px,font-size:18px
-    classDef boundary fill:#F3F4F6,stroke:#4B5563,color:#111827,stroke-width:3px,font-size:18px
-    classDef runtime fill:#DCFCE7,stroke:#15803D,color:#111827,stroke-width:3px,font-size:18px
-    classDef recovery fill:#F3E8FF,stroke:#7E22CE,color:#111827,stroke-width:3px,font-size:18px
+    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:17px
+    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:17px
+    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:17px
+    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:17px
 
-    class Git,Automation delivery
-    class Access boundary
-    class VIP,Cluster,Services runtime
+    class Git,CI,Automation delivery
+    class Proxmox,Admin,Gateway boundary
+    class VIP,Cluster,Services,Observe runtime
     class Backup recovery
 ```
 
@@ -118,17 +126,25 @@ The API VIP is included in the K3s certificate SANs and managed by a kube-vip Da
 
 ```mermaid
 flowchart TD
-    Before["Before / server 02 owns VIP"] --> Delete["Delete leader pod on server 02"]
-    Delete --> Move["Ownership observed on server 03"]
-    Delete --> Replace["Replacement pod running on server 02"]
-    Move --> After["After / 3 kube-vip pods running, 3 nodes Ready"]
-    Replace --> After
-    classDef initial fill:#172554,stroke:#60a5fa,color:#eff6ff
-    classDef action fill:#78350f,stroke:#fbbf24,color:#fffbeb
-    classDef healthy fill:#064e3b,stroke:#34d399,color:#ecfdf5
+    Before["Baseline<br/>server 02 owns VIP"]
+    Action["Controlled action<br/>delete leader pod"]
+    Move["VIP ownership<br/>moves to server 03"]
+    Replace["Replacement pod<br/>starts on server 02"]
+    Healthy["Recovered state<br/>3 pods running + 3 nodes Ready"]
+
+    Before --> Action
+    Action --> Move
+    Action --> Replace
+    Move --> Healthy
+    Replace --> Healthy
+
+    classDef initial fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:16px
+    classDef action fill:#FEF3C7,stroke:#D97706,color:#111827,stroke-width:2px,font-size:16px
+    classDef healthy fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:16px
+
     class Before initial
-    class Delete action
-    class Move,Replace,After healthy
+    class Action action
+    class Move,Replace,Healthy healthy
 ```
 
 **Result:** ownership moved to server 03, the deleted pod was replaced, and no failed API probes were recorded. The test did not measure application traffic or establish a zero-downtime bound.

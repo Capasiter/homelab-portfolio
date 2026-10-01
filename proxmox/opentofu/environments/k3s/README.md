@@ -10,10 +10,24 @@ OpenTofu manages the virtual-machine lifecycle. OPNsense provides isolated routi
 
 ```mermaid
 flowchart TD
-    Management["Management network — vmbr0"] --> Proxmox["Proxmox VE management"]
-    Management --> Firewall["OPNsense VM 400"]
-    Firewall --> Lab["Isolated lab — vmbr1 — 10.20.0.0/24"]
-    Lab --> Nodes["K3s servers — VMs 401–403"]
+    Management["Management network<br/>vmbr0"]
+    Proxmox["Proxmox VE management"]
+    Firewall["OPNsense VM 400<br/>Routing + firewall + NAT"]
+    Lab["Isolated lab network<br/>vmbr1 · 10.20.0.0/24"]
+    Nodes["K3s servers<br/>VMs 401–403"]
+
+    Management --> Proxmox
+    Management --> Firewall
+    Firewall --> Lab
+    Lab --> Nodes
+
+    classDef control fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:16px
+    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:16px
+    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:16px
+
+    class Management,Proxmox control
+    class Firewall,Lab boundary
+    class Nodes runtime
 ```
 
 OPNsense connects the two virtual networks:
