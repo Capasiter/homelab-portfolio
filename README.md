@@ -30,52 +30,38 @@ A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastruc
 The lab separates provisioning, configuration, runtime services, and off-server backups. Kubernetes API access stays inside the isolated lab; administration uses an SSH bastion.
 
 ```mermaid
-flowchart TB
-    subgraph Delivery["Delivery and automation"]
-        direction TB
-        Git["Git repository<br/>Version-controlled infrastructure"]
-        CI["GitHub Actions<br/>Static validation"]
-        Tofu["OpenTofu<br/>Proxmox VM provisioning"]
-        Ansible["Ansible<br/>Linux, K3s, VIP, and backups"]
-        Git --> CI
-        Git --> Tofu
-        Git --> Ansible
-    end
+flowchart TD
+    Git["Git repository<br/>Version-controlled infrastructure"]
+    CI["GitHub Actions<br/>Static validation only"]
+    Automation["Infrastructure automation<br/>OpenTofu + Ansible"]
+    Proxmox["Proxmox VE<br/>One physical host"]
+    Admin["Administrator<br/>SSH bastion access"]
+    Gateway["OPNsense gateway<br/>Isolated vmbr1 network"]
+    VIP["Kubernetes API VIP<br/>10.20.0.110:6443"]
+    Cluster["Three K3s server VMs<br/>Control plane + embedded etcd"]
+    Services["Runtime services<br/>Traefik + WebDemo"]
+    Observe["Observability<br/>Prometheus + Grafana + alerts"]
+    Backup["Unraid NFS recovery storage<br/>Etcd snapshots + protected token"]
 
-    subgraph Access["Access and network boundary"]
-        direction TB
-        Admin["Administrator<br/>SSH bastion access"]
-        Gateway["OPNsense gateway<br/>Isolated vmbr1 network"]
-        Admin --> Gateway
-    end
-
-    subgraph Platform["Proxmox VE — one physical host"]
-        direction TB
-        VIP["Kubernetes API VIP<br/>10.20.0.110:6443"]
-        Cluster["Three K3s server VMs<br/>Control plane + embedded etcd"]
-        App["Traefik + replicated WebDemo"]
-        Observe["Prometheus + Grafana<br/>Alertmanager + Blackbox"]
-        VIP --> Cluster
-        Cluster --> App
-        Observe --> Cluster
-        Observe --> App
-    end
-
-    Backup["Unraid NFS<br/>Etcd snapshots + protected token"]
-
-    Tofu --> Gateway
-    Ansible --> Gateway
+    Git --> CI
+    Git --> Automation
+    Automation --> Proxmox
+    Admin --> Gateway
+    Proxmox --> Gateway
     Gateway --> VIP
+    VIP --> Cluster
+    Cluster --> Services
+    Cluster --> Observe
     Cluster --> Backup
 
-    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:16px
-    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:16px
-    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:16px
-    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:16px
+    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:17px
+    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:17px
+    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:17px
+    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:17px
 
-    class Git,CI,Tofu,Ansible delivery
-    class Admin,Gateway boundary
-    class VIP,Cluster,App,Observe runtime
+    class Git,CI,Automation delivery
+    class Proxmox,Admin,Gateway boundary
+    class VIP,Cluster,Services,Observe runtime
     class Backup recovery
 ```
 
