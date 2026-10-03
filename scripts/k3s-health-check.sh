@@ -90,7 +90,17 @@ run_check remote_kubectl get probe/web-demo-availability \
   --namespace "$MONITORING_NAMESPACE"
 
 section "Persistent volume claims"
-run_check remote_kubectl get persistentvolumeclaims --all-namespaces
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+pvc_validator="$script_dir/pvc-status-validator.sh"
+
+if pvc_json="$(remote_kubectl get persistentvolumeclaims --all-namespaces -o json)"; then
+  if ! bash "$pvc_validator" - <<<"$pvc_json"; then
+    overall_status=1
+  fi
+else
+  printf 'ERROR: Unable to retrieve persistent volume claims.\n' >&2
+  overall_status=1
+fi
 
 section "Pods requiring attention"
 problem_pods="$(
