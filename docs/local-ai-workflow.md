@@ -87,3 +87,16 @@ Assuming later commands succeed, the script reaches RESULT: ATTENTION REQUIRED
 and exits 1. This was a source-analysis exercise, not an execution test.
 
 No live cluster access or push was performed.
+
+## Linux integration verification
+
+On October 3, 2026, a temporary fake-SSH harness ran the health-check script
+from outside the repository directory. All 10 cases passed: Bound, empty,
+Pending, missing phase, missing identity, malformed JSON, missing structure,
+multiple documents, retrieval failure, and retrieval failure with valid JSON
+on stdout.
+
+Checks confirmed expected exit codes, later-check execution, and final RESULT
+output. Retrieval failures emitted the retrieval error and skipped validator
+success output. No cluster connection was made. The temporary harness was
+removed after execution.
