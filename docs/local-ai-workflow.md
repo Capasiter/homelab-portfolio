@@ -62,3 +62,28 @@ runtime location were not independently verified in this Linux session.
 The existing .continue/agents/new-config.yaml was not inspected.
 
 No deployment or push is part of this verification.
+
+## Linux PVC follow-up
+
+The earlier validator-absence note describes the initial checkout.
+The Windows PVC commits were subsequently transferred using a Git bundle
+and applied on feature/local-ai-pvc-workflow:
+
+- afc2263: Add local PVC status validator.
+- a1e1d18: Integrate PVC validator into K3s health check.
+
+Both scripts passed bash syntax checking. The local validator test runner
+reported 10 passed, 0 failed, with exit code 0. Full health-check integration
+tests have not yet been repeated on Linux.
+
+Continue explained the attached validator, but its first answer misplaced
+empty-list success and omitted the missing-phase fallback. After correction,
+it still confused format strings with rendered output and omitted leading
+spaces from a quoted format string. Exact output claims require source review.
+
+Continue correctly analyzed retrieval failure with valid JSON on stdout:
+the else branch runs, the validator is skipped, and overall_status becomes 1.
+Assuming later commands succeed, the script reaches RESULT: ATTENTION REQUIRED
+and exits 1. This was a source-analysis exercise, not an execution test.
+
+No live cluster access or push was performed.
