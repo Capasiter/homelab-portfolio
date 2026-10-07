@@ -303,3 +303,118 @@ Hermes is the initial agent candidate. Prime Agent can be evaluated for reposito
 Physical-host high availability remains outside this design. Etcd snapshots do not replace application-volume backups. GPU inference stays on the desktop, and restore experiments run on demand to control Proxmox resource use.
 
 </details>
+
+## Expanded AI architecture — specialist agent vision
+
+> **Proposed design, not deployed evidence.** This expanded version keeps the connected architecture above and assigns different tools to operations, repository work, and Kubernetes diagnosis. Model assignments are starting points to test, not measured winners.
+
+```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 20, "rankSpacing": 90, "curve": "basis"}, "themeVariables": {"fontSize": "20px"}}}%%
+flowchart TD
+    Git["Git repository<br/>Infrastructure + manifests<br/>Runbooks + evidence"]
+    CI["GitHub Actions<br/>Static validation only"]
+    Automation["Infrastructure automation<br/>OpenTofu + Ansible"]
+    Proxmox["Proxmox VE<br/>One physical host"]
+    Admin["Administrator<br/>SSH bastion access"]
+    Network["OPNsense gateway<br/>Firewall + DNS + routing<br/>Isolated vmbr1 network"]
+    VIP["Kubernetes API VIP<br/>kube-vip<br/>10.20.0.110:6443"]
+    Cluster["Three K3s server VMs<br/>Control plane<br/>+ embedded etcd"]
+    Apps["Application platform<br/>Argo CD + Traefik<br/>WebDemo + cert-manager"]
+    Dashboard["Headlamp dashboard<br/>Workloads + events"]
+    Observe["Observability<br/>Prometheus + Grafana<br/>Probes + Loki + alerts"]
+    Policies["NetworkPolicy<br/>Tested pod-access rules"]
+    Storage["Unraid NFS storage<br/>Shared application data<br/>+ separate volume backups"]
+    Backup["Unraid recovery storage<br/>Etcd snapshots<br/>+ protected token"]
+    Restore["Isolated restore lab<br/>Cluster + volume recovery"]
+
+    Workspace["Dedicated Linux agent VM<br/>Scoped tools + workspaces<br/>Agents run on demand"]
+    Desktop["Desktop AI server<br/>LM Studio + Qwen<br/>Two RTX 3060 GPUs"]
+    Hermes["Hermes Agent / operations<br/>Health + backup reports<br/>Incident triage + runbooks"]
+    OpenCode["OpenCode / repository work<br/>Ansible + OpenTofu + YAML<br/>Prepare edits + run checks"]
+    K8sGPT["K8sGPT / cluster diagnosis<br/>Scoped kubeconfig on agent VM<br/>Analyze unhealthy resources"]
+    Prime["Prime Agent / optional trial<br/>Longer repository investigations<br/>Disposable workspace"]
+    Records["Unraid agent records<br/>Reports + memory<br/>+ handoffs"]
+    Review["Lee reviews proposed fixes<br/>Evidence + code diff<br/>Approve delivery"]
+    Delivery["Approved changes via Git<br/>CI + OpenTofu / Ansible<br/>or Argo CD"]
+    Verify["Validate + document<br/>Health + tests + recovery<br/>Portfolio evidence"]
+
+    Git --> CI
+    Git --> Automation
+    Automation --> Proxmox
+    Admin --> Network
+    Proxmox --> Network
+    Network --> VIP
+    VIP --> Cluster
+    Cluster --> Apps
+    Cluster --> Dashboard
+    Cluster --> Observe
+    Apps --> Policies
+    Apps --> Storage
+    Cluster --> Backup
+    Storage --> Restore
+    Backup --> Restore
+
+    Proxmox ----> Workspace
+    Workspace <-->|Model API| Desktop
+    Workspace --> Hermes
+    Workspace --> OpenCode
+    Workspace --> K8sGPT
+    OpenCode -.->|Optional comparison| Prime
+    Observe -.->|Read evidence| Hermes
+    Cluster -.->|Scoped inspection| K8sGPT
+    Git -.->|Repository context| OpenCode
+    Hermes --> Records
+    K8sGPT --> Records
+    OpenCode --> Review
+    Prime -.-> Review
+    Records --> Review
+    Review --> Delivery
+    Delivery --> Verify
+
+    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:20px
+    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:20px
+    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:20px
+    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:20px
+    classDef ai fill:#FEF3C7,stroke:#D97706,color:#111827,stroke-width:2px,font-size:20px
+
+    class Git,CI,Automation,Delivery delivery
+    class Proxmox,Admin,Network,Policies,Review boundary
+    class VIP,Cluster,Apps,Dashboard,Observe,Verify runtime
+    class Storage,Backup,Restore,Records recovery
+    class Workspace,Desktop,Hermes,OpenCode,K8sGPT,Prime ai
+```
+
+**Blue:** delivery and automation · **Green:** running platform · **Purple:** storage and recovery · **Gray:** access, network boundaries, and review · **Amber:** AI tools and local inference.
+
+The connections show logical responsibilities and evidence flow. Hermes handles recurring operations and reporting; OpenCode prepares repository changes; K8sGPT provides specialized cluster diagnosis. Prime Agent is an optional comparison for longer investigations, not a dependency of OpenCode or a required always-on service.
+
+<details>
+<summary><strong>Expand: agent tasks, model choices, and placement</strong></summary>
+
+| Task | Tool to evaluate | Initial model experiment |
+|---|---|---|
+| Daily health, capacity, and backup-freshness report | **Hermes Agent** | Qwen3.5-9B |
+| Investigate events, logs, and incidents | **Hermes Agent** | Qwen3.5-27B for harder cases |
+| DNS, TLS, endpoint, and firewall inspection | **Hermes Agent** with scoped commands | 9B summaries; 27B for difficult cases |
+| Prepare Ansible, OpenTofu, and Kubernetes changes | **OpenCode** | The locally available Qwen Coder model |
+| Explain unhealthy Kubernetes resources | **K8sGPT** | Test a supported local backend; verify the exact LM Studio connection |
+| Longer repository investigations | **Prime Agent**, optional | Qwen Coder or 27B, evaluated on the same task |
+| Runbook updates, handoffs, and evidence summaries | **Hermes Agent** | Qwen3.5-9B |
+
+**Proxmox:** the existing infrastructure and K3s VMs, plus one dedicated Linux agent VM. General-purpose agents stay outside the cluster so they can investigate it when it is unhealthy. Run coding experiments and restore drills on demand.
+
+**Desktop:** LM Studio serves local models on the two RTX 3060 GPUs. Begin with one active model and queued tasks; validate model fit, context, speed, and tool use before adding concurrency.
+
+**Unraid:** application storage, independent recovery artifacts, and durable agent reports and handoffs.
+
+**K3s additions to evaluate:** Headlamp for a Kubernetes dashboard; cert-manager for certificate automation; Loki for logs; tested NetworkPolicies for scoped pod access. K8sGPT starts as a CLI on the agent VM; its operator is a later optional cluster experiment. These are proposed additions, not claims about the current cluster.
+
+**Review path:** agents collect evidence and prepare fixes. Lee reviews changes before the appropriate infrastructure or application delivery process. GitHub Actions stays static validation only.
+
+**Selection test:** compare agents with the same model on a broken-pod diagnosis, backup-freshness report, and small Ansible fix in a test branch. Check correct tool use, evidence quality, completion, elapsed time, and needed intervention.
+
+Sources: [Hermes](https://hermes-agent.nousresearch.com/docs/) · [OpenCode](https://opencode.ai/v2/docs/providers) · [K8sGPT](https://github.com/k8sgpt-ai/k8sgpt) · [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) · [Headlamp](https://kubernetes-sigs.github.io/headlamp/) · [K3s networking](https://docs.k3s.io/networking)
+
+The three K3s servers and agent VM still share one physical host. GPU inference requires the desktop endpoint to be available. Full recovery, new networking controls, and local agent performance must be validated before they appear as deployed portfolio evidence.
+
+</details>
