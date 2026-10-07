@@ -219,3 +219,99 @@ I am transitioning from manufacturing, field service, and paid computer repair i
 [GitHub](https://github.com/Capasiter) · [LinkedIn](https://www.linkedin.com/in/leeaustinmn/)
 
 **[Download Lee Austin’s Infrastructure Support Resume (PDF)](resume/Lee_Austin_Infrastructure_Support_Resume_2026.pdf)**
+
+## Future architecture — completed-state vision
+
+> **Design target, not deployed evidence.** This is what the lab would look like after the planned storage, recovery, notification, and human-supervised AI work is completed and validated. The current Architecture and Live evidence sections above describe what is implemented today.
+
+### Platform waterfall
+
+Read top to bottom. Each box groups one layer to keep the diagram narrow and the labels readable. The dotted links show the order of the operating layers, not individual network connections.
+
+```mermaid
+flowchart TD
+    Git["Git repository<br/>Version-controlled infrastructure<br/>GitHub Actions: static checks only"]
+    Automation["Infrastructure automation<br/>OpenTofu + Ansible"]
+    Proxmox["Proxmox VE<br/>One physical host"]
+    Access["Administration and network<br/>Administrator via SSH bastion<br/>OPNsense: isolated vmbr1"]
+    API["Kubernetes API VIP<br/>10.20.0.110:6443<br/>kube-vip: one owner at a time"]
+    Cluster["Three K3s server VMs<br/>Control plane + embedded etcd"]
+    Runtime["Application delivery and runtime<br/>Argo CD: approved Git changes<br/>Traefik + WebDemo"]
+    Observe["Observability<br/>Prometheus + Grafana + logs<br/>Endpoint probes + delivered alerts"]
+    Storage["Unraid NFS storage<br/>Shared application data<br/>Separate volume backups"]
+    Backup["Unraid recovery storage<br/>Etcd snapshots + protected token<br/>Checksums + retention"]
+    Restore["Isolated restore lab<br/>Cluster and volume recovery<br/>Tested and documented"]
+
+    Git --> Automation
+    Automation --> Proxmox
+    Proxmox -.-> Access
+    Access --> API
+    API --> Cluster
+    Cluster --> Runtime
+    Runtime -.-> Observe
+    Observe -.-> Storage
+    Storage -.-> Backup
+    Backup --> Restore
+
+    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:18px
+    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:18px
+    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:18px
+    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:18px
+    class Git,Automation delivery
+    class Proxmox,Access boundary
+    class API,Cluster,Runtime,Observe runtime
+    class Storage,Backup,Restore recovery
+```
+
+**Blue:** delivery and automation · **Green:** running platform · **Purple:** storage and recovery · **Gray:** access and network boundaries.
+
+Argo CD reads approved application manifests from Git; OpenTofu and Ansible handle infrastructure changes. GitHub Actions remains static validation only. Etcd snapshots and application-volume backups are separate recovery artifacts.
+
+### Local AI agent waterfall
+
+A separate vertical flow keeps the AI connections readable without stretching the platform diagram sideways.
+
+```mermaid
+flowchart TD
+    Inputs["Operational context<br/>Health + events + logs<br/>Repository + runbooks + backup status"]
+    Agent["Dedicated Linux agent VM<br/>Runs on Proxmox<br/>Tools + project workspace"]
+    Model["Desktop AI model server<br/>LM Studio + Qwen<br/>Two RTX 3060 GPUs"]
+    Work["Human-supervised AI workflows<br/>Health reports + incident triage<br/>Code review + runbook assistance"]
+    Reports["Unraid agent records<br/>Reports + memory + handoffs"]
+    Review["Administrator review<br/>Evidence + proposed fixes<br/>Lee approves infrastructure changes"]
+    Git["Approved changes back to Git<br/>Static checks + reviewed delivery"]
+    Verify["Validate the result<br/>Health checks + test evidence<br/>Update runbooks and portfolio"]
+
+    Inputs --> Agent
+    Agent <-->|Inference requests and responses| Model
+    Agent --> Work
+    Work --> Reports
+    Reports --> Review
+    Review --> Git
+    Git --> Verify
+
+    classDef ai fill:#FEF3C7,stroke:#D97706,color:#111827,stroke-width:2px,font-size:18px
+    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:18px
+    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:18px
+    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:18px
+    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:18px
+    class Inputs,Agent,Model,Work ai
+    class Reports recovery
+    class Review boundary
+    class Git delivery
+    class Verify runtime
+```
+
+**Amber:** local AI context, agents, and inference. Reports feed review; approved changes return through Git rather than giving an agent unrestricted control of the lab.
+
+| Machine | Responsibility in the finished design |
+|---|---|
+| **Proxmox** | Infrastructure VMs, K3s platform services, a dedicated agent VM, and an on-demand isolated restore lab |
+| **Desktop** | LM Studio serves Qwen on the two GPUs; the model endpoint must be available when local AI workflows run |
+| **Unraid** | Shared application storage, separate recovery backups, and durable agent reports and handoffs |
+
+Hermes is the initial agent candidate. Prime Agent can be evaluated for repository tasks; OpenClaw is an optional later interface. Health, triage, and repository assistance are logical workflows, not a requirement to run multiple agents or models continuously.
+
+**Completion criteria:** shared storage and volume recovery validated; full etcd restore completed in isolation; outbound notifications delivered and tested; agent tool use evaluated against real lab tasks; reviewed changes and resulting evidence preserved.
+
+**Physical boundary:** the three K3s servers and agent VM still share one Proxmox host. This design does not provide physical-host high availability. GPU inference stays on the desktop, and restore experiments run on demand to keep the infrastructure host's resource use controlled.
