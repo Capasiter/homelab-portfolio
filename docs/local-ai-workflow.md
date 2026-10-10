@@ -100,3 +100,21 @@ Checks confirmed expected exit codes, later-check execution, and final RESULT
 output. Retrieval failures emitted the retrieval error and skipped validator
 success output. No cluster connection was made. The temporary harness was
 removed after execution.
+
+## Hermes supervised pilot and live-check follow-up
+
+Hermes read `docs/local-ai-workflow.md` and summarized user-supplied evidence. It did not execute the health, backup, checksum, or restore checks.
+
+User-supplied observations:
+
+- `k3s-health-check.sh` reported `RESULT: PASS`.
+- All PVCs were Bound; no pods required attention.
+- The backup timer was active and enabled.
+- The backup service reported `Result=success` and `ExecMainStatus=0`.
+- Snapshot and token checksum checks returned `OK`.
+
+Backup freshness is not established by the supplied review evidence, which lacked a backup timestamp, reference time, and freshness threshold. No completed full restore-test result was supplied. Service success and matching checksums do not establish proven recoverability.
+
+Initial AI answers omitted a freshness threshold and confused an active timer with boot enablement. Human review corrected both. A separate fresh-session test, reviewed by Lee, correctly classified three unsupported claims and one supported timer observation.
+
+File tools were enabled. Read-only instructions were a task constraint, not an enforced technical permission boundary. This pilot demonstrates supervised assistance, not reliable autonomous operations.
