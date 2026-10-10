@@ -3,7 +3,9 @@
 - **Validation date:** July 25, 2026
 - **Environment:** K3s infrastructure
 - **Result:** Passed
-- **Deployment state:** Three Ubuntu VMs deployed; K3s installation pending
+- **Deployment state at validation:** Three Ubuntu VMs deployed; K3s installation pending
+> **Historical record:** This documents the v0.4 infrastructure validation. K3s installation and later reliability milestones are documented separately.
+>
 
 ## Purpose
 

@@ -1,0 +1,9 @@
+2026-09-30T17:56:30-05:00
+NAME       SYNC STATUS   HEALTH STATUS
+web-demo   Synced        Healthy
+NAME       READY   UP-TO-DATE   AVAILABLE   AGE
+web-demo   3/3     3            3           60d
+NAME                        READY   STATUS    RESTARTS   AGE    IP           NODE            NOMINATED NODE   READINESS GATES
+web-demo-594c5c5f9c-9dppd   1/1     Running   0          4d6h   10.42.0.39   k3s-server-01   <none>           <none>
+web-demo-594c5c5f9c-r2pfv   1/1     Running   0          4d6h   10.42.1.77   k3s-server-02   <none>           <none>
+web-demo-594c5c5f9c-s5nl2   1/1     Running   0          4d6h   10.42.3.84   k3s-server-03   <none>           <none>

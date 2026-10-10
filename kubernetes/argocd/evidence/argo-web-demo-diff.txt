@@ -1,0 +1,39 @@
+  Resources:
+    Kind:       Namespace
+    Name:       k8s-learning
+    Status:     Synced
+    Version:    v1
+    Kind:       Service
+    Name:       web-demo
+    Namespace:  k8s-learning
+    Status:     Synced
+    Version:    v1
+    Kind:       ServiceAccount
+    Name:       web-demo
+    Namespace:  k8s-learning
+    Status:     Synced
+    Version:    v1
+    Group:      apps
+    Kind:       Deployment
+    Name:       web-demo
+    Namespace:  k8s-learning
+    Status:     OutOfSync
+    Version:    v1
+    Group:      networking.k8s.io
+    Kind:       Ingress
+    Name:       web-demo
+    Namespace:  k8s-learning
+    Status:     Synced
+    Version:    v1
+    Group:      policy
+    Kind:       PodDisruptionBudget
+    Name:       web-demo
+    Namespace:  k8s-learning
+    Status:     Synced
+    Version:    v1
+Events:
+  Type    Reason           Age   From                           Message
+  ----    ------           ----  ----                           -------
+  Normal  ResourceUpdated  78s   argocd-application-controller  Updated sync status: Synced -> OutOfSync
+  Normal  ResourceUpdated  78s   argocd-application-controller  Updated health status: Healthy -> Progressing
+  Normal  ResourceUpdated  72s   argocd-application-controller  Updated health status: Progressing -> Healthy

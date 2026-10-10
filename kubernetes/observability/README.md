@@ -19,11 +19,32 @@ This foundation will later support controlled incident testing and isolated, rea
 
 ```mermaid
 flowchart TD
-    N["node-exporter"] --> P["Prometheus"]
-    K["kube-state-metrics"] --> P
-    A["Kubernetes API and kubelet"] --> P
-    P --> G["Grafana"]
-    P --> M["Alertmanager"]
+    Sources["Cluster metrics sources"]
+    Node["node-exporter"]
+    State["kube-state-metrics"]
+    API["Kubernetes API + kubelet"]
+    Prom["Prometheus"]
+    Grafana["Grafana dashboards"]
+    Alerts["Alertmanager"]
+
+    Sources --> Node
+    Sources --> State
+    Sources --> API
+    Node --> Prom
+    State --> Prom
+    API --> Prom
+    Prom --> Grafana
+    Prom --> Alerts
+
+    classDef source fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:16px
+    classDef control fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:16px
+    classDef healthy fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:16px
+    classDef action fill:#FEF3C7,stroke:#D97706,color:#111827,stroke-width:2px,font-size:16px
+
+    class Sources,Node,State,API source
+    class Prom control
+    class Grafana healthy
+    class Alerts action
 ```
 
 - **Prometheus** collects and stores time-series metrics.
@@ -191,8 +212,7 @@ Validated on August 23, 2026:
 
 ## Next Steps
 
-1. Complete repository validation, CI, pull-request review, and the v0.6.0 release.
-2. Configure and test Alertmanager routing, delivery, acknowledgement, and recovery notifications.
-3. Evaluate Blackbox Exporter redundancy and alert when the expected probe time series disappears.
-4. Expand controlled testing to partial replica loss, node and network failure, slow responses, and intermittent failures.
-5. Capture timestamped evidence to measure detection, firing, notification, and recovery latency.
+1. Configure and test Alertmanager routing, delivery, acknowledgement, and recovery notifications.
+2. Evaluate Blackbox Exporter redundancy and alert when the expected probe time series disappears.
+3. Expand controlled testing to partial replica loss, node and network failure, slow responses, and intermittent errors.
+4. Capture timestamped evidence to measure detection, firing, notification, and recovery latency.

@@ -2,7 +2,7 @@
 
 **Validation date:** September 19, 2026 (America/Chicago)
 
-**Milestone:** v0.8.0 — implementation merged; release pending
+**Milestone:** [v0.8.0](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.8.0) — released September 20, 2026
 
 **Implementation commit:** `155fd62` — `feat: add K3s API VIP failover foundation`
 

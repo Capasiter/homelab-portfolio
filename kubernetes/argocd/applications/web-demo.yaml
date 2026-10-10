@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: web-demo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Capasiter/homelab-portfolio.git
+    targetRevision: main
+    path: kubernetes/k8s-learning
+    directory:
+      include: web-demo.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: k8s-learning

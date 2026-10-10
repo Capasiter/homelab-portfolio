@@ -2,7 +2,9 @@
 
 ### Build it. Operate it. Test what happens when it breaks.
 
-A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastructure, a three-server Kubernetes control plane, repeatable automation, live monitoring, and tested recovery workflows.
+A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastructure, a three-server Kubernetes control plane, repeatable automation, live monitoring, verified off-server backups, and a documented restore investigation.
+
+> **Latest released milestone: Argo CD application delivery.** Deployed in the lab, with preserved drift-detection and manual-reconciliation evidence. [Read the configuration and validation evidence](kubernetes/argocd/README.md).
 
 [![Infrastructure Validation](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml/badge.svg)](https://github.com/Capasiter/homelab-portfolio/actions/workflows/infrastructure-validation.yml)
 [![Infrastructure as Code](https://img.shields.io/badge/IaC-OpenTofu-844FBA?style=flat-square)](proxmox/opentofu/)
@@ -17,9 +19,9 @@ A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastruc
 | **3 K3s server VMs**<br>Control plane + embedded etcd | **148 successful HTTP requests**<br>0 observed failures in a protected rollout | **Off-server etcd backups**<br>SHA-256 verification + protected token |
 | **Internal API VIP**<br>kube-vip DaemonSet across all 3 servers | **Leader-pod handoff observed**<br>VIP moved from server 02 to server 03 | **Restore drill attempted**<br>Decompression verified; full restore blocked |
 
-> **Latest live validation:** September 19, 2026 — API VIP ownership moved between servers after leader-pod deletion; no failed API probes were recorded in the test log. All three nodes were Ready in the post-test check.
+> **GitOps validation:** Argo CD detected replica drift from three to four; manual reconciliation restored WebDemo to Synced, Healthy, and 3/3 Ready and available replicas.
 >
-> **Latest release:** [v0.8.0 — Stable K3s API Endpoint](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.8.0).
+> **Latest release:** [v0.9.0 — Argo CD GitOps Delivery](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.9.0).
 >
 > **Scope:** Three VMs on **one physical Proxmox host**. This demonstrates control-plane redundancy and a pod-level failover exercise, not physical-host high availability. Full etcd restore remains incomplete.
 
@@ -29,42 +31,41 @@ The lab separates provisioning, configuration, runtime services, and off-server 
 
 ```mermaid
 flowchart TD
-    Git["Version-controlled infrastructure"] --> CI["GitHub Actions / static validation"]
-    Git --> Tofu["OpenTofu / VM provisioning"]
-    Git --> Ansible["Ansible / Linux, K3s, VIP, backups"]
-    Admin["Administration / SSH bastion"]
+    Git["Git repository<br/>Version-controlled infrastructure"]
+    CI["GitHub Actions<br/>Static validation only"]
+    Automation["Infrastructure automation<br/>OpenTofu + Ansible"]
+    Proxmox["Proxmox VE<br/>One physical host"]
+    Admin["Administrator<br/>SSH bastion access"]
+    Gateway["OPNsense gateway<br/>Isolated vmbr1 network"]
+    VIP["Kubernetes API VIP<br/>10.20.0.110:6443"]
+    Cluster["Three K3s server VMs<br/>Control plane + embedded etcd"]
+    Services["Runtime services<br/>Traefik + WebDemo"]
+    Observe["Observability<br/>Prometheus + Grafana + alerts"]
+    Backup["Unraid NFS recovery storage<br/>Etcd snapshots + protected token"]
 
-    subgraph PVE["Proxmox VE — one physical host"]
-        Gateway["OPNsense / isolated lab gateway"]
-        subgraph Lab["vmbr1 / 10.20.0.0/24"]
-            VIP["API VIP / 10.20.0.110:6443"]
-            Cluster["3 K3s server VMs / embedded etcd"]
-            App["Traefik / replicated web-demo"]
-            Observe["Prometheus / Grafana / Alertmanager / Blackbox"]
-        end
-        Gateway --- Cluster
-        VIP -->|"current VIP owner"| Cluster
-        Cluster --> App
-        Observe -->|"metrics and HTTP probes"| Cluster
-        Observe -->|"availability probes"| App
-    end
+    Git --> CI
+    Git --> Automation
+    Automation --> Proxmox
+    Admin --> Gateway
+    Proxmox --> Gateway
+    Gateway --> VIP
+    VIP --> Cluster
+    Cluster --> Services
+    Cluster --> Observe
+    Cluster --> Backup
 
-    Tofu -->|"provisions"| Cluster
-    Ansible -->|"configures"| Cluster
-    Admin -->|"restricted SSH access"| Cluster
-    Cluster -->|"etcd snapshots and protected token"| Backup["Unraid NFS / off-server backup storage"]
+    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:17px
+    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:17px
+    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:17px
+    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:17px
 
-    classDef delivery fill:#172554,stroke:#60a5fa,color:#eff6ff
-    classDef runtime fill:#064e3b,stroke:#34d399,color:#ecfdf5
-    classDef recovery fill:#4c1d95,stroke:#c4b5fd,color:#f5f3ff
-    classDef boundary fill:#1e293b,stroke:#94a3b8,color:#f8fafc
-    class Git,CI,Tofu,Ansible delivery
-    class VIP,Cluster,App,Observe runtime
+    class Git,CI,Automation delivery
+    class Proxmox,Admin,Gateway boundary
+    class VIP,Cluster,Services,Observe runtime
     class Backup recovery
-    class Admin,Gateway boundary
 ```
 
-**Blue:** delivery and automation · **Green:** running platform · **Purple:** off-server recovery data.
+**Blue:** delivery and automation · **Green:** running platform · **Purple:** off-server recovery data · **Gray:** access and network boundaries.
 
 The diagram groups workloads logically. The three K3s VMs share the same physical host; the VIP is owned by one server at a time, not a separate appliance. CI performs static checks and does not deploy to the live lab.
 
@@ -77,7 +78,7 @@ The diagram groups workloads logically. The three K3s VMs share the same physica
 | `k3s-server-02` | 402 | `10.20.0.102` | Control plane + etcd |
 | `k3s-server-03` | 403 | `10.20.0.103` | Control plane + etcd |
 
-Each VM uses 2 CPU cores, 3072 MB RAM, a 32 GB disk, Ubuntu 24.04, cloud-init, and the QEMU guest agent. OpenTofu defines stable VM identities, addressing, and startup dependencies.
+Each VM uses 4 CPU cores, 6144 MB RAM, a 32 GB disk, Ubuntu 24.04, cloud-init, and the QEMU guest agent. OpenTofu defines stable VM identities, addressing, and startup dependencies.
 
 OPNsense VM 400 provides routing, DHCP, DNS forwarding, and outbound NAT. `vmbr0` carries management and OPNsense WAN traffic; `vmbr1` is the isolated lab bridge. No upstream-router changes or physical uplink on the isolated bridge are required.
 
@@ -96,7 +97,8 @@ These are bounded test results, not uptime guarantees. Each link leads to implem
 | Protected application rollout | 148 successful HTTP requests, 0 observed failures; separate revalidation: 120 successful, 0 failures | [Rolling-update lab](kubernetes/k8s-learning/README.md) |
 | Availability alert lifecycle | Healthy → controlled failure → firing alert → recovery | [Observability validation](kubernetes/observability/README.md) |
 | Off-server backup workflow | Snapshot, baseline/rolling retention, token protection, and checksum verification validated | [Backup and restore record](docs/portfolio-history-through-v0.7.md#restore-validation) |
-| API leader-pod failover | VIP moved 02 → 03; no failed API probes recorded; 3/3 kube-vip pods and 3 Ready nodes afterward | [September 19 validation](ansible/docs/k3s-api-vip-validation.md) |
+| API leader-pod failover | VIP moved 02 → 03; no failed API probes recorded; 3/3 kube-vip pods and 3 Ready nodes afterward | [VIP validation](ansible/docs/k3s-api-vip-validation.md) |
+| GitOps drift detection and manual reconciliation | Replica drift detected; manual sync restored Synced, Healthy, and 3/3 Ready replicas | [GitOps validation](kubernetes/argocd/README.md) |
 
 **What the CI badge means:** repository validation status. It is not a live cluster-health indicator.
 
@@ -124,17 +126,25 @@ The API VIP is included in the K3s certificate SANs and managed by a kube-vip Da
 
 ```mermaid
 flowchart TD
-    Before["Before / server 02 owns VIP"] --> Delete["Delete leader pod on server 02"]
-    Delete --> Move["Ownership observed on server 03"]
-    Delete --> Replace["Replacement pod running on server 02"]
-    Move --> After["After / 3 kube-vip pods running, 3 nodes Ready"]
-    Replace --> After
-    classDef initial fill:#172554,stroke:#60a5fa,color:#eff6ff
-    classDef action fill:#78350f,stroke:#fbbf24,color:#fffbeb
-    classDef healthy fill:#064e3b,stroke:#34d399,color:#ecfdf5
+    Before["Baseline<br/>server 02 owns VIP"]
+    Action["Controlled action<br/>delete leader pod"]
+    Move["VIP ownership<br/>moves to server 03"]
+    Replace["Replacement pod<br/>starts on server 02"]
+    Healthy["Recovered state<br/>3 pods running + 3 nodes Ready"]
+
+    Before --> Action
+    Action --> Move
+    Action --> Replace
+    Move --> Healthy
+    Replace --> Healthy
+
+    classDef initial fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:16px
+    classDef action fill:#FEF3C7,stroke:#D97706,color:#111827,stroke-width:2px,font-size:16px
+    classDef healthy fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:16px
+
     class Before initial
-    class Delete action
-    class Move,Replace,After healthy
+    class Action action
+    class Move,Replace,Healthy healthy
 ```
 
 **Result:** ownership moved to server 03, the deleted pod was replaced, and no failed API probes were recorded. The test did not measure application traffic or establish a zero-downtime bound.
@@ -150,6 +160,7 @@ flowchart TD
 | Stable API endpoint | [kube-vip role](ansible/roles/k3s_api_vip/) · [Cluster orchestration](ansible/playbooks/k3s_cluster.yml) |
 | Application reliability | [Kubernetes workload and validation](kubernetes/k8s-learning/README.md) |
 | Monitoring and alerting | [Observability configuration and evidence](kubernetes/observability/README.md) |
+| GitOps application delivery | [Argo CD configuration and validation](kubernetes/argocd/README.md) · [WebDemo Application](kubernetes/argocd/applications/web-demo.yaml) |
 | CI and change history | [Validation workflow](.github/workflows/infrastructure-validation.yml) · [Changelog](CHANGELOG.md) |
 | Earlier engineering detail | [Preserved v0.1–v0.7 portfolio record](docs/portfolio-history-through-v0.7.md) |
 
@@ -182,7 +193,7 @@ flowchart TD
 | v0.6 | Monitoring, application probing, and alert recovery | Released |
 | v0.7 | Off-server backups, integrity checks, retention, and restore investigation | Released; full restore incomplete |
 | v0.8 | Stable internal API VIP and leader-pod failover validation | Released |
-| Next | Argo CD application delivery with drift detection and controlled reconciliation | Planned |
+| v0.9 | Argo CD application delivery with drift detection and manual reconciliation | Released |
 | Next | Unraid-backed shared application storage and volume-recovery validation | Planned |
 | Follow-up | Complete restore validation; notification delivery; broader failure testing | Not yet completed |
 | Future | Human-supervised AI operations for log analysis, incident triage, and runbook assistance | Planned; not deployed |
@@ -196,7 +207,8 @@ The next-stage ordering is a roadmap, not a release commitment. AI-assisted oper
 - **Storage:** current application and monitoring volumes use node-local storage. Etcd snapshots do not back up persistent-volume contents.
 - **Failover:** the recorded exercise deleted one kube-vip pod. It did not power off a node, interrupt the network, or test physical-host failure.
 - **Monitoring:** outbound alert delivery and blackbox-exporter redundancy remain future work.
-- **Isolation:** Kubernetes NetworkPolicy and GitOps are not claimed as implemented.
+- **GitOps:** Argo CD uses manual sync; automated sync, self-heal, and automatic pruning are disabled. Its installation is bootstrapped manually and is not self-managed. Continuous HTTP availability during reconciliation was not tested.
+- **Isolation:** Kubernetes NetworkPolicy is not claimed as implemented.
 
 ## About Lee
 
@@ -205,3 +217,122 @@ I am transitioning from manufacturing, field service, and paid computer repair i
 **Focus:** Linux / Infrastructure Support · Systems Administration · Cloud Operations · Junior DevOps
 
 [GitHub](https://github.com/Capasiter) · [LinkedIn](https://www.linkedin.com/in/leeaustinmn/)
+
+**[Download Lee Austin’s Infrastructure Support Resume (PDF)](resume/Lee_Austin_Infrastructure_Support_Resume_2026.pdf)**
+
+## Future architecture — completed-state vision
+
+> **Proposed design, not deployed evidence.** This connected architecture assigns different tools to operations, repository work, and Kubernetes diagnosis. Model assignments are starting points to test, not measured winners.
+
+```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 20, "rankSpacing": 90, "curve": "basis"}, "themeVariables": {"fontSize": "20px"}}}%%
+flowchart TD
+    Git["Git repository<br/>Infrastructure + manifests<br/>Runbooks + evidence"]
+    CI["GitHub Actions<br/>Static validation only"]
+    Automation["Infrastructure automation<br/>OpenTofu + Ansible"]
+    Proxmox["Proxmox VE<br/>One physical host"]
+    Admin["Administrator<br/>SSH bastion access"]
+    Network["OPNsense gateway<br/>Firewall + DNS + routing<br/>Isolated vmbr1 network"]
+    VIP["Kubernetes API VIP<br/>kube-vip<br/>10.20.0.110:6443"]
+    Cluster["Three K3s server VMs<br/>Control plane<br/>+ embedded etcd"]
+    Apps["Application platform<br/>Argo CD + Traefik<br/>WebDemo + cert-manager"]
+    Dashboard["Headlamp dashboard<br/>Workloads + events"]
+    Observe["Observability<br/>Prometheus + Grafana<br/>Probes + Loki + alerts"]
+    Policies["NetworkPolicy<br/>Tested pod-access rules"]
+    Storage["Unraid NFS storage<br/>Shared application data<br/>+ separate volume backups"]
+    Backup["Unraid recovery storage<br/>Etcd snapshots<br/>+ protected token"]
+    Restore["Isolated restore lab<br/>Cluster + volume recovery"]
+
+    Workspace["Dedicated Linux agent VM<br/>Scoped tools + workspaces<br/>Agents run on demand"]
+    Desktop["Desktop AI server<br/>LM Studio + Qwen<br/>Two RTX 3060 GPUs"]
+    Hermes["Hermes Agent / operations<br/>Health + backup reports<br/>Incident triage + runbooks"]
+    OpenCode["OpenCode / repository work<br/>Ansible + OpenTofu + YAML<br/>Prepare edits + run checks"]
+    K8sGPT["K8sGPT / cluster diagnosis<br/>Scoped kubeconfig on agent VM<br/>Analyze unhealthy resources"]
+    Prime["Prime Agent / optional trial<br/>Longer repository investigations<br/>Disposable workspace"]
+    Records["Unraid agent records<br/>Reports + memory<br/>+ handoffs"]
+    Review["Lee reviews proposed fixes<br/>Evidence + code diff<br/>Approve delivery"]
+    Delivery["Approved changes via Git<br/>CI + OpenTofu / Ansible<br/>or Argo CD"]
+    Verify["Validate + document<br/>Health + tests + recovery<br/>Portfolio evidence"]
+
+    Git --> CI
+    Git --> Automation
+    Automation --> Proxmox
+    Admin --> Network
+    Proxmox --> Network
+    Network --> VIP
+    VIP --> Cluster
+    Cluster --> Apps
+    Cluster --> Dashboard
+    Cluster --> Observe
+    Apps --> Policies
+    Apps --> Storage
+    Cluster --> Backup
+    Storage --> Restore
+    Backup --> Restore
+
+    Proxmox ----> Workspace
+    Workspace <-->|Model API| Desktop
+    Workspace --> Hermes
+    Workspace --> OpenCode
+    Workspace --> K8sGPT
+    OpenCode -.->|Optional comparison| Prime
+    Observe -.->|Read evidence| Hermes
+    Cluster -.->|Scoped inspection| K8sGPT
+    Git -.->|Repository context| OpenCode
+    Hermes --> Records
+    K8sGPT --> Records
+    OpenCode --> Review
+    Prime -.-> Review
+    Records --> Review
+    Review --> Delivery
+    Delivery --> Verify
+
+    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:20px
+    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:20px
+    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:20px
+    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:20px
+    classDef ai fill:#FEF3C7,stroke:#D97706,color:#111827,stroke-width:2px,font-size:20px
+
+    class Git,CI,Automation,Delivery delivery
+    class Proxmox,Admin,Network,Policies,Review boundary
+    class VIP,Cluster,Apps,Dashboard,Observe,Verify runtime
+    class Storage,Backup,Restore,Records recovery
+    class Workspace,Desktop,Hermes,OpenCode,K8sGPT,Prime ai
+```
+
+**Blue:** delivery and automation · **Green:** running platform · **Purple:** storage and recovery · **Gray:** access, network boundaries, and review · **Amber:** AI tools and local inference.
+
+The connections show logical responsibilities and evidence flow. Hermes handles recurring operations and reporting; OpenCode prepares repository changes; K8sGPT provides specialized cluster diagnosis. Prime Agent is an optional comparison for longer investigations, not a dependency of OpenCode or a required always-on service.
+
+<details>
+<summary><strong>Expand: agent tasks, model choices, and placement</strong></summary>
+
+| Task | Tool to evaluate | Initial model experiment |
+|---|---|---|
+| Daily health, capacity, and backup-freshness report | **Hermes Agent** | Qwen3.5-9B |
+| Investigate events, logs, and incidents | **Hermes Agent** | Qwen3.5-27B for harder cases |
+| DNS, TLS, endpoint, and firewall inspection | **Hermes Agent** with scoped commands | 9B summaries; 27B for difficult cases |
+| Prepare Ansible, OpenTofu, and Kubernetes changes | **OpenCode** | The locally available Qwen Coder model |
+| Explain unhealthy Kubernetes resources | **K8sGPT** | Test a supported local backend; verify the exact LM Studio connection |
+| Longer repository investigations | **Prime Agent**, optional | Qwen Coder or 27B, evaluated on the same task |
+| Runbook updates, handoffs, and evidence summaries | **Hermes Agent** | Qwen3.5-9B |
+
+**Proxmox:** the existing infrastructure and K3s VMs, plus one dedicated Linux agent VM. General-purpose agents stay outside the cluster so they can investigate it when it is unhealthy. Run coding experiments and restore drills on demand.
+
+**Desktop:** LM Studio serves local models on the two RTX 3060 GPUs. Begin with one active model and queued tasks; validate model fit, context, speed, and tool use before adding concurrency.
+
+**Unraid:** application storage, independent recovery artifacts, and durable agent reports and handoffs.
+
+**K3s additions to evaluate:** Headlamp for a Kubernetes dashboard; cert-manager for certificate automation; Loki for logs; tested NetworkPolicies for scoped pod access. K8sGPT starts as a CLI on the agent VM; its operator is a later optional cluster experiment. These are proposed additions, not claims about the current cluster.
+
+**Review path:** agents collect evidence and prepare fixes. Lee reviews changes before the appropriate infrastructure or application delivery process. GitHub Actions stays static validation only.
+
+**Completed-state targets:** shared application storage and volume recovery tested; full isolated etcd restore validated; outbound notifications delivered and tested; network access rules verified; agent workflows evaluated on real lab tasks; reviewed changes and evidence preserved.
+
+**Selection test:** compare agents with the same model on a broken-pod diagnosis, backup-freshness report, and small Ansible fix in a test branch. Check correct tool use, evidence quality, completion, elapsed time, and needed intervention.
+
+Sources: [Hermes](https://hermes-agent.nousresearch.com/docs/) · [OpenCode](https://opencode.ai/v2/docs/providers) · [K8sGPT](https://github.com/k8sgpt-ai/k8sgpt) · [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) · [Headlamp](https://kubernetes-sigs.github.io/headlamp/) · [K3s networking](https://docs.k3s.io/networking)
+
+The three K3s servers and agent VM still share one physical host. GPU inference requires the desktop endpoint to be available. Full recovery, new networking controls, and local agent performance must be validated before they appear as deployed portfolio evidence.
+
+</details>

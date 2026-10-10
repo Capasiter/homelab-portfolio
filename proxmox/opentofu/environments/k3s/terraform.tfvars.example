@@ -7,9 +7,9 @@ template_vm_id = 9100
 datastore_id   = "local-lvm"
 bridge         = "vmbr1"
 
-cpu_cores = 2
+cpu_cores = 4
 cpu_type  = "host"
-memory    = 3072
+memory    = 6144
 disk_size = 32
 
 username            = "ansible"
