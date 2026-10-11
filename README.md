@@ -30,6 +30,7 @@ A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastruc
 The lab separates provisioning, configuration, runtime services, and off-server backups. Kubernetes API access stays inside the isolated lab; administration uses an SSH bastion.
 
 ```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 20, "rankSpacing": 90, "curve": "basis"}, "themeVariables": {"fontSize": "20px"}}}%%
 flowchart TD
     Git["Git repository<br/>Version-controlled infrastructure"]
     CI["GitHub Actions<br/>Static validation only"]
@@ -58,10 +59,10 @@ flowchart TD
     Cluster --> Observe
     Cluster --> Backup
 
-    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:17px
-    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:17px
-    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:17px
-    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:17px
+    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:20px
+    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:20px
+    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:20px
+    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:20px
 
     class Git,CI,Automation,Argo delivery
     class Proxmox,Admin,Gateway boundary
@@ -236,6 +237,17 @@ I am transitioning from manufacturing, field service, and paid computer repair i
 ```mermaid
 %%{init: {"flowchart": {"nodeSpacing": 20, "rankSpacing": 90, "curve": "basis"}, "themeVariables": {"fontSize": "20px"}}}%%
 flowchart TD
+    subgraph ReviewLane["Agent evidence and reviewed delivery"]
+        direction TB
+    Prime["Prime Agent / optional trial<br/>Longer repository investigations<br/>Disposable workspace"]
+    Records["Unraid agent records<br/>Reports + memory<br/>+ handoffs"]
+    Review["Lee reviews proposed fixes<br/>Evidence + code diff<br/>Approve delivery"]
+    Delivery["Approved changes via Git<br/>CI + OpenTofu / Ansible<br/>or Argo CD"]
+    Verify["Validate + document<br/>Health + tests + recovery<br/>Portfolio evidence"]
+    end
+
+    subgraph PlatformLane["Platform and specialist tools"]
+        direction TB
     Git["Git repository<br/>Infrastructure + manifests<br/>Runbooks + evidence"]
     CI["GitHub Actions<br/>Static validation only"]
     Automation["Infrastructure automation<br/>OpenTofu + Ansible"]
@@ -251,17 +263,17 @@ flowchart TD
     Storage["Unraid NFS storage<br/>Shared application data<br/>+ separate volume backups"]
     Backup["Unraid recovery storage<br/>Etcd snapshots<br/>+ protected token"]
     Restore["Isolated restore lab<br/>Cluster + volume recovery"]
-
     Workspace["Dedicated Linux agent VM<br/>Scoped tools + workspaces<br/>Agents run on demand"]
     Desktop["Desktop AI server<br/>LM Studio + Qwen<br/>Two RTX 3060 GPUs"]
     Hermes["Hermes Agent / operations<br/>Health + backup reports<br/>Incident triage + runbooks"]
     OpenCode["OpenCode / repository work<br/>Ansible + OpenTofu + YAML<br/>Prepare edits + run checks"]
     K8sGPT["K8sGPT / cluster diagnosis<br/>Scoped kubeconfig on agent VM<br/>Analyze unhealthy resources"]
-    Prime["Prime Agent / optional trial<br/>Longer repository investigations<br/>Disposable workspace"]
-    Records["Unraid agent records<br/>Reports + memory<br/>+ handoffs"]
-    Review["Lee reviews proposed fixes<br/>Evidence + code diff<br/>Approve delivery"]
-    Delivery["Approved changes via Git<br/>CI + OpenTofu / Ansible<br/>or Argo CD"]
-    Verify["Validate + document<br/>Health + tests + recovery<br/>Portfolio evidence"]
+    end
+
+    Prime -.-> Review
+    Records --> Review
+    Review --> Delivery
+    Delivery --> Verify
 
     Git --> CI
     Git --> Automation
@@ -281,8 +293,8 @@ flowchart TD
 
     Proxmox ----> Workspace
     Workspace <-->|Model API| Desktop
-    Workspace --> Hermes
     Workspace --> OpenCode
+    Workspace --> Hermes
     Workspace --> K8sGPT
     OpenCode -.->|Optional comparison| Prime
     Observe -.->|Read evidence| Hermes
@@ -291,16 +303,15 @@ flowchart TD
     Hermes --> Records
     K8sGPT --> Records
     OpenCode --> Review
-    Prime -.-> Review
-    Records --> Review
-    Review --> Delivery
-    Delivery --> Verify
 
     classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:20px
     classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:20px
     classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:20px
     classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:20px
     classDef ai fill:#FEF3C7,stroke:#D97706,color:#111827,stroke-width:2px,font-size:20px
+
+    style ReviewLane fill:transparent,stroke:#94A3B8
+    style PlatformLane fill:transparent,stroke:#94A3B8
 
     class Git,CI,Automation,Delivery delivery
     class Proxmox,Admin,Network,Policies,Review boundary
