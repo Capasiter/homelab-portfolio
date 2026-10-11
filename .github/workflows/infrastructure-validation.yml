@@ -10,6 +10,25 @@ permissions:
   contents: read
 
 jobs:
+  pvc-validation:
+    name: PVC validator tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Verify jq is available
+        run: jq --version
+
+      - name: Check Bash syntax
+        run: bash -n scripts/k3s-health-check.sh scripts/pvc-status-validator.sh test-pvc-validator/test-runner.sh
+
+      - name: Run local PVC fixtures
+        run: bash test-pvc-validator/test-runner.sh
+
   opentofu:
     name: OpenTofu validation
     runs-on: ubuntu-24.04
