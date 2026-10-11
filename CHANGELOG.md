@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Local PVC status validator, K3s health-check integration, and fixture coverage in CI.
+- Read-only backup evidence collector with raw systemd observations, service-exit timing, and isolated fixture tests in CI.
+- Supervised Continue and Hermes workflow records documenting source review, unsupported-claim corrections, and evidence limitations.
+- LM Studio connection documentation for the Windows-to-Linux reverse SSH tunnel and basic Hermes/Continue generation checks.
+
+### Known limitations
+
+- Basic local AI generation checks establish connectivity, not answer accuracy or autonomous operational reliability.
+- The backup collector does not inspect backup artifacts, verify checksums, assess artifact freshness, or test restores.
+- Continue\'s extension execution location remains unverified in the connection record.
+
 ## [0.9.0](https://github.com/Capasiter/homelab-portfolio/releases/tag/v0.9.0) - 2026-09-30
 
 ### Added

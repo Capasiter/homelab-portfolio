@@ -161,6 +161,8 @@ flowchart TD
 | Application reliability | [Kubernetes workload and validation](kubernetes/k8s-learning/README.md) |
 | Monitoring and alerting | [Observability configuration and evidence](kubernetes/observability/README.md) |
 | GitOps application delivery | [Argo CD configuration and validation](kubernetes/argocd/README.md) · [WebDemo Application](kubernetes/argocd/applications/web-demo.yaml) |
+| Supervised local AI | [Workflow and review findings](docs/local-ai-workflow.md) · [LM Studio connection](docs/local-ai-connection.md) |
+| Read-only backup evidence | [Collector usage, tests, and limits](docs/backup-evidence-collector.md) |
 | CI and change history | [Validation workflow](.github/workflows/infrastructure-validation.yml) · [Changelog](CHANGELOG.md) |
 | Earlier engineering detail | [Preserved v0.1–v0.7 portfolio record](docs/portfolio-history-through-v0.7.md) |
 
@@ -196,7 +198,7 @@ flowchart TD
 | v0.9 | Argo CD application delivery with drift detection and manual reconciliation | Released |
 | Next | Unraid-backed shared application storage and volume-recovery validation | Planned |
 | Follow-up | Complete restore validation; notification delivery; broader failure testing | Not yet completed |
-| Future | Human-supervised AI operations for log analysis, incident triage, and runbook assistance | Planned; not deployed |
+| In progress | Human-supervised local AI assistance with Continue and Hermes | Supervised pilot documented; autonomous operations not validated |
 
 The next-stage ordering is a roadmap, not a release commitment. AI-assisted operations will start in an isolated sandbox, with human-reviewed, auditable infrastructure changes.
 
@@ -219,6 +221,9 @@ I am transitioning from manufacturing, field service, and paid computer repair i
 [GitHub](https://github.com/Capasiter) · [LinkedIn](https://www.linkedin.com/in/leeaustinmn/)
 
 **[Download Lee Austin’s Infrastructure Support Resume (PDF)](resume/Lee_Austin_Infrastructure_Support_Resume_2026.pdf)**
+
+<details>
+<summary><strong>Expand: future architecture and agent experiments</strong></summary>
 
 ## Future architecture — completed-state vision
 
@@ -334,5 +339,7 @@ The connections show logical responsibilities and evidence flow. Hermes handles 
 Sources: [Hermes](https://hermes-agent.nousresearch.com/docs/) · [OpenCode](https://opencode.ai/v2/docs/providers) · [K8sGPT](https://github.com/k8sgpt-ai/k8sgpt) · [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) · [Headlamp](https://kubernetes-sigs.github.io/headlamp/) · [K3s networking](https://docs.k3s.io/networking)
 
 The three K3s servers and agent VM still share one physical host. GPU inference requires the desktop endpoint to be available. Full recovery, new networking controls, and local agent performance must be validated before they appear as deployed portfolio evidence.
+
+</details>
 
 </details>
