@@ -12,7 +12,7 @@ A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastruc
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s-326CE5?style=flat-square)](ansible/docs/k3s-cluster-validation.md)
 [![Observability](https://img.shields.io/badge/Observability-Prometheus%20%2B%20Grafana-F46800?style=flat-square)](kubernetes/observability/README.md)
 
-**[Architecture](#architecture)** · **[Live evidence](#live-evidence)** · **[Engineering stories](#engineering-stories)** · **[Roadmap](#roadmap)** · **[About Lee](#about-lee)**
+**[Architecture](#architecture)** · **[Live evidence](#live-evidence)** · **[Engineering stories](#engineering-stories)** · **[Roadmap](#roadmap)** · **[About Lee](#about-lee)** · **[Résumé (PDF)](resume/Lee_Austin_Infrastructure_Support_Resume_2026.pdf)**
 
 | Infrastructure | Reliability | Recovery |
 |:---|:---|:---|
@@ -39,6 +39,7 @@ flowchart TD
     Gateway["OPNsense gateway<br/>Isolated vmbr1 network"]
     VIP["Kubernetes API VIP<br/>10.20.0.110:6443"]
     Cluster["Three K3s server VMs<br/>Control plane + embedded etcd"]
+    Argo["Argo CD<br/>Manual GitOps reconciliation"]
     Services["Runtime services<br/>Traefik + WebDemo"]
     Observe["Observability<br/>Prometheus + Grafana + alerts"]
     Backup["Unraid NFS recovery storage<br/>Etcd snapshots + protected token"]
@@ -50,6 +51,9 @@ flowchart TD
     Proxmox --> Gateway
     Gateway --> VIP
     VIP --> Cluster
+    Git -.->|Application manifests| Argo
+    Cluster --> Argo
+    Argo -->|WebDemo delivery| Services
     Cluster --> Services
     Cluster --> Observe
     Cluster --> Backup
@@ -59,7 +63,7 @@ flowchart TD
     classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:17px
     classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:17px
 
-    class Git,CI,Automation delivery
+    class Git,CI,Automation,Argo delivery
     class Proxmox,Admin,Gateway boundary
     class VIP,Cluster,Services,Observe runtime
     class Backup recovery
@@ -200,7 +204,7 @@ flowchart TD
 | Follow-up | Complete restore validation; notification delivery; broader failure testing | Not yet completed |
 | In progress | Human-supervised local AI assistance with Continue and Hermes | Supervised pilot documented; autonomous operations not validated |
 
-The next-stage ordering is a roadmap, not a release commitment. AI-assisted operations will start in an isolated sandbox, with human-reviewed, auditable infrastructure changes.
+The next-stage ordering is a roadmap, not a release commitment. The supervised AI pilot is documented separately; future operational automation will use an isolated sandbox and human-reviewed, auditable infrastructure changes.
 
 ### Boundaries worth knowing
 
