@@ -30,6 +30,7 @@ A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastruc
 The lab separates provisioning, configuration, runtime services, and off-server backups. Kubernetes API access stays inside the isolated lab; administration uses an SSH bastion.
 
 ```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 20, "rankSpacing": 90, "curve": "basis"}, "themeVariables": {"fontSize": "20px"}}}%%
 flowchart TD
     Git["Git repository<br/>Version-controlled infrastructure"]
     CI["GitHub Actions<br/>Static validation only"]
@@ -58,10 +59,10 @@ flowchart TD
     Cluster --> Observe
     Cluster --> Backup
 
-    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:17px
-    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:17px
-    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:17px
-    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:17px
+    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:20px
+    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:20px
+    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:20px
+    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:20px
 
     class Git,CI,Automation,Argo delivery
     class Proxmox,Admin,Gateway boundary
@@ -233,81 +234,7 @@ I am transitioning from manufacturing, field service, and paid computer repair i
 
 > **Proposed design, not deployed evidence.** This connected architecture assigns different tools to operations, repository work, and Kubernetes diagnosis. Model assignments are starting points to test, not measured winners.
 
-```mermaid
-%%{init: {"flowchart": {"nodeSpacing": 20, "rankSpacing": 90, "curve": "basis"}, "themeVariables": {"fontSize": "20px"}}}%%
-flowchart TD
-    Git["Git repository<br/>Infrastructure + manifests<br/>Runbooks + evidence"]
-    CI["GitHub Actions<br/>Static validation only"]
-    Automation["Infrastructure automation<br/>OpenTofu + Ansible"]
-    Proxmox["Proxmox VE<br/>One physical host"]
-    Admin["Administrator<br/>SSH bastion access"]
-    Network["OPNsense gateway<br/>Firewall + DNS + routing<br/>Isolated vmbr1 network"]
-    VIP["Kubernetes API VIP<br/>kube-vip<br/>10.20.0.110:6443"]
-    Cluster["Three K3s server VMs<br/>Control plane<br/>+ embedded etcd"]
-    Apps["Application platform<br/>Argo CD + Traefik<br/>WebDemo + cert-manager"]
-    Dashboard["Headlamp dashboard<br/>Workloads + events"]
-    Observe["Observability<br/>Prometheus + Grafana<br/>Probes + Loki + alerts"]
-    Policies["NetworkPolicy<br/>Tested pod-access rules"]
-    Storage["Unraid NFS storage<br/>Shared application data<br/>+ separate volume backups"]
-    Backup["Unraid recovery storage<br/>Etcd snapshots<br/>+ protected token"]
-    Restore["Isolated restore lab<br/>Cluster + volume recovery"]
-
-    Workspace["Dedicated Linux agent VM<br/>Scoped tools + workspaces<br/>Agents run on demand"]
-    Desktop["Desktop AI server<br/>LM Studio + Qwen<br/>Two RTX 3060 GPUs"]
-    Hermes["Hermes Agent / operations<br/>Health + backup reports<br/>Incident triage + runbooks"]
-    OpenCode["OpenCode / repository work<br/>Ansible + OpenTofu + YAML<br/>Prepare edits + run checks"]
-    K8sGPT["K8sGPT / cluster diagnosis<br/>Scoped kubeconfig on agent VM<br/>Analyze unhealthy resources"]
-    Prime["Prime Agent / optional trial<br/>Longer repository investigations<br/>Disposable workspace"]
-    Records["Unraid agent records<br/>Reports + memory<br/>+ handoffs"]
-    Review["Lee reviews proposed fixes<br/>Evidence + code diff<br/>Approve delivery"]
-    Delivery["Approved changes via Git<br/>CI + OpenTofu / Ansible<br/>or Argo CD"]
-    Verify["Validate + document<br/>Health + tests + recovery<br/>Portfolio evidence"]
-
-    Git --> CI
-    Git --> Automation
-    Automation --> Proxmox
-    Admin --> Network
-    Proxmox --> Network
-    Network --> VIP
-    VIP --> Cluster
-    Cluster --> Apps
-    Cluster --> Dashboard
-    Cluster --> Observe
-    Apps --> Policies
-    Apps --> Storage
-    Cluster --> Backup
-    Storage --> Restore
-    Backup --> Restore
-
-    Proxmox ----> Workspace
-    Workspace <-->|Model API| Desktop
-    Workspace --> Hermes
-    Workspace --> OpenCode
-    Workspace --> K8sGPT
-    OpenCode -.->|Optional comparison| Prime
-    Observe -.->|Read evidence| Hermes
-    Cluster -.->|Scoped inspection| K8sGPT
-    Git -.->|Repository context| OpenCode
-    Hermes --> Records
-    K8sGPT --> Records
-    OpenCode --> Review
-    Prime -.-> Review
-    Records --> Review
-    Review --> Delivery
-    Delivery --> Verify
-
-    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:20px
-    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:20px
-    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:20px
-    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:20px
-    classDef ai fill:#FEF3C7,stroke:#D97706,color:#111827,stroke-width:2px,font-size:20px
-
-    class Git,CI,Automation,Delivery delivery
-    class Proxmox,Admin,Network,Policies,Review boundary
-    class VIP,Cluster,Apps,Dashboard,Observe,Verify runtime
-    class Storage,Backup,Restore,Records recovery
-    class Workspace,Desktop,Hermes,OpenCode,K8sGPT,Prime ai
-```
+![Proposed future architecture: review and delivery blocks on the left](docs/diagrams/future-architecture.svg)
 
 **Blue:** delivery and automation · **Green:** running platform · **Purple:** storage and recovery · **Gray:** access, network boundaries, and review · **Amber:** AI tools and local inference.
 
