@@ -1,5 +1,17 @@
 # Local AI workflow
 
+## Current status
+
+This document preserves the sequence of supervised exercises; statements about missing code or paused checks below describe their respective sessions.
+
+- PVC validator and health-check integration are now on `main`; the recorded Linux fixture and fake-SSH integration checks each passed all 10 cases.
+- Hermes summarized user-supplied live-check evidence under human review. It did not execute those live checks itself.
+- [LM Studio connection checks](local-ai-connection.md) on October 11 confirmed basic generation through Hermes and Continue; they did not establish answer accuracy. Continue\'s extension execution location remains unverified.
+- The [read-only backup evidence collector](backup-evidence-collector.md) records systemd observations and service-exit age, not artifact freshness or recoverability.
+- Autonomous operations, enforced read-only agent permissions, and full restore success are not established by these records.
+
+## Session history
+
 Verified on October 3, 2026, using Continue in VS Code on
 devops-workstation, with this workspace:
 
