@@ -29,6 +29,9 @@ jobs:
       - name: Run local PVC fixtures
         run: bash test-pvc-validator/test-runner.sh
 
+      - name: Run backup evidence collector fixtures
+        run: python3 scripts/collect-backup-evidence.py --self-test
+
   opentofu:
     name: OpenTofu validation
     runs-on: ubuntu-24.04
