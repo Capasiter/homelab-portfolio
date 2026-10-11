@@ -236,7 +236,7 @@ I am transitioning from manufacturing, field service, and paid computer repair i
 
 ```mermaid
 %%{init: {"flowchart": {"nodeSpacing": 20, "rankSpacing": 90, "curve": "basis"}, "themeVariables": {"fontSize": "20px"}}}%%
-flowchart TD
+flowchart RL
     subgraph ReviewLane["Agent evidence and reviewed delivery"]
         direction TB
     Prime["Prime Agent / optional trial<br/>Longer repository investigations<br/>Disposable workspace"]
