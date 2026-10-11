@@ -59,10 +59,10 @@ flowchart TD
     Cluster --> Observe
     Cluster --> Backup
 
-    classDef delivery fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:20px
-    classDef boundary fill:#F1F5F9,stroke:#475569,color:#111827,stroke-width:2px,font-size:20px
-    classDef runtime fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:20px
-    classDef recovery fill:#F3E8FF,stroke:#9333EA,color:#111827,stroke-width:2px,font-size:20px
+    classDef delivery fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef boundary fill:#293241,stroke:#a9b8c8,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef runtime fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef recovery fill:#39304d,stroke:#b49bd4,color:#e2e8f0,stroke-width:2px,font-size:20px
 
     class Git,CI,Automation,Argo delivery
     class Proxmox,Admin,Gateway boundary
@@ -143,9 +143,9 @@ flowchart TD
     Move --> Healthy
     Replace --> Healthy
 
-    classDef initial fill:#DBEAFE,stroke:#2563EB,color:#111827,stroke-width:2px,font-size:16px
-    classDef action fill:#FEF3C7,stroke:#D97706,color:#111827,stroke-width:2px,font-size:16px
-    classDef healthy fill:#DCFCE7,stroke:#16A34A,color:#111827,stroke-width:2px,font-size:16px
+    classDef initial fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px,font-size:16px
+    classDef action fill:#4a3b24,stroke:#d7b77b,color:#e2e8f0,stroke-width:2px,font-size:16px
+    classDef healthy fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px,font-size:16px
 
     class Before initial
     class Action action
