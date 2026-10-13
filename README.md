@@ -227,20 +227,85 @@ I am transitioning from manufacturing, field service, and paid computer repair i
 
 **[Download Lee Austin’s Infrastructure Support Resume (PDF)](resume/Lee_Austin_Infrastructure_Support_Resume_2026.pdf)**
 
-<details>
+<details open>
 <summary><strong>Expand: future architecture and agent experiments</strong></summary>
 
 ## Future architecture — completed-state vision
 
 > **Proposed design, not deployed evidence.** This connected architecture assigns different tools to operations, repository work, and Kubernetes diagnosis. Model assignments are starting points to test, not measured winners.
 
-![Proposed future architecture: review and delivery blocks on the left](docs/diagrams/future-architecture.svg)
+```mermaid
+flowchart TB
+    subgraph Build["BUILD AND DELIVER"]
+        Git["Git repository<br/>Infrastructure · manifests · runbooks"]
+        CI["GitHub Actions<br/>Static validation only"]
+        Deploy["OpenTofu · Ansible · Argo CD<br/>Reviewed delivery"]
+        Git --> CI
+        Git --> Deploy
+    end
+    subgraph Lab["RUN THE LAB · ONE PHYSICAL PROXMOX HOST"]
+        Network["SSH bastion · OPNsense<br/>Isolated network"]
+        K3s["Kubernetes API VIP<br/>Three K3s server VMs + etcd"]
+        Apps["Traefik · WebDemo<br/>Proposed: cert-manager + NetworkPolicy"]
+        Observe["Prometheus · Grafana · alerts<br/>Proposed: Loki + Headlamp"]
+        Network --> K3s
+        K3s --> Apps
+        K3s --> Observe
+    end
+    subgraph AI["LOCAL AI WORKSPACE"]
+        Desktop["Desktop · LM Studio<br/>2 × RTX 3060 12 GB · 48 GB RAM<br/>One active model · queued tasks"]
+        VM["Dedicated Linux agent VM<br/>On the same Proxmox host<br/>Scoped tools and workspaces"]
+        Ops["Hermes<br/>Health reports · backup checks · triage"]
+        Code["Continue / OpenCode<br/>Repository edits · checks · documentation"]
+        Diagnose["K8sGPT<br/>Kubernetes diagnosis"]
+        Prime["Optional Prime Agent trial<br/>Longer investigations"]
+        Desktop <-->|Model API| VM
+        VM --> Ops
+        VM --> Code
+        VM --> Diagnose
+        VM -.-> Prime
+    end
+    subgraph Recovery["PRESERVE AND RECOVER · UNRAID"]
+        Data["Shared application storage<br/>Separate volume backups"]
+        Snapshots["Etcd snapshots<br/>Protected token"]
+        Records["Agent reports<br/>Evidence and handoffs"]
+    end
+    Restore["Isolated restore drill<br/>On-demand Proxmox workspace<br/>Cluster + application data"]
+    Review["Lee reviews<br/>Evidence · proposed fix · code diff"]
+    Verify["Verify results<br/>Save tests and portfolio evidence"]
+    Deploy --> Network
+    Observe -.->|Read evidence| Ops
+    K3s -.->|Scoped inspection| Diagnose
+    Git -.->|Repository context| Code
+    Apps --> Data
+    K3s --> Snapshots
+    Data --> Restore
+    Snapshots --> Restore
+    Ops --> Records
+    Diagnose --> Records
+    Records --> Review
+    Code --> Review
+    Prime -.-> Review
+    Review -->|Approved change| Git
+    Deploy --> Verify
+    Verify --> Records
+    classDef blue fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px
+    classDef green fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px
+    classDef purple fill:#39304d,stroke:#b49bd4,color:#e2e8f0,stroke-width:2px
+    classDef gray fill:#293241,stroke:#a9b8c8,color:#e2e8f0,stroke-width:2px
+    classDef amber fill:#4a3b24,stroke:#d7b77b,color:#e2e8f0,stroke-width:2px
+    class Git,CI,Deploy blue
+    class K3s,Apps,Observe,Verify green
+    class Data,Snapshots,Records,Restore purple
+    class Network,Review gray
+    class Desktop,VM,Ops,Code,Diagnose,Prime amber
+```
 
 **Blue:** delivery and automation · **Green:** running platform · **Purple:** storage and recovery · **Gray:** access, network boundaries, and review · **Amber:** AI tools and local inference.
 
-The connections show logical responsibilities and evidence flow. Hermes handles recurring operations and reporting; OpenCode prepares repository changes; K8sGPT provides specialized cluster diagnosis. Prime Agent is an optional comparison for longer investigations, not a dependency of OpenCode or a required always-on service.
+The connections show logical responsibilities and evidence flow. Hermes handles recurring operations and reporting; Continue and OpenCode assist with repository changes; K8sGPT provides specialized cluster diagnosis. Prime Agent is an optional comparison for longer investigations, not a dependency of OpenCode or a required always-on service.
 
-<details>
+<details open>
 <summary><strong>Expand: agent tasks, model choices, and placement</strong></summary>
 
 | Task | Tool to evaluate | Initial model experiment |
@@ -248,14 +313,14 @@ The connections show logical responsibilities and evidence flow. Hermes handles 
 | Daily health, capacity, and backup-freshness report | **Hermes Agent** | Qwen3.5-9B |
 | Investigate events, logs, and incidents | **Hermes Agent** | Qwen3.5-27B for harder cases |
 | DNS, TLS, endpoint, and firewall inspection | **Hermes Agent** with scoped commands | 9B summaries; 27B for difficult cases |
-| Prepare Ansible, OpenTofu, and Kubernetes changes | **OpenCode** | The locally available Qwen Coder model |
+| Prepare Ansible, OpenTofu, and Kubernetes changes | **Continue / OpenCode** | The locally available Qwen Coder model |
 | Explain unhealthy Kubernetes resources | **K8sGPT** | Test a supported local backend; verify the exact LM Studio connection |
 | Longer repository investigations | **Prime Agent**, optional | Qwen Coder or 27B, evaluated on the same task |
 | Runbook updates, handoffs, and evidence summaries | **Hermes Agent** | Qwen3.5-9B |
 
 **Proxmox:** the existing infrastructure and K3s VMs, plus one dedicated Linux agent VM. General-purpose agents stay outside the cluster so they can investigate it when it is unhealthy. Run coding experiments and restore drills on demand.
 
-**Desktop:** LM Studio serves local models on the two RTX 3060 GPUs. Begin with one active model and queued tasks; validate model fit, context, speed, and tool use before adding concurrency.
+**Desktop:** LM Studio serves local models on two RTX 3060 GPUs with 12 GB VRAM each; the desktop has 48 GB system RAM. Begin with one active model and queued tasks; validate model fit, context, speed, and tool use before adding concurrency.
 
 **Unraid:** application storage, independent recovery artifacts, and durable agent reports and handoffs.
 
