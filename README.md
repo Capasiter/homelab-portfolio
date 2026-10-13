@@ -64,11 +64,11 @@ flowchart TB
     Gateway --> VIP
     Git -.->|Application manifests| Argo
     Cluster --> Backup
-    classDef blue fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px
-    classDef green fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px
-    classDef purple fill:#39304d,stroke:#b49bd4,color:#e2e8f0,stroke-width:2px
-    classDef gray fill:#293241,stroke:#a9b8c8,color:#e2e8f0,stroke-width:2px
-    classDef amber fill:#4a3b24,stroke:#d7b77b,color:#e2e8f0,stroke-width:2px
+    classDef blue fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef green fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef purple fill:#39304d,stroke:#b49bd4,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef gray fill:#293241,stroke:#a9b8c8,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef amber fill:#4a3b24,stroke:#d7b77b,color:#e2e8f0,stroke-width:2px,font-size:20px
     class Git,CI,Automation,Argo blue
     class Proxmox,Admin,Gateway gray
     class VIP,Cluster,Services,Observe green
@@ -79,8 +79,7 @@ flowchart TB
 
 The diagram groups workloads logically. The three K3s VMs share the same physical host; the VIP is owned by one server at a time, not a separate appliance. CI performs static checks and does not deploy to the live lab.
 
-<details>
-<summary><strong>Expand: node sizing and network design</strong></summary>
+### Node sizing and network design
 
 | Node | VM ID | Address | Role |
 |---|---:|---|---|
@@ -94,7 +93,6 @@ OPNsense VM 400 provides routing, DHCP, DNS forwarding, and outbound NAT. `vmbr0
 
 [Provisioning and network implementation](proxmox/opentofu/environments/k3s/README.md)
 
-</details>
 
 ## Live evidence
 
@@ -154,11 +152,11 @@ flowchart TB
     Action --> Replace
     Move --> Healthy
     Replace --> Healthy
-    classDef blue fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px
-    classDef green fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px
-    classDef purple fill:#39304d,stroke:#b49bd4,color:#e2e8f0,stroke-width:2px
-    classDef gray fill:#293241,stroke:#a9b8c8,color:#e2e8f0,stroke-width:2px
-    classDef amber fill:#4a3b24,stroke:#d7b77b,color:#e2e8f0,stroke-width:2px
+    classDef blue fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef green fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef purple fill:#39304d,stroke:#b49bd4,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef gray fill:#293241,stroke:#a9b8c8,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef amber fill:#4a3b24,stroke:#d7b77b,color:#e2e8f0,stroke-width:2px,font-size:20px
     class Before blue
     class Action amber
     class Move,Replace,Healthy green
@@ -183,8 +181,7 @@ flowchart TB
 | CI and change history | [Validation workflow](.github/workflows/infrastructure-validation.yml) · [Changelog](CHANGELOG.md) |
 | Earlier engineering detail | [Preserved v0.1–v0.7 portfolio record](docs/portfolio-history-through-v0.7.md) |
 
-<details>
-<summary><strong>Expand: security and operating practices</strong></summary>
+### Security and operating practices
 
 - Isolated lab networking and key-based SSH bastion access; no public Kubernetes API.
 - Dedicated automation identities and documented Proxmox permission testing.
@@ -200,7 +197,6 @@ flowchart TB
 
 [Detailed security record and tradeoffs](docs/portfolio-history-through-v0.7.md#security)
 
-</details>
 
 ## Roadmap
 
@@ -239,8 +235,6 @@ I am transitioning from manufacturing, field service, and paid computer repair i
 
 **[Download Lee Austin’s Infrastructure Support Resume (PDF)](resume/Lee_Austin_Infrastructure_Support_Resume_2026.pdf)**
 
-<details open>
-<summary><strong>Expand: future architecture and agent experiments</strong></summary>
 
 ## Future architecture — completed-state vision
 
@@ -301,11 +295,11 @@ flowchart TB
     Review -->|Approved change| Git
     Deploy --> Verify
     Verify --> Records
-    classDef blue fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px
-    classDef green fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px
-    classDef purple fill:#39304d,stroke:#b49bd4,color:#e2e8f0,stroke-width:2px
-    classDef gray fill:#293241,stroke:#a9b8c8,color:#e2e8f0,stroke-width:2px
-    classDef amber fill:#4a3b24,stroke:#d7b77b,color:#e2e8f0,stroke-width:2px
+    classDef blue fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef green fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef purple fill:#39304d,stroke:#b49bd4,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef gray fill:#293241,stroke:#a9b8c8,color:#e2e8f0,stroke-width:2px,font-size:20px
+    classDef amber fill:#4a3b24,stroke:#d7b77b,color:#e2e8f0,stroke-width:2px,font-size:20px
     class Git,CI,Deploy blue
     class K3s,Apps,Observe,Verify green
     class Data,Snapshots,Records,Restore purple
@@ -317,8 +311,7 @@ flowchart TB
 
 The connections show logical responsibilities and evidence flow. Hermes handles recurring operations and reporting; Continue and OpenCode assist with repository changes; K8sGPT provides specialized cluster diagnosis. Prime Agent is an optional comparison for longer investigations, not a dependency of OpenCode or a required always-on service.
 
-<details open>
-<summary><strong>Expand: agent tasks, model choices, and placement</strong></summary>
+### Agent tasks, model choices, and placement
 
 | Task | Tool to evaluate | Initial model experiment |
 |---|---|---|
@@ -348,6 +341,4 @@ Sources: [Hermes](https://hermes-agent.nousresearch.com/docs/) · [OpenCode](htt
 
 The three K3s servers and agent VM still share one physical host. GPU inference requires the desktop endpoint to be available. Full recovery, new networking controls, and local agent performance must be validated before they appear as deployed portfolio evidence.
 
-</details>
 
-</details>
