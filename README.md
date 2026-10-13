@@ -73,6 +73,10 @@ flowchart TB
     class Proxmox,Admin,Gateway gray
     class VIP,Cluster,Services,Observe green
     class Backup purple
+    style Build fill:#182235,stroke:#64748b,color:#e2e8f0
+    style Access fill:#182235,stroke:#64748b,color:#e2e8f0
+    style Platform fill:#182235,stroke:#64748b,color:#e2e8f0
+    style Recovery fill:#182235,stroke:#64748b,color:#e2e8f0
 ```
 
 **Blue:** delivery and automation · **Green:** running platform · **Purple:** off-server recovery data · **Gray:** access and network boundaries.
@@ -160,6 +164,10 @@ flowchart TB
     class Before blue
     class Action amber
     class Move,Replace,Healthy green
+    style Baseline fill:#182235,stroke:#64748b,color:#e2e8f0
+    style Exercise fill:#182235,stroke:#64748b,color:#e2e8f0
+    style Handoff fill:#182235,stroke:#64748b,color:#e2e8f0
+    style Result fill:#182235,stroke:#64748b,color:#e2e8f0
 ```
 
 **Result:** ownership moved to server 03, the deleted pod was replaced, and no failed API probes were recorded. The test did not measure application traffic or establish a zero-downtime bound.
@@ -305,6 +313,10 @@ flowchart TB
     class Data,Snapshots,Records,Restore purple
     class Network,Review gray
     class Desktop,VM,Ops,Code,Diagnose,Prime amber
+    style Build fill:#182235,stroke:#64748b,color:#e2e8f0
+    style Lab fill:#182235,stroke:#64748b,color:#e2e8f0
+    style AI fill:#182235,stroke:#64748b,color:#e2e8f0
+    style Recovery fill:#182235,stroke:#64748b,color:#e2e8f0
 ```
 
 **Blue:** delivery and automation · **Green:** running platform · **Purple:** storage and recovery · **Gray:** access, network boundaries, and review · **Amber:** AI tools and local inference.
