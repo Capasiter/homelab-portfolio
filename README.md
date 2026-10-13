@@ -30,44 +30,49 @@ A hands-on infrastructure portfolio by **Lee Austin**: isolated Linux infrastruc
 The lab separates provisioning, configuration, runtime services, and off-server backups. Kubernetes API access stays inside the isolated lab; administration uses an SSH bastion.
 
 ```mermaid
-%%{init: {"flowchart": {"nodeSpacing": 20, "rankSpacing": 90, "curve": "basis"}, "themeVariables": {"fontSize": "20px"}}}%%
-flowchart TD
-    Git["Git repository<br/>Version-controlled infrastructure"]
-    CI["GitHub Actions<br/>Static validation only"]
-    Automation["Infrastructure automation<br/>OpenTofu + Ansible"]
-    Proxmox["Proxmox VE<br/>One physical host"]
-    Admin["Administrator<br/>SSH bastion access"]
-    Gateway["OPNsense gateway<br/>Isolated vmbr1 network"]
-    VIP["Kubernetes API VIP<br/>10.20.0.110:6443"]
-    Cluster["Three K3s server VMs<br/>Control plane + embedded etcd"]
-    Argo["Argo CD<br/>Manual GitOps reconciliation"]
-    Services["Runtime services<br/>Traefik + WebDemo"]
-    Observe["Observability<br/>Prometheus + Grafana + alerts"]
-    Backup["Unraid NFS recovery storage<br/>Etcd snapshots + protected token"]
-
-    Git --> CI
-    Git --> Automation
+flowchart TB
+    subgraph Build["BUILD AND VALIDATE"]
+        Git["Git repository<br/>Version-controlled infrastructure"]
+        CI["GitHub Actions<br/>Static validation only"]
+        Automation["OpenTofu + Ansible<br/>Infrastructure automation"]
+        Git --> CI
+        Git --> Automation
+    end
+    subgraph Access["HOST AND ACCESS"]
+        Proxmox["Proxmox VE<br/>One physical host"]
+        Admin["Administrator<br/>SSH bastion access"]
+        Gateway["OPNsense gateway<br/>Isolated vmbr1 network"]
+        Proxmox --> Gateway
+        Admin --> Gateway
+    end
+    subgraph Platform["RUN THE PLATFORM · THREE VMs ON ONE HOST"]
+        VIP["Kubernetes API VIP<br/>10.20.0.110:6443"]
+        Cluster["Three K3s server VMs<br/>Control plane + embedded etcd"]
+        Argo["Argo CD<br/>Manual GitOps reconciliation"]
+        Services["Runtime services<br/>Traefik + WebDemo"]
+        Observe["Observability<br/>Prometheus + Grafana + alerts"]
+        VIP --> Cluster
+        Cluster --> Argo
+        Argo -->|WebDemo delivery| Services
+        Cluster --> Services
+        Cluster --> Observe
+    end
+    subgraph Recovery["PRESERVE RECOVERY DATA · OFF-SERVER"]
+        Backup["Unraid NFS recovery storage<br/>Etcd snapshots + protected token"]
+    end
     Automation --> Proxmox
-    Admin --> Gateway
-    Proxmox --> Gateway
     Gateway --> VIP
-    VIP --> Cluster
     Git -.->|Application manifests| Argo
-    Cluster --> Argo
-    Argo -->|WebDemo delivery| Services
-    Cluster --> Services
-    Cluster --> Observe
     Cluster --> Backup
-
-    classDef delivery fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px,font-size:20px
-    classDef boundary fill:#293241,stroke:#a9b8c8,color:#e2e8f0,stroke-width:2px,font-size:20px
-    classDef runtime fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px,font-size:20px
-    classDef recovery fill:#39304d,stroke:#b49bd4,color:#e2e8f0,stroke-width:2px,font-size:20px
-
-    class Git,CI,Automation,Argo delivery
-    class Proxmox,Admin,Gateway boundary
-    class VIP,Cluster,Services,Observe runtime
-    class Backup recovery
+    classDef blue fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px
+    classDef green fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px
+    classDef purple fill:#39304d,stroke:#b49bd4,color:#e2e8f0,stroke-width:2px
+    classDef gray fill:#293241,stroke:#a9b8c8,color:#e2e8f0,stroke-width:2px
+    classDef amber fill:#4a3b24,stroke:#d7b77b,color:#e2e8f0,stroke-width:2px
+    class Git,CI,Automation,Argo blue
+    class Proxmox,Admin,Gateway gray
+    class VIP,Cluster,Services,Observe green
+    class Backup purple
 ```
 
 **Blue:** delivery and automation · **Green:** running platform · **Purple:** off-server recovery data · **Gray:** access and network boundaries.
@@ -130,26 +135,33 @@ Live testing exposed unexpected NFS ownership and checksum files retaining stale
 The API VIP is included in the K3s certificate SANs and managed by a kube-vip DaemonSet. During the September 19 test, the current leader pod on server 02 was deleted while API readiness probes ran through the VIP.
 
 ```mermaid
-flowchart TD
-    Before["Baseline<br/>server 02 owns VIP"]
-    Action["Controlled action<br/>delete leader pod"]
-    Move["VIP ownership<br/>moves to server 03"]
-    Replace["Replacement pod<br/>starts on server 02"]
-    Healthy["Recovered state<br/>3 pods running + 3 nodes Ready"]
-
+flowchart TB
+    subgraph Baseline["ESTABLISH THE BASELINE"]
+        Before["Server 02 owns the API VIP"]
+    end
+    subgraph Exercise["TRIGGER A CONTROLLED FAILURE"]
+        Action["Delete the leader pod<br/>Continue API probes through the VIP"]
+    end
+    subgraph Handoff["OBSERVE RECOVERY"]
+        Move["VIP ownership moves<br/>Server 02 → server 03"]
+        Replace["Replacement pod starts<br/>On server 02"]
+    end
+    subgraph Result["VERIFY THE RESULT"]
+        Healthy["3 kube-vip pods running<br/>3 nodes Ready<br/>No failed API probes recorded"]
+    end
     Before --> Action
     Action --> Move
     Action --> Replace
     Move --> Healthy
     Replace --> Healthy
-
-    classDef initial fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px,font-size:16px
-    classDef action fill:#4a3b24,stroke:#d7b77b,color:#e2e8f0,stroke-width:2px,font-size:16px
-    classDef healthy fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px,font-size:16px
-
-    class Before initial
-    class Action action
-    class Move,Replace,Healthy healthy
+    classDef blue fill:#243b53,stroke:#7ba7d1,color:#e2e8f0,stroke-width:2px
+    classDef green fill:#234338,stroke:#7cb99a,color:#e2e8f0,stroke-width:2px
+    classDef purple fill:#39304d,stroke:#b49bd4,color:#e2e8f0,stroke-width:2px
+    classDef gray fill:#293241,stroke:#a9b8c8,color:#e2e8f0,stroke-width:2px
+    classDef amber fill:#4a3b24,stroke:#d7b77b,color:#e2e8f0,stroke-width:2px
+    class Before blue
+    class Action amber
+    class Move,Replace,Healthy green
 ```
 
 **Result:** ownership moved to server 03, the deleted pod was replaced, and no failed API probes were recorded. The test did not measure application traffic or establish a zero-downtime bound.
