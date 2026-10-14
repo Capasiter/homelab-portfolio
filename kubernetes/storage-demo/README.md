@@ -34,8 +34,9 @@ SHA-256: 741681964e93ad07f5faba653cccaf87ce1922530efaa82e369961b65ac66958
 
 ## Remaining validation
 
-Cross-node pod rescheduling and application-volume backup/restore have not
-been tested in this demo. Etcd snapshots do not back up volume contents.
+Cross-node Deployment rescheduling and full application-volume recovery
+remain untested. Single-file backup/restore is documented below.
+Etcd snapshots do not back up volume contents.
 The shared Unraid host remains a storage dependency.
 
 ## Cross-node read validation — 2026-10-13
@@ -45,3 +46,22 @@ on k3s-server-02 while the demo Deployment remained on k3s-server-03.
 The reader completed successfully, printed the expected file content,
 and returned /data/persistence-proof.txt: OK from sha256sum -c.
 This proves cross-node read access, not Deployment rescheduling or recovery.
+
+## Single-file backup and restore — 2026-10-13
+
+Copied persistence-proof.txt from the running demo through kubectl exec
+to /mnt/k3s-backups/applications/storage-demo.71a7FL/persistence-proof.txt
+on k3s-server-01's mounted Unraid backup export.
+The application-backup directory was configured root-owned with mode 0700;
+the backup file was set to mode 0600.
+The backup copy passed verification against the original SHA-256.
+
+Streamed the backup into /data/restored-proof.txt through kubectl exec,
+with an overwrite guard and without removing the original.
+The restored file passed SHA-256 verification, and cmp confirmed that
+original and restored contents match.
+
+Scope: one test file restored under a new name. Full-volume recovery,
+data-loss recovery, automated backups and retention remain untested.
+Application data and this backup reside on the same Unraid host;
+this is not protection against loss of that host.
