@@ -37,3 +37,11 @@ SHA-256: 741681964e93ad07f5faba653cccaf87ce1922530efaa82e369961b65ac66958
 Cross-node pod rescheduling and application-volume backup/restore have not
 been tested in this demo. Etcd snapshots do not back up volume contents.
 The shared Unraid host remains a storage dependency.
+
+## Cross-node read validation — 2026-10-13
+
+A temporary Pod, storage-demo-reader, mounted the same PVC read-only
+on k3s-server-02 while the demo Deployment remained on k3s-server-03.
+The reader completed successfully, printed the expected file content,
+and returned /data/persistence-proof.txt: OK from sha256sum -c.
+This proves cross-node read access, not Deployment rescheduling or recovery.
