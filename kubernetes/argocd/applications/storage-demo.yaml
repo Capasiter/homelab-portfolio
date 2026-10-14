@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/Capasiter/homelab-portfolio.git
-    targetRevision: feature/shared-app-storage
+    targetRevision: main
     path: kubernetes/storage-demo
     directory:
       include: "*.yaml"

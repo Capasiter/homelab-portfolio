@@ -7,7 +7,8 @@
 - NFSv3 over TCP; ReadWriteMany; Retain reclaim policy.
 - Declared 1Gi capacity is binding metadata, not an enforced NFS quota.
 - Demo container runs as UID 99/GID 100.
-- Argo CD uses manual sync from feature/shared-app-storage.
+- Argo CD uses manual sync; the committed Application targets main.
+- Initial live validation used feature/shared-app-storage at commit 5285091.
 - Export rule: 192.168.0.162(rw,sync,insecure,root_squash).
 - All three node connection tests appeared to Unraid as 192.168.0.162.
   This restriction cannot distinguish clients behind that translated address.
