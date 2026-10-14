@@ -1,0 +1,13 @@
+---
+- name: Prepare K3s servers for NFS application volumes
+  hosts: k3s_servers
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Install the NFS client
+      ansible.builtin.apt:
+        name: nfs-common
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
