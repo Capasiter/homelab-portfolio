@@ -5,6 +5,7 @@ set -Eeuo pipefail
 readonly K3S_SSH_HOST="${K3S_SSH_HOST:-k3s-server-01}"
 readonly WEB_NAMESPACE="${WEB_NAMESPACE:-k8s-learning}"
 readonly MONITORING_NAMESPACE="${MONITORING_NAMESPACE:-monitoring}"
+readonly STORAGE_NAMESPACE="${STORAGE_NAMESPACE:-storage-demo}"
 readonly -a SSH_OPTIONS=(-o BatchMode=yes -o ConnectTimeout=10)
 
 overall_status=0
@@ -83,6 +84,16 @@ run_check remote_kubectl get service/web-demo ingress/web-demo \
 section "Monitoring workloads"
 run_check remote_kubectl get deployment,statefulset,daemonset \
   --namespace "$MONITORING_NAMESPACE"
+
+section "Storage demo workload"
+run_check remote_kubectl rollout status deployment/storage-demo \
+  --namespace "$STORAGE_NAMESPACE" \
+  --timeout=15s
+
+run_check remote_kubectl get deployment,pod \
+  --namespace "$STORAGE_NAMESPACE" \
+  --selector app=storage-demo \
+  -o wide
 
 section "Availability monitoring objects"
 run_check remote_kubectl get probe/web-demo-availability \
