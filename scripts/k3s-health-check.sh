@@ -90,7 +90,11 @@ run_check remote_kubectl rollout status deployment/storage-demo \
   --namespace "$STORAGE_NAMESPACE" \
   --timeout=15s
 
-run_check remote_kubectl get deployment,pod \
+run_check remote_kubectl get deployment/storage-demo \
+  --namespace "$STORAGE_NAMESPACE" \
+  -o wide
+
+run_check remote_kubectl get pods \
   --namespace "$STORAGE_NAMESPACE" \
   --selector app=storage-demo \
   -o wide
