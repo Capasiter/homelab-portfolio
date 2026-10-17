@@ -217,7 +217,7 @@ flowchart TB
 | v0.7 | Off-server backups, integrity checks, retention, and restore investigation | Released; full restore incomplete |
 | v0.8 | Stable internal API VIP and leader-pod failover validation | Released |
 | v0.9 | Argo CD application delivery with drift detection and manual reconciliation | Released |
-| Next | Unraid-backed shared application storage and volume-recovery validation | Planned |
+| Delivered (unreleased) | Unraid-backed shared application storage demo | NFS persistence, cross-node reads, and a single-file backup/restore are documented; Deployment rescheduling and full-volume recovery remain untested |
 | Follow-up | Complete restore validation; notification delivery; broader failure testing | Not yet completed |
 | In progress | Human-supervised local AI assistance with Continue and Hermes | Supervised pilot documented; autonomous operations not validated |
 
@@ -227,7 +227,7 @@ The next-stage ordering is a roadmap, not a release commitment. The supervised A
 
 - **Single physical host:** control-plane VM redundancy does not protect against loss of the Proxmox host.
 - **Recovery:** snapshot integrity and decompression are validated; full etcd restore is not complete.
-- **Storage:** current application and monitoring volumes use node-local storage. Etcd snapshots do not back up persistent-volume contents.
+- **Storage:** the storage demo uses Unraid NFS; documented checks cover pod-replacement persistence, cross-node reads, and a single-file backup/restore. Cross-node Deployment rescheduling and full-volume recovery remain untested. Monitoring volumes use node-local storage, and etcd snapshots do not back up persistent-volume contents.
 - **Failover:** the recorded exercise deleted one kube-vip pod. It did not power off a node, interrupt the network, or test physical-host failure.
 - **Monitoring:** outbound alert delivery and blackbox-exporter redundancy remain future work.
 - **GitOps:** Argo CD uses manual sync; automated sync, self-heal, and automatic pruning are disabled. Its installation is bootstrapped manually and is not self-managed. Continuous HTTP availability during reconciliation was not tested.
