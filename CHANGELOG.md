@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Unraid-backed shared-storage demo with documented NFS persistence, cross-node read, and single-file backup/restore validation.
 - Local PVC status validator, K3s health-check integration, and fixture coverage in CI.
 - Read-only backup evidence collector with raw systemd observations, service-exit timing, and isolated fixture tests in CI.
 - Supervised Continue and Hermes workflow records documenting source review, unsupported-claim corrections, and evidence limitations.
@@ -15,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Known limitations
 
+- Cross-node Deployment rescheduling and full application-volume recovery remain untested; the documented single-file restore is not protection against loss of the shared Unraid host.
 - Basic local AI generation checks establish connectivity, not answer accuracy or autonomous operational reliability.
 - The backup collector does not inspect backup artifacts, verify checksums, assess artifact freshness, or test restores.
 - Continue\'s extension execution location remains unverified in the connection record.
