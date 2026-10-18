@@ -185,7 +185,7 @@ flowchart TB
 | Monitoring and alerting | [Observability configuration and evidence](kubernetes/observability/README.md) |
 | GitOps application delivery | [Argo CD configuration and validation](kubernetes/argocd/README.md) · [WebDemo Application](kubernetes/argocd/applications/web-demo.yaml) |
 | Supervised local AI | [Workflow and review findings](docs/local-ai-workflow.md) · [LM Studio connection](docs/local-ai-connection.md) |
-| Read-only backup evidence | [Collector usage, tests, and limits](docs/backup-evidence-collector.md) |
+| Read-only backup evidence | [Collector usage, tests, and limits](docs/backup-evidence-collector.md) · [Artifact validator usage, tests, and limits](docs/backup-artifact-validator.md) |
 | CI and change history | [Validation workflow](.github/workflows/infrastructure-validation.yml) · [Changelog](CHANGELOG.md) |
 | Earlier engineering detail | [Preserved v0.1–v0.7 portfolio record](docs/portfolio-history-through-v0.7.md) |
 
