@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Local PVC status validator, K3s health-check integration, and fixture coverage in CI.
 - Read-only backup evidence collector with raw systemd observations, service-exit timing, and isolated fixture tests in CI.
+- Offline backup artifact validator for K3s etcd snapshot and token sidecar format, with isolated fixture tests in CI; the token file is never opened.
 - Supervised Continue and Hermes workflow records documenting source review, unsupported-claim corrections, and evidence limitations.
 - LM Studio connection documentation for the Windows-to-Linux reverse SSH tunnel and basic Hermes/Continue generation checks.
 

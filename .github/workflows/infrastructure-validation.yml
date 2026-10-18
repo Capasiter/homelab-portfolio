@@ -32,6 +32,9 @@ jobs:
       - name: Run backup evidence collector fixtures
         run: python3 scripts/collect-backup-evidence.py --self-test
 
+      - name: Run backup artifact validator fixtures
+        run: python3 scripts/validate-backup-artifacts.py --self-test
+
   opentofu:
     name: OpenTofu validation
     runs-on: ubuntu-24.04
