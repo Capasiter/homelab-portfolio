@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Unraid-backed shared-storage demo with documented NFS persistence, cross-node read, and single-file backup/restore validation.
+- K3s health check now reports the storage-demo Deployment rollout and matching pod state.
 - Local PVC status validator, K3s health-check integration, and fixture coverage in CI.
 - Read-only backup evidence collector with raw systemd observations, service-exit timing, and isolated fixture tests in CI.
 - Offline backup artifact validator for K3s etcd snapshot and token sidecar format, with isolated fixture tests in CI; the token file is never opened.
