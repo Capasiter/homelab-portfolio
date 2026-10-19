@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline backup-artifact validator. No backup mounts, SSH, Kubernetes, or secret access."""
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -64,6 +65,21 @@ def _parse_sidecar(path, check, expected_name):
     return digest
 
 
+def _sha256(path, check, chunk_size=1 << 20):
+    """Compute the SHA-256 of a file, reading it in chunks."""
+    digest = hashlib.sha256()
+    try:
+        with open(path, "rb") as handle:
+            while True:
+                chunk = handle.read(chunk_size)
+                if not chunk:
+                    break
+                digest.update(chunk)
+    except OSError as exc:
+        raise ArtifactError(check, f"cannot read for hashing: {exc}", path) from exc
+    return digest.hexdigest()
+
+
 def _record(check, path, result="pass"):
     return {
         "check": check,
@@ -107,9 +123,13 @@ def validate_backup_dir(path, host, prefix="k3s-etcd"):
             try:
                 _is_regular(sp, "snapshot-not-file")
                 _is_regular(sidecar, "sidecar-missing")
-                _parse_sidecar(sidecar, "sidecar-format", name)
+                digest = _parse_sidecar(sidecar, "sidecar-format", name)
+                actual = _sha256(sp, "checksum-read-error")
+                _check("checksum-mismatch", actual == digest,
+                       f"sha256 mismatch: sidecar {digest} != computed {actual}", sp)
                 findings.append(_record("snapshot-ok", sp))
                 findings.append(_record("sidecar-ok", sidecar))
+                findings.append(_record("snapshot-checksum-ok", sp))
             except ArtifactError as exc:
                 fail(exc.check, exc.message, exc.path)
 
@@ -131,9 +151,13 @@ def validate_backup_dir(path, host, prefix="k3s-etcd"):
         try:
             _is_regular(sp, "snapshot-not-file")
             _is_regular(sidecar, "sidecar-missing")
-            _parse_sidecar(sidecar, "sidecar-format", name)
+            digest = _parse_sidecar(sidecar, "sidecar-format", name)
+            actual = _sha256(sp, "checksum-read-error")
+            _check("checksum-mismatch", actual == digest,
+                   f"sha256 mismatch: sidecar {digest} != computed {actual}", sp)
             findings.append(_record("baseline-snapshot-ok", sp))
             findings.append(_record("baseline-sidecar-ok", sidecar))
+            findings.append(_record("baseline-checksum-ok", sp))
         except ArtifactError as exc:
             fail(exc.check, exc.message, exc.path)
 
@@ -164,16 +188,15 @@ def validate_backup_dir(path, host, prefix="k3s-etcd"):
         "errors": errors,
         "passed": len(errors) == 0,
         "limitations": [
-            "Checksum values were not recomputed or compared against artifacts.",
+            "Snapshot checksums are recomputed and compared against their sidecars.",
+            "The token file is never opened or read; its checksum is not verified against token contents.",
             "Artifact freshness was not assessed.",
             "Restore testing was not performed.",
-            "The token file was never opened or read.",
         ],
     }
 
 
 def self_test():
-    import hashlib
     import tempfile
 
     scratch = tempfile.TemporaryDirectory(prefix="bv-test-")
@@ -494,6 +517,48 @@ def self_test():
         and finding["result"] == "fail"
         for finding in result["findings"]
     ), f"missing-baseline finding should point to {baseline_dir}"
+    checks += 1
+
+    # 21. valid snapshot checksums pass (rolling and baseline)
+    root = build_fixture("checksum-valid")
+    result = validate_backup_dir(root, "fixture-host")
+    assert result["passed"], f"valid checksums should pass: {result['errors']}"
+    assert any(f["check"] == "snapshot-checksum-ok" and f["result"] == "pass"
+               for f in result["findings"]), "rolling checksum check should be recorded passing"
+    assert any(f["check"] == "baseline-checksum-ok" and f["result"] == "pass"
+               for f in result["findings"]), "baseline checksum check should be recorded passing"
+    checks += 1
+
+    # 22. rolling checksum mismatch fails and ties to the snapshot path
+    root = build_fixture("rolling-checksum-mismatch")
+    snap_dir = os.path.join(root, "etcd", "fixture-host", "rolling")
+    snap_name = next(f for f in sorted(os.listdir(snap_dir))
+                     if f.startswith("k3s-etcd-") and f.endswith(".zip"))
+    snap_path = os.path.join(snap_dir, snap_name)
+    with open(snap_path + ".sha256", "w") as fh:
+        fh.write("f" * 64 + "  " + snap_name + "\n")  # well-formed but wrong digest
+    result = validate_backup_dir(root, "fixture-host")
+    assert not result["passed"]
+    assert any("checksum" in e for e in result["errors"])
+    failed = [f for f in result["findings"] if f["result"] == "fail"]
+    assert any(f["path"] == snap_path for f in failed), \
+        f"rolling mismatch finding should tie to {snap_path}: {[f['path'] for f in failed]}"
+    checks += 1
+
+    # 23. baseline checksum mismatch fails and ties to the baseline snapshot path
+    root = build_fixture("baseline-checksum-mismatch")
+    bl_dir = os.path.join(root, "etcd", "fixture-host", "baseline")
+    bl_name = next(f for f in sorted(os.listdir(bl_dir))
+                   if f.startswith("k3s-etcd-") and f.endswith(".zip"))
+    bl_path = os.path.join(bl_dir, bl_name)
+    with open(bl_path + ".sha256", "w") as fh:
+        fh.write("e" * 64 + "  " + bl_name + "\n")  # well-formed but wrong digest
+    result = validate_backup_dir(root, "fixture-host")
+    assert not result["passed"]
+    assert any("checksum" in e for e in result["errors"])
+    failed = [f for f in result["findings"] if f["result"] == "fail"]
+    assert any(f["path"] == bl_path for f in failed), \
+        f"baseline mismatch finding should tie to {bl_path}: {[f['path'] for f in failed]}"
     checks += 1
 
     print(f"PASS: {checks} validator self-test checks (synthetic fixtures only).")
