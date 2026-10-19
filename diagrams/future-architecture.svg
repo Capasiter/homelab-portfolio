@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1120" viewBox="0 0 1440 1120" role="img" aria-labelledby="title desc">
+  <title id="title">Future homelab layout and proposed roadmap</title>
+  <desc id="desc">A proposed future layout builds on the currently deployed three-server Kubernetes lab. It adds a local model server, a dedicated Linux agent VM with Hermes, Continue or OpenCode, K8sGPT and optional Prime Agent, proposed Kubernetes observability and security tools, stronger backup and restore testing, and a human-reviewed change path. The agent VM shares the existing single Proxmox host. Proposed components are not represented as deployed.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9fb2c8"/></marker>
+    <marker id="arrowPurple" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#bb9aff"/></marker>
+    <style>
+      text{font-family:Inter,Segoe UI,Arial,sans-serif;fill:#e6edf7}
+      .title{font-size:32px;font-weight:750}.subtitle{font-size:17px;fill:#adbdce}
+      .head{font-size:20px;font-weight:700}.label{font-size:17px;font-weight:650}
+      .small{font-size:15px;fill:#c6d2df}.tiny{font-size:13px;fill:#b3c2d2}
+      .panel{fill:#111c2a;stroke:#455a70;stroke-width:1.5}
+      .current{fill:#142b26;stroke:#60b888;stroke-width:1.6}
+      .proposal{fill:#1b1830;stroke:#a88be8;stroke-width:1.6;stroke-dasharray:8 6}
+      .automation{fill:#172a40;stroke:#74aaff;stroke-width:1.4}
+      .green{fill:#18342c;stroke:#68c392;stroke-width:1.4}
+      .purple{fill:#2a2140;stroke:#bb9aff;stroke-width:1.4}
+      .amber{fill:#382d18;stroke:#efc66c;stroke-width:1.4}
+      .muted{fill:#202d3d;stroke:#71859a;stroke-width:1.3}
+      .line{fill:none;stroke:#9fb2c8;stroke-width:2.2;marker-end:url(#arrow)}
+      .flow{fill:none;stroke:#bb9aff;stroke-width:2.4;stroke-dasharray:8 6;marker-end:url(#arrowPurple)}
+      .dash{stroke-dasharray:8 6}
+    </style>
+  </defs>
+  <rect width="1440" height="1120" rx="22" fill="#0b1220"/>
+  <text x="40" y="52" class="title">Future homelab layout</text>
+  <text x="40" y="82" class="subtitle">A proposed destination for the lab: safer recovery, useful local assistance, and changes reviewed by a person.</text>
+  <rect x="40" y="102" width="18" height="18" rx="4" class="current"/><text x="68" y="117" class="small">Deployed today</text>
+  <rect x="220" y="102" width="18" height="18" rx="4" class="proposal"/><text x="248" y="117" class="small">Proposed / needs validation</text>
+  <text x="1390" y="117" text-anchor="end" class="tiny">Dashed outlines mark proposed work</text>
+
+  <!-- Current foundation -->
+  <rect x="40" y="145" width="430" height="650" rx="18" class="panel"/>
+  <rect x="60" y="165" width="390" height="48" rx="12" class="current"/>
+  <text x="80" y="196" class="head">1 · Running foundation</text>
+  <text x="62" y="239" class="tiny">DEPLOYED · all three server VMs share one physical host</text>
+  <rect x="62" y="258" width="178" height="84" rx="12" class="automation"/>
+  <text x="78" y="287" class="label">GitHub</text><text x="78" y="312" class="small">Infrastructure + app settings</text><text x="78" y="331" class="tiny">Version history and review</text>
+  <rect x="258" y="258" width="190" height="84" rx="12" class="automation"/>
+  <text x="274" y="287" class="label">GitHub Actions</text><text x="274" y="312" class="small">Static checks only</text><text x="274" y="331" class="tiny">No live deployment credentials</text>
+  <path d="M240 300H248" class="line"/>
+
+  <rect x="62" y="360" width="386" height="385" rx="14" fill="#121d2b" stroke="#72879c" stroke-width="1.5"/>
+  <text x="82" y="393" class="label">Proxmox · one physical host</text>
+  <rect x="82" y="410" width="346" height="55" rx="10" class="muted"/>
+  <text x="98" y="434" class="small">OPNsense private network + gateway</text><text x="98" y="454" class="tiny">Restricted admin access; Kubernetes API stays private</text>
+  <rect x="82" y="480" width="346" height="139" rx="12" class="green"/>
+  <text x="100" y="508" class="label">K3s Kubernetes control plane</text>
+  <text x="100" y="534" class="small">3 server VMs · embedded etcd</text>
+  <text x="100" y="558" class="small">Stable API address: 10.20.0.110</text>
+  <text x="100" y="584" class="tiny">Kube-vip handoff tested at pod level</text>
+  <rect x="82" y="634" width="163" height="88" rx="10" class="green"/>
+  <text x="98" y="662" class="label">Argo CD</text><text x="98" y="686" class="small">Manual app sync</text><text x="98" y="707" class="tiny">WebDemo delivered</text>
+  <rect x="265" y="634" width="163" height="88" rx="10" class="automation"/>
+  <text x="281" y="662" class="label">Monitoring</text><text x="281" y="686" class="small">Prometheus + Grafana</text><text x="281" y="707" class="tiny">Internal alerts tested</text>
+
+  <!-- Proposed local AI and cluster additions -->
+  <rect x="495" y="145" width="455" height="650" rx="18" class="panel"/>
+  <rect x="515" y="165" width="415" height="48" rx="12" class="proposal"/>
+  <text x="535" y="196" class="head">2 · Local tools + platform additions</text>
+  <text x="517" y="239" class="tiny">PROPOSED · test each component before calling it operational</text>
+
+  <rect x="517" y="258" width="411" height="102" rx="12" class="proposal"/>
+  <text x="537" y="288" class="label">Desktop · local model server</text>
+  <text x="537" y="315" class="small">LM Studio · 2 × RTX 3060 (12 GB each) · 48 GB RAM</text>
+  <text x="537" y="340" class="tiny">Start with one active model; queue other tasks until capacity is measured</text>
+
+  <rect x="517" y="380" width="411" height="236" rx="12" class="proposal"/>
+  <text x="537" y="411" class="label">Dedicated Linux agent VM</text>
+  <text x="537" y="436" class="tiny">Runs on the same Proxmox host as K3s · stays outside the cluster</text>
+  <rect x="537" y="454" width="178" height="62" rx="9" class="amber"/>
+  <text x="551" y="480" class="label">Hermes</text><text x="551" y="502" class="tiny">Health, backup checks, triage</text>
+  <rect x="730" y="454" width="178" height="62" rx="9" class="amber"/>
+  <text x="744" y="480" class="label">Continue / OpenCode</text><text x="744" y="502" class="tiny">Prepare repo changes</text>
+  <rect x="537" y="532" width="178" height="62" rx="9" class="amber"/>
+  <text x="551" y="558" class="label">K8sGPT</text><text x="551" y="580" class="tiny">Explain cluster problems</text>
+  <rect x="730" y="532" width="178" height="62" rx="9" class="muted"/>
+  <text x="744" y="558" class="label">Prime Agent</text><text x="744" y="580" class="tiny">Optional comparison trial</text>
+
+  <rect x="517" y="638" width="411" height="125" rx="12" class="proposal"/>
+  <text x="537" y="669" class="label">Possible Kubernetes additions</text>
+  <text x="537" y="695" class="small">Headlamp dashboard · Loki log search</text>
+  <text x="537" y="720" class="small">cert-manager certificates · tested NetworkPolicies</text>
+  <text x="537" y="745" class="tiny">All are ideas to evaluate; none are claimed as deployed here.</text>
+
+  <!-- Proposed recovery and human review -->
+  <rect x="975" y="145" width="425" height="650" rx="18" class="panel"/>
+  <rect x="995" y="165" width="385" height="48" rx="12" class="proposal"/>
+  <text x="1015" y="196" class="head">3 · Recovery + human control</text>
+  <text x="997" y="239" class="tiny">PROPOSED TARGET · keep a person in charge of changes</text>
+
+  <rect x="997" y="258" width="381" height="145" rx="12" class="purple"/>
+  <text x="1017" y="290" class="label">Unraid · separate storage</text>
+  <text x="1017" y="318" class="small">Shared app files (NFS) and volume backups</text>
+  <text x="1017" y="344" class="small">Off-server etcd snapshots + protected token</text>
+  <text x="1017" y="370" class="small">Agent reports, evidence, and handoffs</text>
+  <text x="1017" y="391" class="tiny">Some storage checks exist; full recovery remains unproven</text>
+
+  <rect x="997" y="424" width="381" height="105" rx="12" class="proposal"/>
+  <text x="1017" y="455" class="label">On-demand isolated restore drill</text>
+  <text x="1017" y="482" class="small">Rebuild the cluster and restore app data</text>
+  <text x="1017" y="507" class="tiny">Record exact steps, failures, and recovery time</text>
+
+  <rect x="997" y="550" width="381" height="92" rx="12" class="muted"/>
+  <text x="1017" y="581" class="label">Lee reviews the evidence + proposed fix</text>
+  <text x="1017" y="608" class="small">Agents can investigate and prepare; a person approves</text>
+  <text x="1017" y="630" class="tiny">No autonomous live infrastructure changes</text>
+
+  <rect x="997" y="663" width="381" height="100" rx="12" class="automation"/>
+  <text x="1017" y="693" class="label">Reviewed delivery path</text>
+  <text x="1017" y="720" class="small">Git branch / pull request → static checks</text>
+  <text x="1017" y="745" class="tiny">Approved changes follow the normal deployment process</text>
+
+  <!-- Conceptual flows linking the panels -->
+  <path d="M450 530H485" class="flow"/>
+  <path d="M950 312H965" class="flow"/>
+  <path d="M950 500H965" class="flow"/>
+  <text x="478" y="518" text-anchor="middle" class="tiny">inspect</text>
+  <text x="957" y="299" text-anchor="middle" class="tiny">save</text>
+  <text x="957" y="487" text-anchor="middle" class="tiny">restore</text>
+
+  <!-- Future validation roadmap -->
+  <text x="40" y="843" class="head">What to prove before calling the future layout complete</text>
+  <text x="1400" y="843" text-anchor="end" class="tiny">Targets to validate, not promised dates</text>
+  <rect x="40" y="864" width="320" height="205" rx="14" class="proposal"/>
+  <text x="62" y="898" class="label">1 · Recovery</text>
+  <text x="62" y="930" class="small">Complete an isolated etcd restore.</text>
+  <text x="62" y="957" class="small">Back up shared application data.</text>
+  <text x="62" y="984" class="small">Write and rehearse the runbook.</text>
+  <text x="62" y="1037" class="tiny">Success means a verified restore, not just a copied file.</text>
+
+  <rect x="380" y="864" width="320" height="205" rx="14" class="proposal"/>
+  <text x="402" y="898" class="label">2 · Storage resilience</text>
+  <text x="402" y="930" class="small">Test cross-node app rescheduling.</text>
+  <text x="402" y="957" class="small">Restore a full application volume.</text>
+  <text x="402" y="984" class="small">Confirm permissions and ownership.</text>
+  <text x="402" y="1037" class="tiny">Keep app-volume recovery separate from etcd backups.</text>
+
+  <rect x="720" y="864" width="320" height="205" rx="14" class="proposal"/>
+  <text x="742" y="898" class="label">3 · Detection + safeguards</text>
+  <text x="742" y="930" class="small">Deliver and test external alerts.</text>
+  <text x="742" y="957" class="small">Add redundant endpoint probes.</text>
+  <text x="742" y="984" class="small">Test network rules before relying on them.</text>
+  <text x="742" y="1037" class="tiny">Measure behavior during controlled failures.</text>
+
+  <rect x="1060" y="864" width="340" height="205" rx="14" class="proposal"/>
+  <text x="1082" y="898" class="label">4 · Evaluate local assistance</text>
+  <text x="1082" y="930" class="small">Compare tools on the same lab tasks.</text>
+  <text x="1082" y="957" class="small">Check evidence quality and tool use.</text>
+  <text x="1082" y="984" class="small">Record speed and needed intervention.</text>
+  <text x="1082" y="1037" class="tiny">Keep review, logs, and rollback under human control.</text>
+
+  <text x="40" y="1098" class="tiny">The agent VM shares the existing Proxmox host. Local model inference also depends on the desktop being available; neither adds physical-host redundancy.</text>
+</svg>
