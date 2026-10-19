@@ -2,7 +2,7 @@
   <title id="title">Homelab infrastructure, in plain language</title>
   <desc id="desc">GitHub stores configuration. GitHub Actions checks it. OpenTofu and Ansible create and configure three Linux virtual machines on one physical Proxmox host. The machines run a Kubernetes cluster and sample services. Monitoring reports health and etcd backups are stored separately on Unraid. All three virtual machines share the same physical host.</desc>
   <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#526579"/></marker>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9fb2c8"/></marker>
     <style>
       text{font-family:Inter,Segoe UI,Arial,sans-serif;fill:#e6edf7}
       .title{font-size:30px;font-weight:700}.subtitle{font-size:16px;fill:#adbdce}
