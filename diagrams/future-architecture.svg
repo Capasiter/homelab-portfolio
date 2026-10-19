@@ -62,8 +62,8 @@
 
   <rect x="517" y="258" width="411" height="102" rx="12" class="proposal"/>
   <text x="537" y="288" class="label">Desktop · local model server</text>
-  <text x="537" y="315" class="small">LM Studio · 2 × RTX 3060 (12 GB each) · 48 GB RAM</text>
-  <text x="537" y="340" class="tiny">Start with one active model; queue other tasks until capacity is measured</text>
+  <text x="537" y="315" class="small">LM Studio · 2 × RTX 3060 (12 GB VRAM each)</text>
+  <text x="537" y="340" class="small">48 GB RAM · one model at first; measure fit and speed</text>
 
   <rect x="517" y="380" width="411" height="236" rx="12" class="proposal"/>
   <text x="537" y="411" class="label">Dedicated Linux agent VM</text>
@@ -103,13 +103,13 @@
 
   <rect x="997" y="550" width="381" height="92" rx="12" class="muted"/>
   <text x="1017" y="581" class="label">Lee reviews the evidence + proposed fix</text>
-  <text x="1017" y="608" class="small">Agents can investigate and prepare; a person approves</text>
+  <text x="1017" y="608" class="small">Agents investigate and prepare; Lee reviews evidence</text>
   <text x="1017" y="630" class="tiny">No autonomous live infrastructure changes</text>
 
   <rect x="997" y="663" width="381" height="100" rx="12" class="automation"/>
   <text x="1017" y="693" class="label">Reviewed delivery path</text>
   <text x="1017" y="720" class="small">Git branch / pull request → static checks</text>
-  <text x="1017" y="745" class="tiny">Approved changes follow the normal deployment process</text>
+  <text x="1017" y="745" class="tiny">Approved changes follow the normal process</text>
 
   <!-- Conceptual flows linking the panels -->
   <path d="M450 530H485" class="flow"/>
@@ -127,28 +127,28 @@
   <text x="62" y="930" class="small">Complete an isolated etcd restore.</text>
   <text x="62" y="957" class="small">Back up shared application data.</text>
   <text x="62" y="984" class="small">Write and rehearse the runbook.</text>
-  <text x="62" y="1037" class="tiny">Success means a verified restore, not just a copied file.</text>
+  <text x="62" y="1032" class="tiny">Success means a verified restore,</text><text x="62" y="1051" class="tiny">not only a copied file.</text>
 
   <rect x="380" y="864" width="320" height="205" rx="14" class="proposal"/>
   <text x="402" y="898" class="label">2 · Storage resilience</text>
   <text x="402" y="930" class="small">Test cross-node app rescheduling.</text>
   <text x="402" y="957" class="small">Restore a full application volume.</text>
   <text x="402" y="984" class="small">Confirm permissions and ownership.</text>
-  <text x="402" y="1037" class="tiny">Keep app-volume recovery separate from etcd backups.</text>
+  <text x="402" y="1032" class="tiny">Test app-data recovery separately</text><text x="402" y="1051" class="tiny">from etcd backups.</text>
 
   <rect x="720" y="864" width="320" height="205" rx="14" class="proposal"/>
   <text x="742" y="898" class="label">3 · Detection + safeguards</text>
   <text x="742" y="930" class="small">Deliver and test external alerts.</text>
   <text x="742" y="957" class="small">Add redundant endpoint probes.</text>
   <text x="742" y="984" class="small">Test network rules before relying on them.</text>
-  <text x="742" y="1037" class="tiny">Measure behavior during controlled failures.</text>
+  <text x="742" y="1032" class="tiny">Measure behavior during</text><text x="742" y="1051" class="tiny">controlled failures.</text>
 
   <rect x="1060" y="864" width="340" height="205" rx="14" class="proposal"/>
   <text x="1082" y="898" class="label">4 · Evaluate local assistance</text>
   <text x="1082" y="930" class="small">Compare tools on the same lab tasks.</text>
   <text x="1082" y="957" class="small">Check evidence quality and tool use.</text>
   <text x="1082" y="984" class="small">Record speed and needed intervention.</text>
-  <text x="1082" y="1037" class="tiny">Keep review, logs, and rollback under human control.</text>
+  <text x="1082" y="1032" class="tiny">Keep review, logs, and rollback</text><text x="1082" y="1051" class="tiny">under human control.</text>
 
   <text x="40" y="1098" class="tiny">The agent VM shares the existing Proxmox host. Local model inference also depends on the desktop being available; neither adds physical-host redundancy.</text>
 </svg>
