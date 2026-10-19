@@ -111,6 +111,51 @@ A useful portfolio should make the limits clear as well as the successes.
 - **GitOps operation:** Argo CD sync is manual. Automatic correction and pruning are disabled.
 - **Monitoring:** External alert delivery and redundant probing remain future work.
 
+## Future layout (proposed, not deployed)
+
+This diagram shows the direction I want to explore. **Dashed boxes and proposed labels are future work, not a description of the running lab.** The currently deployed foundation is shown for context.
+
+![Proposed future homelab layout with local AI tools, Kubernetes improvements, Unraid recovery storage, an isolated restore drill, and human-reviewed changes. Dashed boxes are proposed, not deployed.](diagrams/future-architecture.svg)
+
+### Local assistance, kept under human control
+
+- **Desktop model server:** Use LM Studio on the desktop with two RTX 3060 GPUs (12 GB VRAM each) and 48 GB system RAM. Start with one active model and queue jobs; measure model fit, speed, context, and tool use before adding concurrency.
+- **Dedicated Linux agent VM:** Keep general-purpose agents outside Kubernetes so they can help investigate it when the cluster is unhealthy. This VM would still share the existing physical Proxmox host, so it would not provide host-level redundancy.
+- **Hermes:** Evaluate recurring health and capacity reports, backup-freshness checks, and incident triage using scoped read-only tools.
+- **Continue or OpenCode:** Evaluate help preparing Ansible, OpenTofu, and Kubernetes changes on a separate Git branch.
+- **K8sGPT:** Evaluate Kubernetes diagnosis from the agent VM; confirm a supported local model connection before relying on it.
+- **Prime Agent:** Optional comparison for longer investigations, not a required always-on service.
+
+Agents should gather evidence and prepare suggestions. Lee reviews the findings and code diff; changes go through a pull request and repository checks. No agent should make autonomous live infrastructure changes.
+
+### Kubernetes capabilities to evaluate
+
+- **Headlamp** for a browser-based Kubernetes dashboard.
+- **Loki** for searching application and platform logs.
+- **cert-manager** for automating certificate requests and renewals.
+- **NetworkPolicies** to restrict pod-to-pod traffic, after testing how they affect each service.
+
+These additions need a deployment plan, access boundaries, and validation before being described as operational.
+
+### Recovery and storage goals
+
+- Keep etcd snapshots and the protected restore token on separate Unraid storage.
+- Expand the Unraid NFS application-storage demo with a tested full-volume backup and restore, not just individual-file recovery.
+- Test whether applications can reschedule across Kubernetes nodes while keeping their data available.
+- Run an isolated, on-demand restore drill to rebuild the cluster and recover application data. Record the steps, failures, and time to recovery.
+- Store agent reports and handoffs durably so investigations leave a reviewable trail.
+
+Etcd backups and application-volume backups protect different data and need separate recovery tests. The existing full etcd restore is still incomplete.
+
+### Completion checks
+
+1. Restore an etcd snapshot in an isolated environment and document a successful recovery.
+2. Back up and restore a full application volume, then verify permissions and cross-node rescheduling.
+3. Deliver external alerts and test redundant endpoint probes and network rules during controlled failures.
+4. Compare the local tools on the same diagnosis, backup-check, and small code-change tasks; record evidence quality, tool use, speed, and human intervention.
+
+**Limits remain:** the proposed agent VM and the three K3s servers share one physical host, and local model inference depends on the desktop being available. This design adds capabilities to explore, not physical-host redundancy.
+
 ## Security and working practices
 
 - Keep the lab network private and use restricted SSH access.
@@ -132,9 +177,3 @@ I’m moving into Linux systems, infrastructure support, and cloud operations af
 
 ---
 
-<details>
-<summary>Future ideas (proposed, not deployed)</summary>
-
-The following ideas are experiments under consideration, not capabilities currently claimed as deployed: a dedicated Linux agent VM for supervised local AI assistance, expanded log collection, a Kubernetes dashboard, automated certificate management, and broader network policies. Any future automation will use limited access and human-reviewed changes.
-
-</details>
