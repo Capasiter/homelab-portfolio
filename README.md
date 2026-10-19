@@ -36,21 +36,9 @@ If you have a minute, these are the best places to begin:
 
 ## How the system fits together
 
-The diagram shows the main parts and how they connect. The colors distinguish automation, running services, recovery data, and access/network components.
+The diagram uses plain-language labels to show how the pieces connect. All three virtual machines run on one physical computer; the recovery storage sits outside that host.
 
-```mermaid
-flowchart TB
-    Git["GitHub<br/>Versioned configuration"] --> CI["GitHub Actions<br/>Automated code checks"]
-    Git --> IaC["OpenTofu + Ansible<br/>Create and configure servers"]
-    IaC --> Host["Proxmox<br/>One physical server"]
-    Host --> Net["OPNsense<br/>Private lab network"]
-    Net --> Nodes["Three Linux VMs<br/>K3s Kubernetes cluster"]
-    Git --> Argo["Argo CD<br/>Application delivery"]
-    Nodes --> Argo
-    Argo --> App["Sample application<br/>WebDemo"]
-    Nodes --> Monitor["Prometheus + Grafana<br/>Monitoring and alerts"]
-    Nodes --> Backup["Unraid storage<br/>Off-server etcd backups"]
-```
+![Architecture diagram of the homelab: GitHub and automation create three Kubernetes virtual machines on one Proxmox host, with monitoring and off-server backups.](diagrams/portfolio-architecture.svg)
 
 **What those names mean:**
 
