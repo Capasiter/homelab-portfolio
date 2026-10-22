@@ -63,7 +63,7 @@ These are results from specific documented exercises, not uptime guarantees.
 | Move the Kubernetes API address after deleting its current owner pod | The address moved from server 02 to server 03; no failed API probes were recorded; all three nodes were Ready afterward | [API failover test](ansible/docs/k3s-api-vip-validation.md) |
 | Exercise an alert | Observed the system move from healthy, to a controlled failure and firing alert, then back to healthy | [Monitoring validation](kubernetes/observability/README.md) |
 | Check infrastructure for unexpected differences | Documented full OpenTofu checks reported no changes | [Provisioning validation](proxmox/opentofu/docs/k3s-live-validation.md) |
-| Verify backup files and investigate restore | Snapshot checksums and decompression were verified; a full etcd restore hit a repeatable K3s reset-path error and is not claimed as complete | [Backup and restore record](docs/portfolio-history-through-v0.7.md#restore-validation) |
+| Verify backup files and investigate restore | Snapshot checksums and decompression were verified, and checksum verification is now part of the backup workflow; a local PVC status validator now runs in the K3s health check. A full etcd restore still hits a repeatable K3s reset-path error and is not claimed as complete | [Backup and restore record](docs/portfolio-history-through-v0.7.md#restore-validation) · [PVC status validator](scripts/pvc-status-validator.sh) |
 | Test GitOps drift detection | Argo CD detected replica-count drift; manual reconciliation returned the application to Synced, Healthy, and 3/3 available replicas | [GitOps validation](kubernetes/argocd/README.md) |
 
 The Actions badge above reports repository checks. It does not represent live cluster health.
@@ -106,7 +106,7 @@ A useful portfolio should make the limits clear as well as the successes.
 
 - **One physical host:** Three virtual machines provide multiple Kubernetes control-plane members, but they all depend on the same physical server.
 - **Full disaster recovery:** Snapshot integrity and decompression have been checked; a complete etcd restore has not succeeded yet.
-- **Application storage:** The Unraid-backed storage demo has documented persistence and single-file recovery checks. Full-volume recovery and application rescheduling across nodes still need testing.
+- **Application storage:** The Unraid-backed storage demo has documented persistence and single-file recovery checks, and PVC status is now validated in the K3s health check. Full-volume backup and recovery, and application rescheduling across nodes, still need testing.
 - **Failover scope:** The recorded API exercise removed a Kubernetes pod. It did not test a whole server or host failure.
 - **GitOps operation:** Argo CD sync is manual. Automatic correction and pruning are disabled.
 - **Monitoring:** External alert delivery and redundant probing remain future work.
