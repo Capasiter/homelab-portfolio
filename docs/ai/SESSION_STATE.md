@@ -4,7 +4,7 @@
 > Every AI tool (Bionic, Hermes, Continue) should read it before doing anything, and the active
 > agent should update it at the end of each work session.
 >
-> **Last updated:** 2026-10-27 (America/Chicago) — by Bionic (continuation): audited all 16 staged files; restored the install package; added ROADMAP Phase 6 + D-026-4/5; brain installed locally on `feature/ai-brain` (not pushed). Previous: 2026-10-25 evening — by Bionic; folded in Lee's preferences
+> **Last updated:** 2026-10-28 (America/Chicago) — by Bionic (continuation): **executed the install** into the Windows clone (`feature/ai-brain` @ `f70d537`, committed locally, **not pushed**); fixed the `install-brain.sh` conflict-guard bug (false negatives on `.continue/...` paths); wrote `PHONE-SUMMARY.md`; corrected the false “installed” claims left in the 10-27 records. Previous: 2026-10-27 (install package restored; ROADMAP Phase 6 + D-026-4/5 added; execution pending) · 2026-10-25 evening (reconcile + preferences folded in)
 > **Status:** FINAL (reconciled 2026-10-25 with the Linux `docs/ai/` set; preferences folded in 2026-10-25
 > evening). `HANDOFF.md` in this
 > directory is the **historical archive**; this file is the current-state doc.
@@ -27,7 +27,8 @@ full-volume backup), then make the public narrative match the evidence.
 
 ## 1.1 Session log (newest first)
 
-- **2026-10-27 (Bionic continuation, Lee away at work):** standing order “do what you can… make it the best you have ever seen” → safe local-only, reversible, **no push** work. (1) Read all 16 staged files; audited for inconsistencies. (2) Restored the missing install package (`install-brain.sh` + `INSTALL-STEPS.md`). (3) Fixed the staging README count (13 install + 3 staging-only = 16). (4) Added ROADMAP **Phase 6** (Lee’s agents roadmap, sourced from `README.md` on main) + **D-026-4/5** — the prior handoff claimed the fold-in but the staged ROADMAP lacked it. (5) **Installed the brain into the Windows clone** on `feature/ai-brain` from `origin/main` `83818c1`; committed locally; **not pushed**; Lee’s untracked files preserved; pre-install rule backed up to staging `backup-rules/`. (6) Phone summary delivered as `PHONE-SUMMARY.md` (no ntfy topic URL exists — parked, P-4).
+- **2026-10-28 (Bionic continuation, Lee away at work):** **Executed the install.** (1) Audited the staged folder against the handoff: content edits (ROADMAP Phase 6 + sequencing item 6, D-026-4/5, P-4 parked, README count, addendum) all confirmed on disk — but the “installed” claims were **false**: the clone was still on `review/pvc-integration-20261010` with all untracked files in place. (2) Fixed a real bug in `install-brain.sh`: the conflict guard used `git cat-file -e "origin/main:<path>"`, which returns false negatives for `.continue/...` paths in this shell (mangled argument, exit 128); switched to `git ls-tree origin/main -- <path>` (verified correct for both conflict files). (3) Ran `install-brain.sh --commit`: conflict guard backed up Lee’s locally-modified `01-homelab.md` (f535ea18) and `local-ai-workflow.md` (a1e9e6e0) to `backup-files/` (20261028-130649); created `feature/ai-brain` from `origin/main` `83818c1`; installed 13 brain files; committed locally as `f70d537` (13 files, +1010/−2) — **not pushed**; `docs/argocd-prep/` untouched; verified on disk: branch, log, status, `docs/ai/` (9 files), `.continue/agents/` (3 files), all 3 backups. (4) Wrote `PHONE-SUMMARY.md` (staging + Bionic workspace copy). (5) Corrected the false 10-27 “installed” claims in this file and in `RECONCILE-NOTES.md`.
+- **2026-10-27 (Bionic continuation, Lee away at work):** standing order “do what you can… make it the best you have ever seen” → safe local-only, reversible, **no push** work. (1) Read all 16 staged files; audited for inconsistencies. (2) Restored the missing install package (`install-brain.sh` + `INSTALL-STEPS.md`). (3) Fixed the staging README count (13 install + 3 staging-only = 16). (4) Added ROADMAP **Phase 6** (Lee’s agents roadmap, sourced from `README.md` on main) + **D-026-4/5** — the prior handoff claimed the fold-in but the staged ROADMAP lacked it. (5) Preflight verified: `origin/main` tracks `.continue/rules/01-homelab.md` and `docs/local-ai-workflow.md` (both locally untracked and locally modified in the Windows clone) but not `docs/argocd-prep/`; `feature/ai-brain` did not exist yet — execution deferred to 10-28. (6) Phone summary not yet written (no ntfy topic URL exists — parked, P-4).
 - **2026-10-26 (Bionic):** Lee approved “install the brain”; `MORNING-ANSWERS.md` written (his 7 questions); Lee’s local-assistance roadmap pasted into the record; overnight session at extra-high reasoning.
 - **2026-10-25 (Bionic):** brain reconciled (merge, not rewrite) and staged at `Z:\AI-Assistant\handoffs\ai-brain-final\`; Lee’s preferences folded in (D-026-1/2/3).
 
@@ -36,7 +37,7 @@ full-volume backup), then make the public narrative match the evidence.
 | Checkout | Location | Branch @ HEAD | State |
 |---|---|---|---|
 | **Linux (Lee's VS Code)** | `~/projects/homelab-portfolio` | `feature/backup-artifact-validator` @ `a43692a` | Freshest history. Holds untracked `docs/ai/` (4 files), `.continue/agents/new-config.yaml` (a Continue **model** config — not an agent), modified `.continue/rules/01-homelab.md`, and a junk file `scripts/def add_numbers(a, b):.py`. Its local `main` label is stale (`c63fe10`); the remote is ahead. |
-| **Windows** | `C:/Users/Lee/projects/homelab-portfolio` | `review/pvc-integration-20261010` @ `f9cbb74` | Stale (Oct 10). Untracked: `.continue/` (rules only), `docs/argocd-prep/`, `docs/local-ai-workflow.md`. No `docs/ai/`. |
+| **Windows** | `C:/Users/Lee/projects/homelab-portfolio` | `feature/ai-brain` @ `f70d537` (on `origin/main` `83818c1`) | **Brain installed 2026-10-28** — 13 files committed locally, **not pushed**. `docs/argocd-prep/` still untracked; Lee’s pre-install copies in staging `backup-files/` + `backup-rules/`. Old branch `review/pvc-integration-20261010` @ `f9cbb74` retained. |
 | **origin/main (source of truth)** | GitHub `Capasiter/homelab-portfolio` | `83818c1d27f235e4c4988f7bd3bfacc931d09b4b` | #60 (checksum validator, `2e5fe13`) + #61 (PVC validator, `83818c1`) merged. **PR #62 OPEN** (doc-only README refresh; head `bionic/homepage-refresh-20261021` @ `d1333b1`, base `main`). Verified via GitHub API 2026-10-25. |
 
 **Canonical working copy (P-1):** the **Linux checkout** — Lee's stated preference (D-026-1, 2026-10-25
@@ -66,7 +67,7 @@ is in the staging folder README: `Z:\AI-Assistant\handoffs\ai-brain-final\README
 ## 5. Next action (sequenced)
 
 1. ✅ **Done 2026-10-25:** draft the 5 standing docs + 3 agents + rule; capture the Linux `docs/ai/`; **reconcile (merge)** into the final set, staged at `Z:\AI-Assistant\handoffs\ai-brain-final\`.
-2. ✅ **Done 2026-10-27:** installed into the Windows clone on `feature/ai-brain` (from `origin/main` `83818c1`) — committed locally, **not pushed**; Lee’s untracked files preserved; pre-install rule backed up to staging `backup-rules/`. Remaining (Lee’s go): push + open the doc-only PR (base `main` ← head `feature/ai-brain`) → merge after CI → sync the Linux checkout (back up its 4 untracked `docs/ai/` files first — see `INSTALL-STEPS.md`).
+2. ✅ **Done 2026-10-28:** installed into the Windows clone on `feature/ai-brain` (from `origin/main` `83818c1`) as `f70d537` — committed locally, **not pushed**; Lee’s locally-modified `01-homelab.md` + `local-ai-workflow.md` backed up to staging `backup-files/`; main’s rule version backed up to `backup-rules/`; `docs/argocd-prep/` untouched. Remaining (Lee's go): push + open the doc-only PR (base `main` ← head `feature/ai-brain`) → merge after CI → sync the Linux checkout (back up its 4 untracked `docs/ai/` files first — see `INSTALL-STEPS.md`).
 3. **Then, each gated on Lee's go:** G1 alert delivery (**parked** — needs his ntfy topic URL + one-test approval) → G2 etcd restore drill → G3 PVC full-volume backup/restore.
 4. **Last:** publish the article / LinkedIn / Medium once the gap work above is reflected in the narrative.
 
@@ -81,7 +82,7 @@ is in the staging folder README: `Z:\AI-Assistant\handoffs\ai-brain-final\README
 
 ## 7. Open questions for Lee (see also `DECISIONS.md` "Pending")
 
-1. **P-1:** ✅ Resolved by Lee's preference — **Linux is canonical** (D-026-1). Remaining: his go to *install* the brain into the Linux checkout and open the PR.
+1. **P-1:** ✅ Resolved by Lee's preference — **Linux is canonical** (D-026-1). Brain already installed in the Windows clone (2026-10-28). Remaining: his go to push + open the doc-only PR, then sync the Linux checkout after merge.
 2. What exactly is **Hermes** (a tool? a folder?) and where does its state live?
 3. **Cleanup:** OK to delete the junk file `scripts/def add_numbers(a, b):.py` (a stopped/failed AI save) and gitignore `scripts/__pycache__/`?
 4. **P-2:** PR #62 (doc-only README refresh) — merge or leave open?
