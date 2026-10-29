@@ -20,6 +20,7 @@ A hands-on infrastructure portfolio by Lee Austin (see `README.md`): an isolated
 | `docs/` | Portfolio history through v0.7, backup evidence collector, local-AI workflow/connection records, and `docs/ai/` (these shared notes) |
 | `diagrams/` | Architecture diagrams (SVG): `portfolio-architecture.svg` (current lab) and `future-architecture.svg` (proposed future layout, labeled not-deployed) |
 | `resume/` | Lee's résumé PDF (`Lee_Austin_Infrastructure_Support_Resume_2026.pdf`), linked from the README |
+| `.continue/` | AI-assistant config: `rules/01-homelab.md` (always-apply project rule) + `agents/` (specialist agent definitions) — the brain's install location |
 | `.github/workflows/` | `infrastructure-validation.yml` (static validation only) |
 
 ## 3. Argo CD workflow (sources: `kubernetes/argocd/README.md`, `kubernetes/argocd/applications/`)
