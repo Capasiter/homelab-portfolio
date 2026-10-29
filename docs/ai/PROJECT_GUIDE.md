@@ -18,6 +18,8 @@ A hands-on infrastructure portfolio by Lee Austin (see `README.md`): an isolated
 | `scripts/` | `k3s-health-check.sh`, `pvc-status-validator.sh`, `collect-backup-evidence.py` (self-test in CI), `validate-backup-artifacts.py` (offline backup-artifact validator: checks snapshot/token presence, regular-file and `.sha256` sidecar format; no SSH, Kubernetes, or live-infrastructure access) |
 | `test-pvc-validator/` | Fixtures and runner for the PVC status validator, exercised by CI |
 | `docs/` | Portfolio history through v0.7, backup evidence collector, local-AI workflow/connection records, and `docs/ai/` (these shared notes) |
+| `diagrams/` | Architecture diagrams (SVG): `portfolio-architecture.svg` (current lab) and `future-architecture.svg` (proposed future layout, labeled not-deployed) |
+| `resume/` | Lee's résumé PDF (`Lee_Austin_Infrastructure_Support_Resume_2026.pdf`), linked from the README |
 | `.github/workflows/` | `infrastructure-validation.yml` (static validation only) |
 
 ## 3. Argo CD workflow (sources: `kubernetes/argocd/README.md`, `kubernetes/argocd/applications/`)
