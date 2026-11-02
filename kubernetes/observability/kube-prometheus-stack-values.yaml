@@ -88,39 +88,25 @@ alertmanager:
           group_wait: 30s
           repeat_interval: 8h
 
+    # Alertmanager has NO native ntfy_configs field. The standard, supported
+    # mechanism is webhook_configs: Alertmanager POSTs its alert JSON to the
+    # ntfy topic URL, and ntfy renders the notification. (ntfy_configs was an
+    # invalid field and crashed Alertmanager 0.33.1 on load.)
     receivers:
       - name: ntfy-default
-        ntfy_configs:
+        webhook_configs:
           - url: https://ntfy.sh/lee-homelab-8x7k2m
-            title: '{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}'
-            message: >-
-              {{ range .Alerts }}
-              {{ .Labels.instance }} — {{ .Annotations.description }}
-              {{ end }}
-            priority: 3
-            tags: [bell]
+            send_resolved: true
 
       - name: ntfy-critical
-        ntfy_configs:
+        webhook_configs:
           - url: https://ntfy.sh/lee-homelab-8x7k2m
-            title: '🔴 CRITICAL: {{ .CommonLabels.alertname }}'
-            message: >-
-              {{ range .Alerts }}
-              {{ .Labels.instance }} — {{ .Annotations.description }}
-              {{ end }}
-            priority: 5
-            tags: [rotating_light, bell]
+            send_resolved: true
 
       - name: ntfy-warning
-        ntfy_configs:
+        webhook_configs:
           - url: https://ntfy.sh/lee-homelab-8x7k2m
-            title: '🟡 WARNING: {{ .CommonLabels.alertname }}'
-            message: >-
-              {{ range .Alerts }}
-              {{ .Labels.instance }} — {{ .Annotations.description }}
-              {{ end }}
-            priority: 3
-            tags: [warning]
+            send_resolved: true
 
 grafana:
   admin:
