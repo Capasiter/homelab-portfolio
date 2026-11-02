@@ -1,0 +1,65 @@
+# G1: Alertmanager ntfy tiered routing — ConfigMap override
+#
+# This replaces the chart-rendered Alertmanager config so the running
+# Alertmanager StatefulSet picks up the ntfy route + receivers.
+#
+# The kube-prometheus-stack chart names its Alertmanager ConfigMap:
+#   <release>-kube-prometheus-alertmanager
+# For release "monitoring" that is:  monitoring-kube-prometheus-alertmanager
+#
+# IF that name is wrong, run first to find the real one:
+#   kubectl -n monitoring get configmap | grep -i alert
+# then change "name:" below to match, and re-apply.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitoring-kube-prometheus-alertmanager
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    route:
+      receiver: ntfy-default
+      group_by: [alertname, cluster, severity]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+        - receiver: ntfy-critical
+          matchers:
+            - severity = critical
+          group_wait: 10s
+          repeat_interval: 1h
+        - receiver: ntfy-warning
+          matchers:
+            - severity = warning
+          group_wait: 30s
+          repeat_interval: 8h
+
+    receivers:
+      - name: ntfy-default
+        ntfy_configs:
+          - url: https://ntfy.sh/lee-homelab-8x7k2m
+            title: '{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}'
+            message: '{{ range .Alerts }}{{ .Labels.instance }} — {{ .Annotations.description }}
+              {{ end }}'
+            priority: 3
+            tags: [bell]
+
+      - name: ntfy-critical
+        ntfy_configs:
+          - url: https://ntfy.sh/lee-homelab-8x7k2m
+            title: '🔴 CRITICAL: {{ .CommonLabels.alertname }}'
+            message: '{{ range .Alerts }}{{ .Labels.instance }} — {{ .Annotations.description }}
+              {{ end }}'
+            priority: 5
+            tags: [rotating_light, bell]
+
+      - name: ntfy-warning
+        ntfy_configs:
+          - url: https://ntfy.sh/lee-homelab-8x7k2m
+            title: '🟡 WARNING: {{ .CommonLabels.alertname }}'
+            message: '{{ range .Alerts }}{{ .Labels.instance }} — {{ .Annotations.description }}
+              {{ end }}'
+            priority: 3
+            tags: [warning]
