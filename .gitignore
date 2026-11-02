@@ -1,1 +1,3 @@
 .offline-markdown-preview/
+__pycache__/
+*.pyc

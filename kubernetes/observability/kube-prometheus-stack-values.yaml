@@ -55,6 +55,73 @@ alertmanager:
             requests:
               storage: 1Gi
 
+  # ── Alert routing (G1: alert delivery) ──────────────────────────────────
+  # Tiered severity routing via ntfy push notifications.
+  #
+  #   critical  → ntfy priority 5 (max/urgent, breaks through DND)
+  #   warning   → ntfy priority 3 (default)
+  #   info      → dropped (log-only, no push)
+  #
+  # The ntfy topic URL is the ONLY secret-ish value here. It is a random
+  # string you choose at https://ntfy.sh (no account needed). Anyone who
+  # knows the topic can read the alerts, so treat it like a password.
+  #
+  # To change the topic later: edit the url below, `helm upgrade`, done.
+  config:
+    route:
+      receiver: ntfy-default
+      group_by: [alertname, cluster, severity]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+        # Critical: page immediately, no grouping delay
+        - receiver: ntfy-critical
+          matchers:
+            - severity = critical
+          group_wait: 10s
+          repeat_interval: 1h
+        # Warning: batch, lower urgency
+        - receiver: ntfy-warning
+          matchers:
+            - severity = warning
+          group_wait: 30s
+          repeat_interval: 8h
+
+    receivers:
+      - name: ntfy-default
+        ntfy_configs:
+          - url: https://ntfy.sh/lee-homelab-8x7k2m
+            title: '{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}'
+            message: >-
+              {{ range .Alerts }}
+              {{ .Labels.instance }} — {{ .Annotations.description }}
+              {{ end }}
+            priority: 3
+            tags: [bell]
+
+      - name: ntfy-critical
+        ntfy_configs:
+          - url: https://ntfy.sh/lee-homelab-8x7k2m
+            title: '🔴 CRITICAL: {{ .CommonLabels.alertname }}'
+            message: >-
+              {{ range .Alerts }}
+              {{ .Labels.instance }} — {{ .Annotations.description }}
+              {{ end }}
+            priority: 5
+            tags: [rotating_light, bell]
+
+      - name: ntfy-warning
+        ntfy_configs:
+          - url: https://ntfy.sh/lee-homelab-8x7k2m
+            title: '🟡 WARNING: {{ .CommonLabels.alertname }}'
+            message: >-
+              {{ range .Alerts }}
+              {{ .Labels.instance }} — {{ .Annotations.description }}
+              {{ end }}
+            priority: 3
+            tags: [warning]
+
 grafana:
   admin:
     existingSecret: monitoring-grafana-admin
