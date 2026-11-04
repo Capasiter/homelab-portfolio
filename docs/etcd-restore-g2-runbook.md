@@ -14,7 +14,7 @@
 | # | Check | How | Expected |
 |---|---|---|---|
 | 0.1 | Restore-lab VM (404) exists + reachable | Proxmox console / `qm list` | VM present, on staging `vmbr0` only |
-| 0.2 | Lab K3s version is in the **fixed** range | `k3s version` on the VM | **v1.36.5+k3s1** (preferred) or v1.36.4+k3s1 with #14528 confirmed |
+| 0.2 | Lab K3s version is in the **fixed** range | `k3s version` on the VM | **v1.36.5+k3s1** (first release with the #14528 fix) |
 | 0.3 | A **compressed** etcd snapshot is staged on the VM | `ls -l <snapshot dir>/*.zip` | snapshot present (the affected path — this is the scenario that panicked) |
 | 0.4 | Matching K3s server token is staged | `ls -l <token path>` (presence + 0600 only — **never print it**) | token present |
 | 0.5 | Snapshot integrity | `sha256sum -c <snapshot>.zip.sha256` | `OK` |
@@ -22,6 +22,23 @@
 | 0.7 | NIC state | Proxmox | disconnected (offline) or on staging `vmbr0` only — **never `vmbr1`** |
 
 > **Critical (from the diagnosis):** the panic was specific to **compressed** snapshots. Use a `.zip` snapshot for this drill — that's the exact scenario that failed. If you only have an uncompressed one, the test is weaker (the uncompressed path was never broken).
+
+### 0a. Fresh start (per Lee's 2026-11-03 call: wipe old junk, start fresh)
+
+Run the fresh-start playbook — it wipes the old K3s state, installs **v1.36.5** (checksum-pinned), and stages the snapshot + token:
+
+```bash
+# From the Linux box, with the lab VM reachable:
+ANSIBLE_HOST_KEY_CHECKING=True ansible-playbook \
+  -i '192.168.0.182,' -u ansible \
+  --private-key ~/.ssh/homelab_ansible_ed25519 \
+  ansible/playbooks/k3s_restore_lab_fresh_start_v1365.yml
+```
+
+**Snapshot to use (verified 2026-11-03, checksum OK):** the newest rolling **compressed** snapshot
+`k3s-etcd-k3s-server-01-1793697863.zip` (Nov 3, 2.8M) — compressed is exactly the scenario that used to panic. Source: `/mnt/k3s-backups/etcd/k3s-server-01/rolling/` on the backup tier. Token: `/mnt/k3s-backups/token/k3s-server-01/token` (0600, root).
+
+> **Access note (2026-11-03):** PVE (192.168.0.182) was "No route to host" from the Linux box; the bastion (192.168.0.202) is reachable but needs Lee's key passphrase and its `permitopen` only allows the K3s node IPs. So this runbook needs **Lee at the keyboard** for the PVE/VM path.
 
 ## 1. Record the "before" state (read-only)
 

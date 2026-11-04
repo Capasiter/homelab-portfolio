@@ -1,0 +1,181 @@
+---
+# G2 fresh-start: stage the isolated restore lab with K3s v1.36.5+k3s1
+#
+# WHY v1.36.5: it is the first release that definitively carries the backport
+# of K3s PR #14528 ("Fix restore from compressed etcd snapshot"), which fixes
+# upstream issue #14526 — the doubled-path bug that caused our v1.36.2 panic.
+# See docs/etcd-restore-g2-diagnosis.md.
+#
+# This playbook:
+#   1. Wipes the old K3s state on the lab VM (fresh start — per Lee's call).
+#   2. Installs K3s v1.36.5+k3s1 (checksum-pinned), stopped.
+#   3. Copies the newest compressed etcd snapshot + server token from the
+#      backup tier into the VM's restore location.
+#
+# Safety: targets ONLY the isolated lab VM (k3s-restore-lab-01). It asserts the
+# hostname + IP before doing anything, and never touches the production cluster.
+#
+# Run (from the Linux box, with PVE/VM reachable):
+#   ANSIBLE_HOST_KEY_CHECKING=True ansible-playbook \
+#     -i '192.168.0.182,' -u ansible \
+#     --private-key ~/.ssh/homelab_ansible_ed25519 \
+#     ansible/playbooks/k3s_restore_lab_fresh_start_v1365.yml
+
+- name: Fresh-start isolated K3s restore lab (v1.36.5)
+  hosts: "192.168.0.182"
+  gather_facts: true
+  become: true
+
+  vars:
+    k3s_version: "v1.36.5+k3s1"
+    # v1.36.5+k3s1 linux-amd64 k3s binary sha256 (from the K3s release sha256sum-amd64.txt)
+    k3s_binary_checksum: "d73847bcd3c5fccef0115b372e2f9a91f3032dc84bbf71518a4617565294d313"
+    k3s_binary_path: /usr/local/bin/k3s
+    k3s_service_unit_path: /etc/systemd/system/k3s.service
+    k3s_state_dir: /var/lib/rancher/k3s
+    # Where the snapshot + token land on the lab VM (the restore source)
+    restore_dir: /root/etcd-restore
+    # Source of the snapshot + token (backup tier, mounted on the K3s bootstrap server)
+    # Adjust if the backup export is mounted elsewhere on the lab.
+    snapshot_source: "/mnt/k3s-backups/etcd/k3s-server-01/rolling/k3s-etcd-k3s-server-01-1793697863.zip"
+    snapshot_checksum_source: "/mnt/k3s-backups/etcd/k3s-server-01/rolling/k3s-etcd-k3s-server-01-1793697863.zip.sha256"
+    token_source: "/mnt/k3s-backups/token/k3s-server-01/token"
+
+  pre_tasks:
+    - name: Assert this is the isolated K3s restore VM (safety boundary)
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.hostname == "k3s-restore-lab-01"
+          - ansible_facts.default_ipv4.address == "192.168.0.182"
+        fail_msg: >-
+          REFUSING to run: this is not k3s-restore-lab-01 at 192.168.0.182.
+          This playbook must only ever target the isolated restore lab.
+
+  tasks:
+    # ── Phase 1: fresh start (wipe old K3s state) ─────────────────────────
+    - name: Stop K3s (if running)
+      ansible.builtin.systemd_service:
+        name: k3s
+        state: stopped
+        daemon_reload: true
+
+    - name: Record the pre-wipe state (for the record)
+      ansible.builtin.shell: |
+        set -o pipefail
+        { echo "=== pre-wipe: $(date -u +%FT%TZ) ===";
+          echo "k3s binary: $(ls -l {{ k3s_binary_path }} 2>/dev/null || echo none)";
+          echo "state dir:  $(ls -ld {{ k3s_state_dir }} 2>/dev/null || echo none)";
+        }
+      args:
+        executable: /bin/bash
+      register: pre_wipe
+      changed_when: false
+
+    - name: Show pre-wipe state
+      ansible.builtin.debug:
+        var: pre_wipe.stdout_lines
+
+    - name: Wipe the old K3s state directory (fresh start)
+      ansible.builtin.file:
+        path: "{{ k3s_state_dir }}"
+        state: absent
+
+    - name: Remove the old K3s binary + unit (will be reinstalled)
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ k3s_binary_path }}"
+        - "{{ k3s_service_unit_path }}"
+
+    # ── Phase 2: install K3s v1.36.5 (checksum-pinned), stopped ───────────
+    - name: Install staging prerequisites
+      ansible.builtin.apt:
+        name: [ca-certificates, curl]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install K3s v1.36.5 without starting it
+      ansible.builtin.shell: |
+        set -euo pipefail
+        curl -sfL https://get.k3s.io | \
+          INSTALL_K3S_VERSION="{{ k3s_version }}" \
+          INSTALL_K3S_EXEC=server \
+          INSTALL_K3S_SKIP_START=true \
+          sh
+      args:
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Verify the installed K3s binary checksum
+      ansible.builtin.stat:
+        path: "{{ k3s_binary_path }}"
+        checksum_algorithm: sha256
+        get_checksum: true
+      register: k3s_binary
+
+    - name: Assert the K3s binary checksum matches v1.36.5
+      ansible.builtin.assert:
+        that:
+          - k3s_binary.stat.exists
+          - k3s_binary.stat.checksum == k3s_binary_checksum
+        fail_msg: >-
+          K3s binary checksum mismatch — expected {{ k3s_binary_checksum }},
+          got {{ k3s_binary.stat.checksum | default('none') }}. Aborting;
+          do not proceed to restore.
+
+    - name: Confirm K3s is stopped (offline phase)
+      ansible.builtin.systemd_service:
+        name: k3s
+        state: stopped
+        enabled: false
+        daemon_reload: true
+
+    # ── Phase 3: stage the snapshot + token for the restore ───────────────
+    - name: Create the restore directory
+      ansible.builtin.file:
+        path: "{{ restore_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    # NOTE: the snapshot + token live on the backup tier (Unraid), reached via
+    # the K3s bootstrap server's /mnt/k3s-backups mount. If the lab VM does not
+    # have that mount, copy them over first (scp from the bootstrap server),
+    # then point snapshot_source/token_source at the local copies. The runbook
+    # (docs/etcd-restore-g2-runbook.md §0) has the exact copy commands.
+    - name: Verify the staged snapshot is present + checksum-valid
+      ansible.builtin.shell: |
+        set -e
+        test -f "{{ restore_dir }}/k3s-etcd-k3s-server-01-1793697863.zip"
+        (cd "{{ restore_dir }}" && sha256sum -c k3s-etcd-k3s-server-01-1793697863.zip.sha256)
+      args:
+        executable: /bin/bash
+      register: snap_check
+      changed_when: false
+
+    - name: Show snapshot verification
+      ansible.builtin.debug:
+        var: snap_check.stdout_lines
+
+    - name: Confirm the token is staged (presence + 0600 only — never print it)
+      ansible.builtin.stat:
+        path: "{{ restore_dir }}/token"
+      register: token_stat
+
+    - name: Assert the token is present and 0600
+      ansible.builtin.assert:
+        that:
+          - token_stat.stat.exists
+          - token_stat.stat.mode == "0600"
+        fail_msg: "Staged token missing or wrong mode. Do not proceed to restore."
+
+    - name: Fresh-start complete
+      ansible.builtin.debug:
+        msg: >-
+          FRESH START COMPLETE on k3s-restore-lab-01.
+          K3s {{ k3s_version }} installed (checksum OK), stopped.
+          Snapshot + token staged in {{ restore_dir }}.
+          Next: run the restore drill per docs/etcd-restore-g2-runbook.md §2.
