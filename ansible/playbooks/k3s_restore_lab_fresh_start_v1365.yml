@@ -98,7 +98,7 @@
 
     - name: Install K3s v1.36.5 without starting it
       ansible.builtin.shell: |
-        set -e
+        set -euo pipefail
         curl -sfL https://get.k3s.io | \
           INSTALL_K3S_VERSION="{{ k3s_version }}" \
           INSTALL_K3S_EXEC=server \
@@ -120,7 +120,10 @@
         that:
           - k3s_binary.stat.exists
           - k3s_binary.stat.checksum == k3s_binary_checksum
-        fail_msg: "K3s binary checksum mismatch — expected {{ k3s_binary_checksum }}, got {{ k3s_binary.stat.checksum | default('none') }}. Aborting; do not proceed to restore."
+        fail_msg: >-
+          K3s binary checksum mismatch — expected {{ k3s_binary_checksum }},
+          got {{ k3s_binary.stat.checksum | default('none') }}. Aborting;
+          do not proceed to restore.
 
     - name: Confirm K3s is stopped (offline phase)
       ansible.builtin.systemd_service:
