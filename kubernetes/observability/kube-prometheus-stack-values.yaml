@@ -58,15 +58,26 @@ alertmanager:
   # ── Alert routing (G1: alert delivery) ──────────────────────────────────
   # Tiered severity routing via ntfy push notifications.
   #
-  #   critical  → ntfy priority 5 (max/urgent, breaks through DND)
-  #   warning   → ntfy priority 3 (default)
+  #   critical  → ntfy (urgent, breaks through DND)
+  #   warning   → ntfy (default priority)
   #   info      → dropped (log-only, no push)
+  #   Watchdog  → null receiver (see note below)
   #
   # The ntfy topic URL is the ONLY secret-ish value here. It is a random
   # string you choose at https://ntfy.sh (no account needed). Anyone who
   # knows the topic can read the alerts, so treat it like a password.
   #
   # To change the topic later: edit the url below, `helm upgrade`, done.
+  #
+  # ── Watchdog: why it goes to a null receiver ────────────────────────────
+  # The kube-prometheus-stack ships a "Watchdog" alert with severity "none"
+  # that fires *forever by design* — it is a pipeline self-test (a "dead
+  # man's snitch") proving Prometheus → Alertmanager → a receiver works.
+  # It is NOT a real incident. If it routed to ntfy it would re-push to the
+  # phone every repeat_interval (4h) and spam Lee. So we route it to a
+  # `null` receiver: Alertmanager still evaluates and records it (the pipeline
+  # is still proven), but nothing is sent. Real critical + warning alerts
+  # still page; info stays dropped.
   config:
     route:
       receiver: ntfy-default
@@ -75,6 +86,12 @@ alertmanager:
       group_interval: 5m
       repeat_interval: 4h
       routes:
+        # Watchdog: always-firing pipeline test → swallow it (no push).
+        # Listed first; Alertmanager routes are most-specific-first, and this
+        # alertname is unique, so it unambiguously matches here.
+        - receiver: null
+          matchers:
+            - alertname = Watchdog
         # Critical: page immediately, no grouping delay
         - receiver: ntfy-critical
           matchers:
@@ -92,6 +109,10 @@ alertmanager:
     # mechanism is webhook_configs: Alertmanager POSTs its alert JSON to the
     # ntfy topic URL, and ntfy renders the notification. (ntfy_configs was an
     # invalid field and crashed Alertmanager 0.33.1 on load.)
+    #
+    # `null` is a real, built-in Alertmanager receiver type — it accepts and
+    # discards notifications. Referencing it as a route receiver is valid and
+    # needs no webhook_configs (unlike a custom named receiver).
     receivers:
       - name: ntfy-default
         webhook_configs:
