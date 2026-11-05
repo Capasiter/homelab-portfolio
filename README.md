@@ -61,7 +61,7 @@ These are results from specific documented exercises, not uptime guarantees.
 | Update an application while it receives requests | 148 successful requests and 0 observed failures in one protected rollout; a separate check recorded 120 successful requests and 0 failures | [Rolling-update test](kubernetes/k8s-learning/README.md) |
 | Rerun server and cluster configuration | Ansible reported `changed=0` on the documented full rerun, meaning it found the machines already matched the requested settings | [Node validation](ansible/docs/k3s-node-validation.md) · [Cluster validation](ansible/docs/k3s-cluster-validation.md) |
 | Move the Kubernetes API address after deleting its current owner pod | The address moved from server 02 to server 03; no failed API probes were recorded; all three nodes were Ready afterward | [API failover test](ansible/docs/k3s-api-vip-validation.md) |
-| Exercise an alert | Observed the system move from healthy, to a controlled failure and firing alert, then back to healthy | [Monitoring validation](kubernetes/observability/README.md) |
+| Exercise an alert and deliver it externally | Observed the system move from healthy, to a controlled failure and firing alert, then back to healthy; the alert path to an external push (ntfy) was confirmed end-to-end on a phone | [Monitoring validation](kubernetes/observability/README.md#alert-delivery-ntfy) |
 | Check infrastructure for unexpected differences | Documented full OpenTofu checks reported no changes | [Provisioning validation](proxmox/opentofu/docs/k3s-live-validation.md) |
 | Verify backup files and investigate restore | Snapshot checksums and decompression were verified, and checksum verification is now part of the backup workflow; a local PVC status validator now runs in the K3s health check. A full etcd restore still hits a repeatable K3s reset-path error and is not claimed as complete | [Backup and restore record](docs/portfolio-history-through-v0.7.md#restore-validation) · [PVC status validator](scripts/pvc-status-validator.sh) |
 | Test GitOps drift detection | Argo CD detected replica-count drift; manual reconciliation returned the application to Synced, Healthy, and 3/3 available replicas | [GitOps validation](kubernetes/argocd/README.md) |
@@ -109,7 +109,7 @@ A useful portfolio should make the limits clear as well as the successes.
 - **Application storage:** The Unraid-backed storage demo has documented persistence and single-file recovery checks, and PVC status is now validated in the K3s health check. Full-volume backup and recovery, and application rescheduling across nodes, still need testing.
 - **Failover scope:** The recorded API exercise removed a Kubernetes pod. It did not test a whole server or host failure.
 - **GitOps operation:** Argo CD sync is manual. Automatic correction and pruning are disabled.
-- **Monitoring:** External alert delivery and redundant probing remain future work.
+- **Monitoring:** External alert delivery to a single ntfy topic is working (tiered by severity); redundant delivery, acknowledgement, and on-call escalation remain future work.
 
 ## Future layout (proposed, not deployed)
 
@@ -151,7 +151,7 @@ Etcd backups and application-volume backups protect different data and need sepa
 
 1. Restore an etcd snapshot in an isolated environment and document a successful recovery.
 2. Back up and restore a full application volume, then verify permissions and cross-node rescheduling.
-3. Deliver external alerts and test redundant endpoint probes and network rules during controlled failures.
+3. Extend alert delivery (acknowledgement, on-call escalation, redundant probes) and test network rules during controlled failures.
 4. Compare the local tools on the same diagnosis, backup-check, and small code-change tasks; record evidence quality, tool use, speed, and human intervention.
 
 **Limits remain:** the proposed agent VM and the three K3s servers share one physical host, and local model inference depends on the desktop being available. This design adds capabilities to explore, not physical-host redundancy.
