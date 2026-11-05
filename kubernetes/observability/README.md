@@ -206,13 +206,30 @@ Validated on August 23, 2026:
 - Local-path volumes cannot be expanded and are unavailable if their assigned node is offline.
 - Loopback-only K3s component metrics are intentionally not collected.
 - Grafana is accessed through a local SSH tunnel rather than a public ingress.
-- External alert notification routing is not configured yet.
+- Alert delivery is tiered by severity and sends to a single ntfy topic; there is no redundant delivery path, acknowledgement workflow, or on-call escalation yet.
 - Blackbox Exporter currently runs as a single replica.
 - Availability probing currently covers only the internal `web-demo` service.
 
+## Alert Delivery (ntfy)
+
+Alertmanager routes alerts to an [ntfy](https://ntfy.sh) topic by severity, using `webhook_configs` (Alertmanager POSTs the alert JSON to the topic URL; ntfy renders the push). The topic name is a random string and is treated like a password.
+
+| Severity | Receiver | repeat_interval | Notes |
+|---|---|---|---|
+| `critical` | `ntfy-critical` | 1h | Pages immediately (10s group wait) |
+| `warning` | `ntfy-warning` | 8h | Batched, lower urgency |
+| `info` | dropped | — | Log-only, no push |
+| `Watchdog` | `"null"` | — | Always-firing pipeline self-test; routed to a no-op receiver so it does not page |
+
+The always-firing **Watchdog** alert (severity `none`) is a pipeline self-test, not a real incident. It is routed to a named `"null"` receiver (a receiver with no `webhook_configs`) so Alertmanager still evaluates and records it — proving the pipeline works — without pushing to the phone. Real `critical` and `warning` alerts still deliver.
+
+**Validation (LIVE):** the full path Prometheus → Alertmanager → ntfy → phone was confirmed end-to-end (a test alert was received on the phone). After the Watchdog routing change, Alertmanager reloaded the config cleanly (`2/2 Running`, 0 restarts, CR `RECONCILED=True`).
+
+**Known limitation of the `"null"` receiver:** the built-in `receiver: null` is dropped by the Prometheus Operator's config generator, and an unquoted `name: null` is parsed as YAML null (not the string `"null"`), which makes Alertmanager fail to load (`missing name in receiver`). The working form is a quoted `name: "null"` receiver.
+
 ## Next Steps
 
-1. Configure and test Alertmanager routing, delivery, acknowledgement, and recovery notifications.
+1. Add acknowledgement and on-call escalation for `critical` alerts (delivery itself is working).
 2. Evaluate Blackbox Exporter redundancy and alert when the expected probe time series disappears.
 3. Expand controlled testing to partial replica loss, node and network failure, slow responses, and intermittent errors.
 4. Capture timestamped evidence to measure detection, firing, notification, and recovery latency.
