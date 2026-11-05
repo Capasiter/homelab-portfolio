@@ -89,6 +89,10 @@ alertmanager:
         # Watchdog: always-firing pipeline test → swallow it (no push).
         # Listed first; Alertmanager routes are most-specific-first, and this
         # alertname is unique, so it unambiguously matches here.
+        #
+        # NOTE: the built-in `receiver: null` is dropped by the operator's
+        # generator, so we use a named receiver `null` (defined below with no
+        # webhook_configs) — Alertmanager accepts and discards it.
         - receiver: null
           matchers:
             - alertname = Watchdog
@@ -110,10 +114,12 @@ alertmanager:
     # ntfy topic URL, and ntfy renders the notification. (ntfy_configs was an
     # invalid field and crashed Alertmanager 0.33.1 on load.)
     #
-    # `null` is a real, built-in Alertmanager receiver type — it accepts and
-    # discards notifications. Referencing it as a route receiver is valid and
-    # needs no webhook_configs (unlike a custom named receiver).
+    # `null` is a named receiver with no webhook_configs — Alertmanager accepts
+    # and discards notifications sent to it. (The built-in `receiver: null` is
+    # dropped by the operator's generator, so we define a named one instead.)
     receivers:
+      - name: null
+
       - name: ntfy-default
         webhook_configs:
           - url: https://ntfy.sh/lee-homelab-8x7k2m
