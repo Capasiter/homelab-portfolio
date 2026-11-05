@@ -93,7 +93,7 @@ alertmanager:
         # NOTE: the built-in `receiver: null` is dropped by the operator's
         # generator, so we use a named receiver `null` (defined below with no
         # webhook_configs) — Alertmanager accepts and discards it.
-        - receiver: null
+        - receiver: "null"
           matchers:
             - alertname = Watchdog
         # Critical: page immediately, no grouping delay
@@ -118,7 +118,7 @@ alertmanager:
     # and discards notifications sent to it. (The built-in `receiver: null` is
     # dropped by the operator's generator, so we define a named one instead.)
     receivers:
-      - name: null
+      - name: "null"
 
       - name: ntfy-default
         webhook_configs:
