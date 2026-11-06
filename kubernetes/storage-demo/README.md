@@ -35,8 +35,9 @@ SHA-256: 741681964e93ad07f5faba653cccaf87ce1922530efaa82e369961b65ac66958
 
 ## Remaining validation
 
-Cross-node Deployment rescheduling and full application-volume recovery
-remain untested. Single-file backup/restore is documented below.
+Cross-node Deployment rescheduling remains untested. Full application-volume
+backup and a non-destructive restore proof are documented below (2026-11-06).
+Single-file backup/restore is also documented below.
 Etcd snapshots do not back up volume contents.
 The shared Unraid host remains a storage dependency.
 
@@ -66,3 +67,41 @@ Scope: one test file restored under a new name. Full-volume recovery,
 data-loss recovery, automated backups and retention remain untested.
 Application data and this backup reside on the same Unraid host;
 this is not protection against loss of that host.
+
+## Full-volume backup and restore proof — 2026-11-06 (G3)
+
+The `k3s_app_backup` role (ansible/roles/k3s_app_backup/) creates a
+full-volume, checksum-verified backup of the app-data export, and the
+restore was proven non-destructively (Phase A of
+docs/g3-pvc-full-volume-design.md §4.3).
+
+**Backup (LIVE, 2026-11-06T18:20:54Z, k3s-server-01):**
+- Source: /mnt/k3s-app-data (NFSv3 mount of 192.168.0.102:/mnt/user/k3s-app-data).
+- Artifact: /mnt/k3s-backups/applications/storage-demo/rolling/20261106T182054Z/
+  - storage-demo-data.tar (2 files, --numeric-owner, UID 99 / GID 100 preserved)
+  - manifest.sha256 (per-file SHA-256)
+  - artifact.sha256 (single digest of the .tar)
+  - meta.json (ts, host, file count, artifact digest)
+- Baseline: first verified backup preserved at .../baseline/ (never overwritten).
+- Artifact digest: 30b7698be1fd0751f75917c6eb8bf02a2b7da6daf4e5e5f19ee5cb239c46b644
+
+**Phase A restore proof (LIVE, non-destructive):**
+- Extracted the archive to a scratch dir (/tmp/g3-restore-proof-...).
+- sha256sum -c against the manifest: both files OK
+  - k3s-app-data/persistence-proof.txt: OK
+  - k3s-app-data/restored-proof.txt: OK
+- File count: manifest 2 == scratch 2 (COUNT-MATCH).
+- Live export untouched: both files still present, persistence-proof.txt
+  digest 741681964e93ad07f5faba653cccaf87ce1922530efaa82e369961b65ac66958
+  (identical to the 2026-10-13 historical evidence — the backup faithfully
+  preserves the data).
+- Scratch dir removed after verification.
+
+**Evidence bar met (docs/g3-pvc-full-volume-design.md §5):** a full-volume
+backup artifact + manifest exist and pass sha256sum -c; Phase A recovers
+100% of manifest files with matching digests; the live export is untouched.
+
+**Limits (unchanged):** the backup and the data share the Unraid host;
+this is not protection against loss of that host. The destructive live
+restore (Phase B) was not run — Phase A is the sufficient, non-destructive
+proof for the portfolio.

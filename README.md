@@ -106,7 +106,7 @@ A useful portfolio should make the limits clear as well as the successes.
 
 - **One physical host:** Three virtual machines provide multiple Kubernetes control-plane members, but they all depend on the same physical server.
 - **Full disaster recovery:** Snapshot integrity and decompression have been checked; a complete etcd restore has not succeeded yet.
-- **Application storage:** The Unraid-backed storage demo has documented persistence and single-file recovery checks, and PVC status is now validated in the K3s health check. Full-volume backup and recovery, and application rescheduling across nodes, still need testing.
+- **Application storage:** The Unraid-backed storage demo has documented persistence, single-file recovery, and a **full-volume backup + non-destructive restore proof** (2026-11-06), and PVC status is now validated in the K3s health check. Application rescheduling across nodes still needs testing.
 - **Failover scope:** The recorded API exercise removed a Kubernetes pod. It did not test a whole server or host failure.
 - **GitOps operation:** Argo CD sync is manual. Automatic correction and pruning are disabled.
 - **Monitoring:** External alert delivery to a single ntfy topic is working (tiered by severity); redundant delivery, acknowledgement, and on-call escalation remain future work.
