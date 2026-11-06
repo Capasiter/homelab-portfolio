@@ -116,15 +116,21 @@ archive_path="${DEST_DIR}/${APP_NAME}-data.tar"
 manifest_path="${DEST_DIR}/manifest.sha256"
 partial_path="${archive_path}.partial"
 
+# DEST_DIR must exist before the tar writes its .partial into it.
+install -d -m 0750 "$DEST_DIR"
+
 log "Creating a full-volume archive of ${SOURCE_DIR}."
-# -C /mnt/user so the archive members are relative to the export root
-# (k3s-app-data/...), preserving the tree the PVC exposes.
+# Archive members are relative to the export root (the basename of
+# SOURCE_DIR), preserving the tree the PVC exposes, regardless of where
+# the export is mounted (Unraid: /mnt/user/k3s-app-data; node: /mnt/k3s-app-data).
+source_parent="$(dirname "$SOURCE_DIR")"
+source_base="$(basename "$SOURCE_DIR")"
 tar --create \
   --file="$partial_path" \
   --numeric-owner \
   --format=ustar \
-  --directory=/mnt/user \
-  "k3s-app-data"
+  --directory="$source_parent" \
+  "$source_base"
 
 chmod 0640 "$partial_path"
 sync "$partial_path"
