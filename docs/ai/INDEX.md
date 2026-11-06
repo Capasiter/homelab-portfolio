@@ -15,6 +15,7 @@
 | You are doing… | Read this first |
 |---|---|
 | **Anything at all** (start of every session) | `SESSION_STATE.md` — the single current-state source of truth |
+| **What to do next / what’s blocked / what I need from Lee** (the working queue) | `MORNING-QUEUE.md` — the single live queue: done, blocked, decisions needed. Replaces ad-hoc phone summaries (D-026-6). |
 | Reaching a machine, running a command, "why is this path blocked?" | `ACCESS.md` — machines, working paths, blocked paths, password protocol |
 | Wondering why a decision was made, or proposing a new one | `DECISIONS.md` — decision log with rationale + pending items |
 | Planning work, or reporting progress against the goal | `ROADMAP.md` — phases, evidence bars, sequencing rationale |
@@ -37,15 +38,15 @@ prove a test or parser passed.
 
 ## 3. Working routine (every task, every tool)
 
-1. **Read the notes.** This index → `SESSION_STATE.md` → the task-specific document above.
+1. **Read the notes.** This index → `SESSION_STATE.md` → `MORNING-QUEUE.md` (what’s next / blocked / needed) → the task-specific document above.
 2. **Verify claims against source.** Treat README claims as historical evidence (`DOC`). Confirm anything
    you rely on by reading the cited file or evidence artifact in this session. Never infer live system
    state from documentation or fixtures.
 3. **Do one bounded task.** Make the smallest change that accomplishes the stated task. Do not run
    live-infrastructure commands, commit, or push without explicit permission.
 4. **Verify.** Re-read changed files; confirm the result is grounded in repository content, not assumed.
-5. **Update `SESSION_STATE.md`.** Record what changed, what was verified, and any new known limits or
-   open questions.
+5. **Update `SESSION_STATE.md` + `MORNING-QUEUE.md`.** Record what changed, what was verified, what’s
+   blocked, and the decisions needed. Keep the queue to the 2–3 things Lee must answer (D-026-6).
 
 ## 4. Hard rules (never violate — full text in `WHY.md` §A and `DECISIONS.md`)
 

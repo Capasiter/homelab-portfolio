@@ -1,0 +1,24 @@
+[Unit]
+Description=Create and verify a full-volume backup of the app data export
+Wants=network-online.target
+After=network-online.target
+RequiresMountsFor={{ k3s_app_backup_mount_path }}
+RequiresMountsFor={{ k3s_app_backup_root }}
+ConditionPathIsExecutable={{ k3s_app_backup_script_path }}
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0027
+Environment=BACKUP_ROOT={{ k3s_app_backup_root }}
+Environment=APP_NAME={{ k3s_app_backup_app_name }}
+Environment=SOURCE_DIR={{ k3s_app_backup_mount_path }}
+Environment=ROLLING_RETENTION={{ k3s_app_backup_rolling_retention }}
+ExecStart={{ k3s_app_backup_script_path }}
+TimeoutStartSec=15min
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+StandardOutput=journal
+StandardError=journal

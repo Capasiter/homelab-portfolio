@@ -1,0 +1,30 @@
+---
+# G3 — full-volume backup of the Unraid-backed application data (storage-demo-data PVC).
+# Mirrors the k3s_backup role conventions (atomic write, SHA-256, retention, lock).
+# See docs/g3-pvc-full-volume-design.md for the design and approval model.
+
+k3s_app_backup_packages:
+  - tar
+  - findutils
+
+# The application data export (the storage-demo-data PVC source).
+k3s_app_backup_nfs_server: 192.168.0.102
+k3s_app_backup_nfs_export: /mnt/user/k3s-app-data
+k3s_app_backup_mount_path: /mnt/k3s-app-data
+k3s_app_backup_mount_options: >-
+  rw,hard,vers=3,_netdev,nofail,x-systemd.automount,x-systemd.device-timeout=10s
+
+# Where the full-volume backup artifacts land (same backup export as the etcd set).
+k3s_app_backup_root: /mnt/k3s-backups
+k3s_app_backup_app_name: storage-demo
+k3s_app_backup_rolling_retention: 3
+
+k3s_app_backup_script_path: /usr/local/sbin/k3s-app-backup
+
+k3s_app_backup_service_name: k3s-app-backup.service
+k3s_app_backup_timer_name: k3s-app-backup.timer
+k3s_app_backup_service_unit_path: /etc/systemd/system/k3s-app-backup.service
+k3s_app_backup_timer_unit_path: /etc/systemd/system/k3s-app-backup.timer
+# Offset from the etcd timer (03:15) so the two jobs do not contend for NFS I/O.
+k3s_app_backup_on_calendar: "*-*-* 03:45:00"
+k3s_app_backup_randomized_delay: 10m
