@@ -10,6 +10,19 @@
 
 ---
 
+## 2026-11-05
+
+### D-026-6 — Standing “unattended OK” list + one morning-queue (process, agreed with Lee 2026-11-05)
+- **Decision:** Adopt a standing authorization list so the agent can finish more in one pass and Lee reviews a batch, instead of ping-ponging on small confirmations. Default (Lee to confirm/adjust):
+  1. **Docs-only PRs:** the agent may open and, when CI is green, merge them without a per-PR “go.”
+  2. **Live infra (K3s / Unraid / Proxmox / Alertmanager / firewall):** NEVER without Lee’s explicit, step-specific go. (Reaffirms D-024-2.)
+  3. **Deletes / `git reset --hard` / branch deletion of Lee’s work:** NEVER without Lee’s explicit go.
+  4. **Phone summaries:** keep delivering when a work block finishes.
+  5. **One `MORNING-QUEUE.md`** (repo + mirrored to the phone) replaces several ad-hoc summaries: what was done, what’s blocked, the 2–3 decisions needed. Lee answers the decisions; the agent executes.
+- **Rationale:** Lee (2026-11-05): *“make sure you update all the ai stuff so we can make this better for both of us… see if we can make it as streamlined as possible.”* The friction this cycle was the agent re-deriving context and Lee waiting on small confirmations. A standing list + one queue file removes both while keeping the hard safety boundary (no autonomous live-infra changes, D-025-1/D-024-2).
+- **Rejected:** fully autonomous operation (violates the human-control boundary Lee set in the README); per-task “go” for docs (the ping-pong that slowed things).
+- **Revisit when:** Lee tightens or loosens any item, or a tool (Hermes/Continue) needs the same list expressed in its own config.
+
 ## 2026-10-26 — 2026-10-27
 
 ### D-026-4 — Lee’s local-assistance/agents roadmap is tracked as ROADMAP Phase 6 (agent decision, built on Lee’s own text)

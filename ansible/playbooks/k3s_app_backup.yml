@@ -1,0 +1,10 @@
+---
+- name: Configure full-volume app-data backups (G3)
+  hosts: k3s_bootstrap_server
+  become: true
+  gather_facts: true
+  serial: 1
+  any_errors_fatal: true
+
+  roles:
+    - role: k3s_app_backup
