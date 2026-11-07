@@ -95,6 +95,7 @@ This was a controlled pod-level test. It did not simulate a powered-off server, 
 | Creating the virtual machines and private lab network | [OpenTofu project](proxmox/opentofu/) |
 | Linux setup and Kubernetes installation | [Ansible roles and playbooks](ansible/) |
 | Application deployment and update testing | [Kubernetes learning project](kubernetes/k8s-learning/README.md) |
+| Application data persistence + full-volume backup | [Storage demo](kubernetes/storage-demo/README.md) |
 | Monitoring, dashboards, and alerts | [Observability project](kubernetes/observability/README.md) |
 | Git-based application delivery | [Argo CD configuration](kubernetes/argocd/README.md) |
 | Automated repository checks | [GitHub Actions workflow](.github/workflows/infrastructure-validation.yml) |
