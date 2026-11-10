@@ -114,6 +114,9 @@ jobs:
       - name: Check K3s backup playbook syntax
         run: ansible-playbook -i ansible/inventory/hosts.example.yml ansible/playbooks/k3s_backup.yml --syntax-check
 
+      - name: Check K3s app backup playbook syntax
+        run: ansible-playbook -i ansible/inventory/hosts.example.yml ansible/playbooks/k3s_app_backup.yml --syntax-check
+
       - name: Check K3s cluster playbook syntax
         run: ansible-playbook -i ansible/inventory/hosts.example.yml ansible/playbooks/k3s_cluster.yml --syntax-check
 
@@ -128,12 +131,19 @@ jobs:
       - name: Lint Ansible project
         run: ansible-lint --profile production ansible/
 
+      - name: Lint K3s app backup role
+        run: ansible-lint --profile production ansible/roles/k3s_app_backup/
+
       - name: Lint K3s backup script
         run: shellcheck ansible/roles/k3s_backup/files/k3s-backup.sh
 
       - name: Render K3s backup systemd templates
         working-directory: ansible
         run: ansible-playbook -i localhost, --connection=local playbooks/ci/render-backup-templates.yml
+
+      - name: Render K3s app backup systemd templates
+        working-directory: ansible
+        run: ansible-playbook -i localhost, --connection=local playbooks/ci/render-app-backup-templates.yml
 
   observability:
     name: Kubernetes observability validation
