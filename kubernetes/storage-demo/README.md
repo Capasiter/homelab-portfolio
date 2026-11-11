@@ -82,7 +82,7 @@ docs/g3-pvc-full-volume-design.md §4.3).
   - manifest.sha256 (per-file SHA-256)
   - artifact.sha256 (single digest of the .tar)
   - meta.json (ts, host, file count, artifact digest)
-- Baseline: first verified backup preserved at .../baseline/ (never overwritten).
+- Baseline: first verified backup preserved at /mnt/k3s-backups/applications/storage-demo/baseline/ (never overwritten).
 - Artifact digest: 30b7698be1fd0751f75917c6eb8bf02a2b7da6daf4e5e5f19ee5cb239c46b644
 
 **Phase A restore proof (LIVE, non-destructive):**
@@ -104,4 +104,4 @@ backup artifact + manifest exist and pass sha256sum -c; Phase A recovers
 **Limits (unchanged):** the backup and the data share the Unraid host;
 this is not protection against loss of that host. The destructive live
 restore (Phase B) was not run — Phase A is the sufficient, non-destructive
-proof for the portfolio.
+proof for the portfolio. (Phase B can be added later if needed.)
