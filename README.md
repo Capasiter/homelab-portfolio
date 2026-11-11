@@ -148,7 +148,17 @@ These additions need a deployment plan, access boundaries, and validation before
 
 Etcd backups and application-volume backups protect different data and need separate recovery tests. The existing full etcd restore is still incomplete.
 
-### Completion checks
+### Completion status
+
+| Goal | Status | Notes |
+|---|---|---|
+| **G1 (alert delivery)** | ✅ Done | ntfy spam fixed, Watchdog routed to `"null"` receiver (PR #70) |
+| **CI checks for `k3s_app_backup`** | ✅ Done | Syntax-check, role-lint, template-render added (PR #78) |
+| **G3 (PVC full-volume backup)** | ✅ Done | Phase A non-destructive restore proof (LIVE 2026-11-06) |
+| **Hermes↔LM Studio connection** | ✅ Resolved | Reverse SSH tunnel working; `qwen/qwen3.5-9b` or `glm-4.7-flash` |
+| **G2 (etcd restore drill)** | ⏸️ Blocked | Proxmox unreachable; needs you at keyboard when ready |
+
+## Completion checks
 
 1. Restore an etcd snapshot in an isolated environment and document a successful recovery.
 2. Back up and restore a full application volume, then verify permissions and cross-node rescheduling.
